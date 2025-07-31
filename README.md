@@ -25,5 +25,5 @@ El archivo main.cpp será el punto de entrada del programa, donde se inicializar
 
 EL bucle principal está dividido en 3 partes:
 1. Gestión de eventos: Aquí se capturan y procesan los eventos del sistema, como entradas del teclado o del ratón.
-2. Actualización de la lógica de la simulación: En esta sección se actualizan las entidades de la simulación, el entorno, estre otras cosas...
+2. Actualización de la lógica de la simulación: En esta sección se actualizan las entidades de la simulación, el entorno, entre otras cosas...
 3. Renderizado: Finalmente, se dibujan las entidades y el entorno en la ventana principal, utilizando la librería SFML para manejar gráficos y animaciones.
