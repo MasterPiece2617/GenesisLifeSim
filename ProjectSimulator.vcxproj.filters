@@ -39,6 +39,13 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="README.md" />
+    <None Include="docs\intro_estructura.md" />
+    <None Include="docs\engine_loop.md" />
+    <None Include="docs\scenario.md" />
+    <None Include="docs\main.md" />
+    <None Include="docs\entity.md" />
+    <None Include="docs\component.md" />
+    <None Include="docs\transform.md" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="simulator\include\engine_loop.hpp">

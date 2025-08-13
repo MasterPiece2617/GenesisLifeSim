@@ -55,3 +55,5 @@ Root/
 │   ├── src/ <-- Archivos fuente del proyecto (.cpp)
 │   ├── main.cpp <-- Archivo main del proyecto
 ```
+
+[Documentación](docs/intro_estructura.md)
