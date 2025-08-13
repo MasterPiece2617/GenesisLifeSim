@@ -1,4 +1,4 @@
-## Estructura básica del programa
+# Estructura básica del programa
 
 ## loop
 
@@ -19,11 +19,11 @@ Ambas clases están diseñadas para ser heredadas, lo que permite crear entidades 
 
 ## Componentes básicos
 
-## Transform
+### Transform
 
 [`Transform`](transform.md) es un componente que define la posición, rotación y escala de una entidad en el espacio 2D. Este componente está presente en todas las entidades, ya que es escencial para representar la jerarquía de objetos, incluso si no se renderiza en pantalla.
 
-## Render (no ha sido creado)
+### Render (no ha sido creado)
 [`Render`](render.md) es un componente que define cómo se renderiza una entidad en la pantalla. Este componente puede contener información sobre la textura, el color y otros aspectos visuales de la entidad. Es opcional, ya que algunas entidades pueden no necesitar ser renderizadas.
 
 ## Manejo de eventos (Aún por decidir)
