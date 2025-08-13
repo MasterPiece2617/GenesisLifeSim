@@ -1,0 +1,21 @@
+#pragma once
+
+#include <component.hpp>
+
+class ComponentTest : public Component
+{
+public:
+	
+	ComponentTest(std::weak_ptr<Entity> _owner) : Component(_owner) {}
+	ComponentTest() : Component() {}
+
+	void start() override
+	{
+		std::cout << "ComponentTest from " << owner.lock()->get_name() << " started." << std::endl;
+	}
+
+	void update() override
+	{
+		std::cout << "ComponentTest from " << owner.lock()->get_name() << " Updated." << std::endl;
+	}
+};
