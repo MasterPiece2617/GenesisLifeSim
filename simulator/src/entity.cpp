@@ -1,7 +1,24 @@
 #include <entity.hpp>
 #include <component.hpp>
 
+void Entity::init_transform()
+{
+	if (transform)
+	{
+		std::cerr << "Warning: Transform already initialized for entity: " << name << std::endl;
+		return;
+	}
+	std::shared_ptr<Transform> _transform = std::make_shared<Transform>(shared_from_this());
+	transform = _transform;
+	components.push_back(_transform);
+}
+
 Entity::Entity(const std::string& _name) : name(_name)  {}
+
+void Entity::init()
+{
+	init_transform();
+}
 
 const std::string& Entity::get_name() const
 {
@@ -16,6 +33,40 @@ void Entity::set_name(const std::string& _name)
 void Entity::print() const
 {
 	std::cout << "Entity Name: " << name << std::endl;
+}
+
+void Entity::print_family() const
+{
+	bool has_family = false;
+
+	std::cout << "Entity Name: " << name << std::endl;
+
+	if (transform->get_parent())
+	{
+		has_family = true;
+		std::cout << "Parent: " << transform->get_parent()->get_name() << std::endl;
+	}
+	else
+	{
+		std::cout << "No parent." << std::endl;
+	}
+
+	if (transform->get_children().size() > 0)
+	{
+		has_family = true;
+		std::cout << "Children:" << std::endl;
+
+		for (const auto& child : transform->get_children())
+		{
+			std::cout << child->get_name() << std::endl;
+		}
+
+		std::cout << std::endl;
+	}
+	else
+	{
+		std::cout << "No children." << std::endl;
+	}
 }
 
 bool Entity::get_is_active() const
@@ -91,6 +142,11 @@ std::shared_ptr<Entity> Entity::get_parent() const
 	return transform->get_parent();
 }
 
+std::vector<std::shared_ptr<Entity>> Entity::get_children() const
+{
+	return transform->get_children();
+}
+
 bool Entity::add_child(std::shared_ptr<Entity> child)
 {
 	if (transform->add_child(child))
@@ -124,6 +180,9 @@ void Entity::update()
 {
 	for (auto& component : components)
 	{
-		component->update();
+		if (component->get_is_active())
+		{
+			component->update();
+		}
 	}
 }

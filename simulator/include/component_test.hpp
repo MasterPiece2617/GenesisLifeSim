@@ -7,7 +7,6 @@ class ComponentTest : public Component
 public:
 	
 	ComponentTest(std::weak_ptr<Entity> _owner) : Component(_owner) {}
-	ComponentTest() : Component() {}
 
 	void start() override
 	{

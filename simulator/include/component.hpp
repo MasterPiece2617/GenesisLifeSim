@@ -1,7 +1,6 @@
 #pragma once
 
 #include <iostream>
-#include <typeinfo>
 
 class Entity; // Forward declaration
 
@@ -12,7 +11,6 @@ protected:
 	std::weak_ptr<Entity> owner;
 
 public:
-	Component() = default;
 	Component(std::weak_ptr<Entity> _owner);
 
 	std::weak_ptr<Entity> get_owner() const;

@@ -1,6 +1,6 @@
 #include <engine_loop.hpp>
 #include <entity_test.hpp>
-#include <scenario.hpp>
+#include <scene.hpp>
 
 // Constructor
 Engine::Engine()
@@ -36,9 +36,21 @@ void Engine::render()
 // Main loop function
 void Engine::run()
 {
-	Scenario scenario;
+	Scene scenario;
 	std::shared_ptr<Entity> entity1 = EntityFactory<EntityTest>::create("Test1");
 	scenario.add_entity(entity1);
+
+	std::shared_ptr<Entity> entity2 = EntityFactory<EntityTest>::create("Hijo de Test1");
+
+	std::shared_ptr<Entity> entity3 = EntityFactory<Entity>::create("Padre de test1");
+
+	scenario.add_entity(entity2);
+	entity1->add_child(entity2);
+	scenario.add_entity(entity3);
+
+	entity1->set_parent(entity3);
+
+	entity1->print_family();
 
 	scenario.start();
 

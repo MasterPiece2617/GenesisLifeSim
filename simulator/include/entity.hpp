@@ -21,25 +21,13 @@ protected:
 public:
 	
 	Entity(const std::string& _name);
-
-	template<typename T>
-	void init(std::shared_ptr<T> self)
-	{
-		if (transform)
-		{
-			std::cerr << "Warning: Transform already initialized for entity: " << name << std::endl;
-			return;
-		}
-
-		std::shared_ptr<Transform> _transform = std::make_shared<Transform>(self);
-		transform = _transform;
-		components.push_back(_transform);
-	}
-
+	void init_transform();
+	virtual void init();
 	const std::string& get_name() const;
 	void set_name(const std::string& _name);
 	bool add_component(std::shared_ptr<Component> component);
 	virtual void print() const;
+	void print_family() const;
 	bool get_is_active() const;
 	void deactivate();
 	void activate();
@@ -50,11 +38,12 @@ public:
 	bool remove_tag(const std::string& tag);
 	bool set_parent(std::shared_ptr<Entity> _parent);
 	std::shared_ptr<Entity> get_parent() const;
+	std::vector<std::shared_ptr<Entity>> get_children() const;
 	bool add_child(std::shared_ptr<Entity> child);
 	bool remove_child(std::shared_ptr<Entity> child);
 
-	virtual void start();
-	virtual void update();
+	void start();
+	void update();
 	virtual ~Entity() = default;
 };
 
@@ -67,7 +56,8 @@ public:
 	{
 		static_assert(std::is_base_of<Entity, T>::value, "T must inherit from Entity");
 		std::shared_ptr<T> entity = std::make_shared<T>(name);
-		entity->init(entity);
+		entity->init_tranform();
+		entity->init();
 		return entity;
 	}
 };

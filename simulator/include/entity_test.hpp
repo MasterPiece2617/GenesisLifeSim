@@ -11,17 +11,4 @@ public:
 
 	}
 
-	void start() override
-	{
-		add_component(std::make_shared<ComponentTest>());
-		std::cout << "EntityTest " << name << " started." << std::endl;
-		Entity::start();
-	}
-
-	void update() override
-	{
-		std::cout << "EntityTest " << name << " updated." << std::endl;
-		Entity::update();
-	}
-
 };

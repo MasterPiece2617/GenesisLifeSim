@@ -30,7 +30,7 @@
     <ClCompile Include="simulator\src\graph.cpp">
       <Filter>Archivos de origen</Filter>
     </ClCompile>
-    <ClCompile Include="simulator\src\scenario.cpp">
+    <ClCompile Include="simulator\src\scene.cpp">
       <Filter>Archivos de origen</Filter>
     </ClCompile>
     <ClCompile Include="simulator\src\transform.cpp">
@@ -41,7 +41,7 @@
     <None Include="README.md" />
     <None Include="docs\intro_estructura.md" />
     <None Include="docs\engine_loop.md" />
-    <None Include="docs\scenario.md" />
+    <None Include="docs\scene.md" />
     <None Include="docs\main.md" />
     <None Include="docs\entity.md" />
     <None Include="docs\component.md" />
@@ -69,7 +69,7 @@
     <ClInclude Include="simulator\include\graph.hpp">
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
-    <ClInclude Include="simulator\include\scenario.hpp">
+    <ClInclude Include="simulator\include\scene.hpp">
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
     <ClInclude Include="simulator\include\transform.hpp">

@@ -23,4 +23,6 @@ public:
 	std::shared_ptr<Entity> get_parent() const;
 	bool add_child(std::shared_ptr<Entity> child);
 	bool remove_child(std::shared_ptr<Entity> child);
+	std::vector<std::shared_ptr<Entity>> get_children() const;
+	~Transform() = default;
 };

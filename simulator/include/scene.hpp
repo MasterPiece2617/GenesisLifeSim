@@ -4,15 +4,15 @@
 #include <component_test.hpp>
 #include <graph.hpp>
 
-class Scenario
+class Scene
 {
 protected:
-	Hierarchy hierarchy; // Esto se va a cambiar por un grafo/árbol. Asignación de José...
+	Hierarchy hierarchy;
 
 public:
-	Scenario() = default; // Provisional
+	Scene() = default; // Provisional
 	void add_entity(std::shared_ptr<Entity> entity); // Provisional
 	void start();
 	void update();
-	~Scenario() = default; 
+	~Scene() = default; 
 };

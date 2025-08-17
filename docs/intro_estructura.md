@@ -7,7 +7,7 @@ este bucle principal se encuentra en los archivos [engine_loop.hpp/engine_loop.c
 
 En resumen esta clase tiene los atributos y métodos principales: 
 
-- [`scenario`](scenario.md), el cual es el contenedor de todas las entidades y componentes que definen un contexto activo, puede ser la simulación en sí o un menú principal, solo un `Scenario` puede estar activo a la vez.
+- [`scene`](scene.md), el cual es el contenedor de todas las entidades y componentes que definen un contexto activo, puede ser la simulación en sí o un menú principal, solo un `Scenario` puede estar activo a la vez.
 - `window`, que es la ventana donde se renderiza la simulación. 
 - El bucle principal se ejecuta en el método `run()` de la clase `Engine`, este método se llama desde [main.cpp](main.md).
 

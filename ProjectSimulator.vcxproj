@@ -136,7 +136,7 @@
     <ClCompile Include="simulator\src\engine_loop.cpp" />
     <ClCompile Include="simulator\src\entity.cpp" />
     <ClCompile Include="simulator\src\graph.cpp" />
-    <ClCompile Include="simulator\src\scenario.cpp" />
+    <ClCompile Include="simulator\src\scene.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="docs\component.md" />
@@ -144,7 +144,7 @@
     <None Include="docs\entity.md" />
     <None Include="docs\intro_estructura.md" />
     <None Include="docs\main.md" />
-    <None Include="docs\scenario.md" />
+    <None Include="docs\scene.md" />
     <None Include="docs\transform.md" />
     <None Include="README.md" />
   </ItemGroup>
@@ -154,7 +154,7 @@
     <ClInclude Include="simulator\include\engine_loop.hpp" />
     <ClInclude Include="simulator\include\entity_test.hpp" />
     <ClInclude Include="simulator\include\graph.hpp" />
-    <ClInclude Include="simulator\include\scenario.hpp" />
+    <ClInclude Include="simulator\include\scene.hpp" />
     <ClInclude Include="simulator\include\transform.hpp" />
     <ClInclude Include="src\map\map.hpp" />
     <ClInclude Include="simulator\include\entity.hpp" />

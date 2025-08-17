@@ -19,6 +19,11 @@ bool Component::set_owner(std::weak_ptr<Entity> _owner)
 	return true;	
 }
 
+bool Component::get_is_active() const
+{
+	return is_active;
+}
+
 void Component::start() {}
 
 void Component::update() {}
