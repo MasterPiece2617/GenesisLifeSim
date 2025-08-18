@@ -15,6 +15,8 @@ Cada `Entity` cuenta con un nombre, `tags`, una lista de [`Component`](component
     bool is_active = true;
 ```
 
+## Métodos de Entity
+
 Sus métodos son:
 
 ```cpp
@@ -43,6 +45,16 @@ Función que establece el nombre de la entidad.
 ```
 Función que añade un componente a la entidad. Devuelve `true` si se ha añadido correctamente, `false` si ya existe un componente con el mismo tipo.
 ```cpp
+    template <typename T>
+    std::shared_ptr<T> get_component() const;
+```
+Función que devuelve un componente de tipo `T` de la entidad. Si no existe un componente de ese tipo, devuelve `nullptr`.
+```cpp
+    template <typename T>
+    bool remove_component();
+```
+Función que elimina un componente de tipo `T` de la entidad. Devuelve `true` si se ha eliminado correctamente, `false` si no existe un componente de ese tipo.
+```cpp
     virtual void print() const;
 ```
 Función que imprime información de la entidad, como su nombre y sus [`Component`](component.md). Esta función es virtual, por lo que puede ser sobreescrita en clases derivadas.
@@ -52,6 +64,13 @@ Función que imprime información de la entidad, como su nombre y sus [`Componen
 Función que imprime el nombre de la entidad, así como los nombres de las entidades padre e hijo.
 ```cpp
     bool get_is_active() const;
+```
+Ejemplo:
+```terminal
+    Entity Name: Test1
+    Parent: Padre de test1
+    Children:
+    Hijo de Test1
 ```
 Función que devuelve si la entidad está activa o no.
 ```cpp
@@ -111,6 +130,84 @@ Función que se llama en cada frame para actualizar la `Entity`, es decir, sus [
 ```
 estructor virtual que se encarga de liberar los recursos de la entidad. Es importante que sea virtual para que se llame al destructor de las clases derivadas cuando se destruya una entidad.
 
+## Cómo crear una clase derivada de Entity?
+
+Para crear una clase derivada de `Entity`, debes sobreescribir el método `init()` para inicializar los [`Component`](component.md) que necesites. Aquí tienes un ejemplo de `EntityTest`:
+
+`entity_test.hpp`:
+```cpp
+    #pragma once
+
+    #include <entity.hpp>
+    #include <component_test.hpp>
+
+    class EntityTest : public Entity
+    {
+    public:
+
+        EntityTest(const std::string& name) : Entity(name) {}
+
+        void init() override
+        {
+            // Añadir componentes a la entidad
+            add_component(std::make_shared<ComponentTest>());
+        }
+
+        ~EntityTest() override = default;
+    };
+```
+La clase `EntityTest` hereda de `Entity` y sobreescribe el método `init()` para añadir un componente de prueba `ComponentTest`. Puedes añadir tantos componentes como necesites en este método.
+
+<span style="color:red">NOTA</span>: No se pueden añadir componentes en el constructor, ya que el `shared_from_this()` no está disponible en ese momento, por lo que debes usar el método `init()` para añadir los componentes.
+<span style="color:red">NOTA</span>: No sepueden agregar dos componentes del mismo tipo.
+
+También puedes sobreescribir el método `print()` para imprimir información específica de la entidad:
+
+`entity_test.hpp`:
+```cpp
+    void print() const override
+    {
+        std::cout << "EntityTest: " << get_name() << std::endl;
+    }
+```
+Resultado:
+```cpp
+    std::shared_ptr<Entity> entity = std::EntityFactory<EntityTest>::create("Test1");
+    entity->print();
+```
+Terminal:
+```terminal
+    EntityTest: Test1
+```
+
+Es posible acceder al método `print()` de la clase base `Entity` usando `Entity::print()` dentro del método `print()` de la clase derivada, si se desea imprimir también la información de la clase base, aplica para clases derivadas de la clase derivada de `Entity`.
+
+`entity.cpp`:
+```cpp
+    void Entity::print() const
+    {
+	    std::cout << "Entity Name: " << name << std::endl;
+    }
+```
+`entity_test.hpp`:
+```cpp
+    void print() const override
+    {
+        Entity::print();
+        std::cout << "This is an test" << std::endl;
+    }
+```
+Resultado:
+```cpp
+    std::shared_ptr<Entity> entity = std::EntityFactory<EntityTest>::create("Test1");
+    entity->print();
+```
+Terminal:
+```terminal
+    Entity name: Test1
+    This is an test
+```
+
 # EntityFactory
 
 `EntityFactory` es una clase que se encarga de crear e inicializar automáticamente [`Entity`](#entity) del tipo `T` derivado de [`Entity`](#entity).
@@ -119,3 +216,8 @@ estructor virtual que se encarga de liberar los recursos de la entidad. Es impor
     static std::shared_ptr<T> create(const std::string& name);
 ```
 Función `static` que crea una nueva entidad del tipo `T` con el nombre dado. Inicializa el [`transform`](transform.md) de la entidad y llama a `init()` para inicializar los componentes de la entidad. Devuelve el `shared_ptr` de la entidad creada.
+
+Ejemplo de uso:
+```cpp
+    std::shared_ptr<Entity> entity = EntityFactory<EntityTest>::create("Test1");
+```

@@ -19,6 +19,7 @@ protected:
 public:
 
 	Transform(std::weak_ptr<Entity> _owner);
+	std::shared_ptr<Entity> get_owner() const;
 	bool set_parent(std::shared_ptr<Entity> _parent);
 	std::shared_ptr<Entity> get_parent() const;
 	bool add_child(std::shared_ptr<Entity> child);

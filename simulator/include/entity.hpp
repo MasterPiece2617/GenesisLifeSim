@@ -26,6 +26,12 @@ public:
 	const std::string& get_name() const;
 	void set_name(const std::string& _name);
 	bool add_component(std::shared_ptr<Component> component);
+
+	template <typename T>
+	std::shared_ptr<T> get_component() const;
+	template <typename T>
+	bool remove_component();
+
 	virtual void print() const;
 	void print_family() const;
 	bool get_is_active() const;
@@ -56,8 +62,36 @@ public:
 	{
 		static_assert(std::is_base_of<Entity, T>::value, "T must inherit from Entity");
 		std::shared_ptr<T> entity = std::make_shared<T>(name);
-		entity->init_tranform();
+		entity->init_transform();
 		entity->init();
 		return entity;
 	}
 };
+
+template<typename T>
+inline std::shared_ptr<T> Entity::get_component() const
+{
+	for (const auto& component : components)
+	{
+		if (std::dynamic_pointer_cast<T>(component))
+		{
+			return std::dynamic_pointer_cast<T>(component);
+		}
+	}
+
+	return nullptr;
+}
+
+template<typename T>
+inline bool Entity::remove_component()
+{
+	for (auto it = components.begin(); it != components.end(); ++it)
+	{
+		if (std::dynamic_pointer_cast<T>(*it))
+		{
+			components.erase(it);
+			return true;
+		}
+	}
+	return false;
+}

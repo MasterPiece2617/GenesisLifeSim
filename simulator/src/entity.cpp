@@ -1,6 +1,8 @@
 #include <entity.hpp>
 #include <component.hpp>
 
+Entity::Entity(const std::string& _name) : name(_name) {}
+
 void Entity::init_transform()
 {
 	if (transform)
@@ -13,12 +15,7 @@ void Entity::init_transform()
 	components.push_back(_transform);
 }
 
-Entity::Entity(const std::string& _name) : name(_name)  {}
-
-void Entity::init()
-{
-	init_transform();
-}
+void Entity::init() {}
 
 const std::string& Entity::get_name() const
 {
@@ -86,14 +83,18 @@ void Entity::activate()
 
 bool Entity::add_component(std::shared_ptr<Component> component)
 {
-	if (auto self = shared_from_this()) 
+	for (auto& c : components)
 	{
-		component->set_owner(self);
-		components.push_back(component);
-		return true;
+		if (typeid(*c) == typeid(*component))
+		{
+			std::cerr << "Component of type" << typeid(*component).name() << "already exists in entity: " << name << std::endl;
+			return false;
+		}
 	}
 
-	return false;
+	component->set_owner(shared_from_this());
+	components.push_back(component);
+	return true;
 }
 
 Transform& Entity::get_transform() const
