@@ -48,6 +48,37 @@ Función que elimina un hijo de la entidad dueña del componente. Devuelve `true` 
 	std::vector<std::shared_ptr<Entity>> get_children() const;
 ```
 Función que devuelve un vector de `shared_ptr` a las entidades hijas.
+#### Métodos de establecimiento de transformaciones
+Estos métodos establecen las transformaciones absolutas de la entidad, es decir, su posición, escala y rotación en el espacio global.
+	void set_position(const sf::Vector2f& pos);
+	sf::Vector2f get_position() const;
+	void set_scale(const sf::Vector2f& _scale);
+	sf::Vector2f get_scale() const;
+	void set_rotation(float _angle);
+	float get_rotation() const;
+#### Métodos de establecimiento de transformaciones relativas
+Estos métodos establecen las transformaciones relativas de la entidad, es decir, su posición, escala y rotación en relación a su padre.
+	void set_local_position(const sf::Vector2f& pos);
+	sf::Vector2f get_local_position() const;
+	void set_local_scale(const sf::Vector2f& _scale);
+	sf::Vector2f get_local_scale() const;
+	void set_local_rotation(float _angle);
+	float get_local_rotation() const;
+#### Métodos de transformación
+Estos métodos aplican transformaciones a la entidad, modificando su posición, escala o rotación en relación a su estado actual.
+	void translate(const sf::Vector2f& offset);
+	void rotate(float _angle);
+	void scale(const sf::Vector2f& offsset);
+#### Métodos de vector de dirección
+```cpp
+	sf::Vector2f get_forward() const;
+```
+Función que devuelve un vector `sf::Vector2f` que representa la dirección normalizada hacia adelante de la entidad, calculada a partir de su rotación.
+
+```cpp
+	void look_at(const sf::Vector2f& target);
+```
+Fucción que establece la dirección de la entidad hacia un punto específico en el espacio 2D.
 ### Destructor
 ```cpp
 	~Transform() override = default;
