@@ -15,6 +15,8 @@ public:
 
 	void update() override
 	{
-		std::cout << "ComponentTest from " << owner.lock()->get_name() << " Updated." << std::endl;
+		std::cout << "ComponentTest from " << owner.lock()->get_name() << " updated." << std::endl;
 	}
+
+	~ComponentTest() override = default;
 };

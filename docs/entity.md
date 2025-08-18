@@ -5,6 +5,8 @@ por defecto, a excepción del [`Transform`](transform.md), que es obligatorio pa
 A pesar de no tener [`Component`](component.md) que definan su comportamiento o apariencia, puede ser útil para crear entidades vacías a las que se le pueden agregar y eliminar [`Component`](component.md) de forma dinámica en casos donde sea más conveniente en vez de
 crear una clase heredera nueva.
 
+## Atributos de Entity
+
 Cada `Entity` cuenta con un nombre, `tags`, una lista de [`Component`](component.md), un `bool` que indica si está activo o no y un acceso directo al [`Component`](component.md) [`transform`](transform.md).
 
 ```cpp
@@ -19,51 +21,62 @@ Cada `Entity` cuenta con un nombre, `tags`, una lista de [`Component`](component
 
 Sus métodos son:
 
+### Constructor
 ```cpp
     Entity(const std::string& _name);
 ```
 Constructor que recibe un nombre para la entidad. <span style="color:red">NOTA</span>: no usar este constructor directamente, en vez usar [`EntityFactory`](#entityfactory), pero si aún así decides usarla, no olvides inicializarla con `init_transform_()` y luego con
 `init()`.
+### Inicialización
+Estos métodos son necesarios para inicializar la entidad, [`EntityFactory`](#entityfactory) se encarga de llamarlos automáticamente al crear una entidad, pero si decides crear una entidad directamente, debes llamarlos manualmente.
+#### `init_transform`
 ```cpp
     void init_transform();
 ```
 Función que inicializa el [`transform`](transform.md) de la `Entity` con un apuntador de sí mismo `shared_from_this()`, esto es necesario debido a que no es posible usar `shared_from_this()` en el constructor porque el apuntador inteligente no ha sido creado aún.
+#### `init`
 ```cpp
     virtual void init();
 ```
 Función virtual cuya función principal es inicializar los [`Component`](component.md) de la `Entity`, es necesario sobreescribir esta función para agregar los [`Component`](component.md) en las clases derivadas.
+### Métodos de name
+#### `get_name`
 ```cpp
     const std::string& get_name() const;
 ```
 Función que devuelve el nombre de la entidad.
+#### `set_name`
 ```cpp
     void set_name(const std::string& _name);
 ```
 Función que establece el nombre de la entidad.
+### Métodos de componentes
+#### `add_component`
 ```cpp
     bool add_component(std::shared_ptr<Component> component);
 ```
 Función que añade un componente a la entidad. Devuelve `true` si se ha añadido correctamente, `false` si ya existe un componente con el mismo tipo.
+#### `get_component`
 ```cpp
     template <typename T>
     std::shared_ptr<T> get_component() const;
 ```
 Función que devuelve un componente de tipo `T` de la entidad. Si no existe un componente de ese tipo, devuelve `nullptr`.
+#### `get_components`
 ```cpp
     template <typename T>
     bool remove_component();
 ```
 Función que elimina un componente de tipo `T` de la entidad. Devuelve `true` si se ha eliminado correctamente, `false` si no existe un componente de ese tipo.
+### Métodos de impresión
+#### `print`
 ```cpp
     virtual void print() const;
 ```
 Función que imprime información de la entidad, como su nombre y sus [`Component`](component.md). Esta función es virtual, por lo que puede ser sobreescrita en clases derivadas.
+#### `print_family`
 ```cpp
     void print_family() const;
-```
-Función que imprime el nombre de la entidad, así como los nombres de las entidades padre e hijo.
-```cpp
-    bool get_is_active() const;
 ```
 Ejemplo:
 ```terminal
@@ -72,63 +85,87 @@ Ejemplo:
     Children:
     Hijo de Test1
 ```
+Función que imprime el nombre de la entidad, así como los nombres de las entidades padre e hijo.
+### Métodos de estado
+#### `get_is_active`
+```cpp
+    bool get_is_active() const;
+```
 Función que devuelve si la entidad está activa o no.
+#### `deactivate`
 ```cpp
     void deactivate();
 ```
 Función que desactiva la entidad, estableciendo `is_active` a `false`.
+#### `activate`
 ```cpp
     void activate();
 ```
 Función que activa la entidad, estableciendo `is_active` a `true`.
+### Métodos de transform y jerarquía
+#### `get_transform`
 ```cpp
     Transform& get_transform() const;
 ```
 Función que devuelve el componente [`Transform`](transform.md) de la entidad. Este componente es especial, ya que todas las entidades deben tenerlo, se usa para manejar la posición, rotación y escala de la entidad en el mundo, y también para manejar la jerarquía.
-```cpp
-    bool add_tag(const std::string& tag);
-```
-Función que añade una etiqueta a la entidad. Devuelve `true` si se ha añadido correctamente, `false` si ya existe una etiqueta con el mismo nombre.
-```cpp
-    bool has_tag(const std::string& tag) const;
-```
-Función que comprueba si la entidad tiene una etiqueta con el nombre dado. Devuelve `true` si la etiqueta existe, `false` en caso contrario.
-```cpp
-    bool remove_tag(const std::string& tag);
-```
-Función que elimina una etiqueta de la entidad. Devuelve `true` si se ha eliminado correctamente, `false` si no existe una etiqueta con el nombre dado.
+#### `set_parent`
 ```cpp
     bool set_parent(std::shared_ptr<Entity> _parent);
 ```
 Función que establece la entidad padre de la entidad actual. Devuelve `true` si se ha establecido correctamente, `false` si no ha sido posible.
+#### `get_parent`
 ```cpp
     std::shared_ptr<Entity> get_parent() const;
 ```
 Función que devuelve la entidad padre de la entidad actual. Devuelve un `shared_ptr` a la entidad padre, o `nullptr` si no tiene padre.
+#### `get_children`
 ```cpp
     std::vector<std::shared_ptr<Entity>> get_children() const;
 ```
 Función que devuelve un vector de `shared_ptr` a las entidades hijas de la entidad actual. Si no tiene hijas, devuelve un vector vacío.
+#### `add_child`
 ```cpp
     bool add_child(std::shared_ptr<Entity> child);
 ```
 Función que añade una entidad hija a la entidad actual. Devuelve `true` si se ha añadido correctamente, `false` si no ha sido posible.
+#### `remove_child`
 ```cpp
     bool remove_child(std::shared_ptr<Entity> child);
 ```
 Función que elimina una entidad hija de la entidad actual. Devuelve `true` si se ha eliminado correctamente, `false` si no existe la entidad hija.
+### Métodos de etiquetas
+#### `add_tag`
+```cpp
+    bool add_tag(const std::string& tag);
+```
+Función que añade una etiqueta a la entidad. Devuelve `true` si se ha añadido correctamente, `false` si ya existe una etiqueta con el mismo nombre.
+#### `get_tags`
+```cpp
+    bool has_tag(const std::string& tag) const;
+```
+Función que comprueba si la entidad tiene una etiqueta con el nombre dado. Devuelve `true` si la etiqueta existe, `false` en caso contrario.
+#### `remove_tag`
+```cpp
+    bool remove_tag(const std::string& tag);
+```
+Función que elimina una etiqueta de la entidad. Devuelve `true` si se ha eliminado correctamente, `false` si no existe una etiqueta con el nombre dado.
+### Métodos de loop
+#### `start`
 ```cpp
     void start();
 ```
-Función que se llama al iniciar la entidad. Se usa para inicializar los [`Component`](component.md).
+Función que se llama al iniciar la entidad en la [`Scene`](scene.md). Se usa para iniciar los [`Component`](component.md) al inicio de la [`Scene`](scene.md) o cuando se crea una `Entity` durante la ejecución.
+#### `update`
+
 ```cpp
     void update();
 ```
+### Destuctor
 Función que se llama en cada frame para actualizar la `Entity`, es decir, sus [`Component`](component.md).
 ```cpp
     virtual ~Entity() = default;
 ```
-estructor virtual que se encarga de liberar los recursos de la entidad. Es importante que sea virtual para que se llame al destructor de las clases derivadas cuando se destruya una entidad.
+Destructor virtual que se encarga de liberar los recursos de la entidad. Es importante que sea virtual para que se llame al destructor de las clases derivadas cuando se destruya una entidad.
 
 ## Cómo crear una clase derivada de Entity?
 
@@ -212,6 +249,7 @@ Terminal:
 
 `EntityFactory` es una clase que se encarga de crear e inicializar automáticamente [`Entity`](#entity) del tipo `T` derivado de [`Entity`](#entity).
 
+#### create
 ```cpp
     static std::shared_ptr<T> create(const std::string& name);
 ```

@@ -25,5 +25,5 @@ public:
 	bool add_child(std::shared_ptr<Entity> child);
 	bool remove_child(std::shared_ptr<Entity> child);
 	std::vector<std::shared_ptr<Entity>> get_children() const;
-	~Transform() = default;
+	~Transform() override = default;
 };
