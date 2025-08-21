@@ -10,7 +10,7 @@ También tiene un `weak_ptr` a su entidad padre y un vector  de `shared_ptr` a su
 ```cpp
 	sf::Vector2f position;
 	sf::Vector2f scale;
-	sf::Vector2f rotation; // Grades
+	float angle; 
 	std::weak_ptr<Entity> parent;
 	std::vector<std::shared_ptr<Entity>> children;
 ```
@@ -22,6 +22,9 @@ También tiene un `weak_ptr` a su entidad padre y un vector  de `shared_ptr` a su
 	Transform(std::weak_ptr<Entity> _owner);
 ```
 Constructor que recibe un `weak_ptr` a la entidad dueña del componente.
+
+---
+
 ### Metodos de jerarquía
 #### `set_parent`
 ```cpp
@@ -48,28 +51,101 @@ Función que elimina un hijo de la entidad dueña del componente. Devuelve `true` 
 	std::vector<std::shared_ptr<Entity>> get_children() const;
 ```
 Función que devuelve un vector de `shared_ptr` a las entidades hijas.
-#### Métodos de establecimiento de transformaciones
+
+---
+
+### Métodos de establecimiento de transformaciones
 Estos métodos establecen las transformaciones absolutas de la entidad, es decir, su posición, escala y rotación en el espacio global.
+
+#### `set_position`
+```cpp
 	void set_position(const sf::Vector2f& pos);
+```
+Esta función establece la posición absoluta de la entidad en el espacio 2D.
+#### `get_position`
+```cpp
 	sf::Vector2f get_position() const;
+```
+Esta función devuelve un vector `sf::Vector2f` que representa la posición absoluta de la entidad en el espacio 2D.
+#### `set_scale`
+```cpp
 	void set_scale(const sf::Vector2f& _scale);
+```
+Esta función establece la escala absoluta de la entidad en el espacio 2D.
+#### `get_scale`
+```cpp
 	sf::Vector2f get_scale() const;
+```
+Esta función devuelve un vector `sf::Vector2f` que representa la escala absoluta de la entidad en el espacio 2D.
+#### `set_rotation`
+```cpp
 	void set_rotation(float _angle);
+```
+Esta función establece la rotación absoluta de la entidad en el espacio 2D, en grados.
+#### `get_rotation`
+```cpp
 	float get_rotation() const;
-#### Métodos de establecimiento de transformaciones relativas
+```
+Esta función devuelve un `float` que representa la rotación absoluta de la entidad en el espacio 2D, en grados.
+
+---
+
+### Métodos de establecimiento de transformaciones relativas
 Estos métodos establecen las transformaciones relativas de la entidad, es decir, su posición, escala y rotación en relación a su padre.
+#### `set_local_position`
+```cpp
 	void set_local_position(const sf::Vector2f& pos);
+```
+Esta función establece la posición relativa de la entidad en relación a su padre en el espacio 2D.
+#### `get_local_position`
+```cpp
 	sf::Vector2f get_local_position() const;
+```
+Esta función devuelve un vector `sf::Vector2f` que representa la posición relativa de la entidad en relación a su padre en el espacio 2D.
+#### `set_local_scale`
+```cpp
 	void set_local_scale(const sf::Vector2f& _scale);
+```
+Esta función establece la escala relativa de la entidad en relación a su padre en el espacio 2D.
+#### `get_local_scale`
+```cpp
 	sf::Vector2f get_local_scale() const;
+```
+Esta función devuelve un vector `sf::Vector2f` que representa la escala relativa de la entidad en relación a su padre en el espacio 2D.
+#### `set_local_rotation`
+```cpp
 	void set_local_rotation(float _angle);
+```
+Esta función establece la rotación relativa de la entidad en relación a su padre en el espacio 2D, en grados.
+#### `get_local_rotation`
+```cpp
 	float get_local_rotation() const;
-#### Métodos de transformación
+```
+Esta función devuelve un `float` que representa la rotación relativa de la entidad en relación a su padre en el espacio 2D, en grados.
+
+---
+
+### Métodos de transformación
 Estos métodos aplican transformaciones a la entidad, modificando su posición, escala o rotación en relación a su estado actual.
-	void translate(const sf::Vector2f& offset);
-	void rotate(float _angle);
-	void scale(const sf::Vector2f& offsset);
-#### Métodos de vector de dirección
+#### `translate_mod`
+```cpp
+	void translate_mod(const sf::Vector2f& offset);
+```
+Función que aplica una transformación de traslación a la entidad, modificando su posición actual en el espacio 2D. El parámetro `offset` es un vector `sf::Vector2f` que indica cuánto se debe desplazar la entidad.
+#### `rotate_mod`
+```cpp
+	void rotate_mod(float _angle);
+```	
+Función que aplica una transformación de rotación a la entidad, modificando su ángulo actual en grados. El parámetro `_angle` es un `float` que indica cuánto se debe rotar la entidad.
+#### `scale_mod`
+```cpp
+	void scale_mod(const sf::Vector2f& offsset);
+```
+Función que aplica una transformación de escala a la entidad, modificando su escala actual en el espacio 2D. El parámetro `offset` es un vector `sf::Vector2f` que indica cuánto se debe escalar la entidad.
+
+---
+
+### Métodos de vector de dirección
 ```cpp
 	sf::Vector2f get_forward() const;
 ```
