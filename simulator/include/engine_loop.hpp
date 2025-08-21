@@ -5,6 +5,10 @@
 #include <chrono>
 #include <memory>
 
+#include <entity_test.hpp>
+#include <event_manager.hpp>
+#include <scene.hpp>
+
 class Engine
 {
 private:
