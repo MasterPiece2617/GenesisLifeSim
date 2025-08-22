@@ -6,23 +6,23 @@ Event::Event(EventType event_type, EventData _data) : type(event_type), data(_da
 
 EventCategory Event::get_event_category() const
 {
-	if (type < EventType::SYSTEM_END)
+	if (type < EventTypeInfo::custom_end)
 	{
 		return EventCategory::SYSTEM_EVENT;
 	}
-	else if (type < EventType::INPUT_END)
+	else if (type < EventTypeInfo::input_end)
 	{
 		return EventCategory::INPUT_EVENT;
 	}
-	else if (type < EventType::PHYSICS_END)
+	else if (type < EventTypeInfo::physics_end)
 	{
 		return EventCategory::PHYSICS_EVENT;
 	}
-	else if (type < EventType::ENTITY_END)
+	else if (type < EventTypeInfo::entity_end)
 	{
 		return EventCategory::ENTITY_EVENT;
 	}
-	else if (type < EventType::CUSTOM_END)
+	else if (type < EventTypeInfo::custom_end)
 	{
 		return EventCategory::CUSTOM_DIRECT_EVENT;
 	}
@@ -44,6 +44,20 @@ EventManager::EventManager() {}
 void EventManager::suscribe(Actor self, EventType event_type, EventCallback callback)
 {
 	event_bus[static_cast<size_t>(event_type)][self] = callback;
+}
+
+bool EventManager::desuscribe(Actor self, EventType event_type)
+{
+	auto& callbacks = event_bus[static_cast<size_t>(event_type)];
+	auto it = callbacks.find(self);
+
+	if (it != callbacks.end())
+	{
+		callbacks.erase(it);
+		return true;
+	}
+
+	return false;
 }
 
 void EventManager::publish(const Event& event)

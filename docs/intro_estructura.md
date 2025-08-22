@@ -1,6 +1,6 @@
 # Estructura básica del programa
 
-Este progma está diseñado para simular un entorno 2D utillizando la biblioteca SFML. Usa una arquectura ECS (Entity-Component Sistem) para organizar el código y facilitar la extensión y mantenimiento del mismo.
+Este progma está diseñado para simular un entorno 2D utillizando la biblioteca SFML. Usa una arquitectura ECS (Entity-Component Sistem) para organizar el código, facilitar la extensión y mantenimiento del mismo.
 
 ## loop
 
@@ -23,5 +23,5 @@ Ambas clases están diseñadas para ser heredadas, lo que permite crear entidades 
 
 ## Manejo de eventos
 
-El motor utiliza un sistema EDA (Event-Driven Architecture). El manejo de eventos se realiza a través de la clase [`EventManager`](event_manager.md), que captura y procesa los eventos generados por la ventana SFML. Los eventos pueden incluir entradas del teclado, movimientos del ratón y otros eventos del sistema cómo interacciones entre entidades de la 
-simulación. El [`EventManager`](event_manager.md) distribuye estos eventos a las entidades y componentes que los necesitan para actualizar su estado.
+El motor utiliza un sistema EDA (Event-Driven Architecture). El manejo de eventos se realiza a través de la clase [`EventManager`](event_manager.md), que captura y procesa los eventos generados por la ventana SFML y por las entidades. Los eventos pueden incluir entradas del teclado, 
+movimientos del ratón y otros eventos del sistema cómo interacciones entre entidades de la simulación. El [`EventManager`](event_manager.md) distribuye estos eventos a las entidades y componentes que los necesitan para actualizar su estado.

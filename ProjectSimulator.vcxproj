@@ -163,6 +163,9 @@
     <ClInclude Include="src\map\map.hpp" />
     <ClInclude Include="simulator\include\entity.hpp" />
   </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\..\EDA.png" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

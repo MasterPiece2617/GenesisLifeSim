@@ -44,5 +44,9 @@ public:
 
 	}
 
-	~EventTest1() override = default;
+	~EventTest1() override
+	{
+		EventManager::desuscribe(owner.lock(), EventType::ENTITY_CREATED);
+		std::cout << "EventTest1 unsubscribed from ENTITY_CREATED event." << std::endl;
+	}
 };

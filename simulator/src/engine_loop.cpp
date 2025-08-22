@@ -58,9 +58,9 @@ void Engine::run()
 	scenario.add_entity(entity3);
 	entity1->set_parent(entity3);
 
+	entity1->~Entity();
+
 	scenario.start();
-
-
 
 	// termina código de prueba que será eliminado
     while (this->window->isOpen())

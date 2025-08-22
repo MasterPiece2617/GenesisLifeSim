@@ -20,36 +20,39 @@ enum class EventType
 	WINDOW_RESIZED,
 	WINDOW_LOST_FOCUS,
 	WINDOW_GAINED_FOCUS,
-	SYSTEM_END = WINDOW_GAINED_FOCUS,
 
 	// Input events
 	KEY_PRESSED,
 	KEY_RELEASED,
 	MOUSE_BUTTON_PRESSED,
 	MOUSE_BUTTON_RELEASED,
-	INPUT_END = MOUSE_BUTTON_RELEASED,
+	MOUSE_MOVED,
 
 	// Physics events
 	COLLISION,
 	TRIGGER_ENTER,
 	TRIGGER_EXIT,
-	PHYSICS_END = TRIGGER_EXIT,
 
 	// Entity events
 	ENTITY_CREATED,
 	ENTITY_DESTROYED,
-	ENTITY_END = ENTITY_DESTROYED,
 
 	// Custom direct events
 	MESSAGE,
-	CUSTOM_END = MESSAGE,
 
 	// Custom global events
 	GLOBAL_MESSAGE,
-	GLOBAL_END = GLOBAL_MESSAGE,
+};
 
-	// Get the total number of event types
-	SIZE 
+struct EventTypeInfo
+{
+	static const EventType system_end = EventType::WINDOW_GAINED_FOCUS;
+	static const EventType input_end = EventType::MOUSE_MOVED;
+	static const EventType physics_end = EventType::TRIGGER_EXIT;
+	static const EventType entity_end = EventType::ENTITY_DESTROYED;
+	static const EventType custom_end = EventType::MESSAGE;
+	static const EventType custom_global_end = EventType::GLOBAL_MESSAGE;
+	static const size_t size = static_cast<size_t>(custom_global_end) + 1;
 };
 
 enum class EventCategory
@@ -89,8 +92,8 @@ public:
 	Event(EventType event_type, EventData _data);
 	EventCategory get_event_category() const;
 	EventType get_event_type() const;
-	template<typename T>
 
+	template<typename T>
 	T get_data() const
 	{
 		if (std::holds_alternative<T>(data))
@@ -99,12 +102,13 @@ public:
 		}
 
 		std::cerr << "Error: EventData does not hold the requested type." << std::endl;
+		exit(EXIT_FAILURE);
 	}
 };
 
 
 using EventCallback = std::function<void(const Event&)>;
-using EventBus = std::array<std::unordered_map<Actor, EventCallback>, static_cast<size_t>(EventType::SIZE)>;
+using EventBus = std::array<std::unordered_map<Actor, EventCallback>, EventTypeInfo::size>;
 
 class EventManager
 {
@@ -117,6 +121,7 @@ protected:
 public:
 
 	static void suscribe(Actor self, EventType event_type, EventCallback callback);
+	static bool desuscribe(Actor self, EventType event_type);
 	static void publish(const Event& event);
 	static void publish(const Event& event, Actor target);
 };
