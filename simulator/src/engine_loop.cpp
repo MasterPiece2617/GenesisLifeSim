@@ -62,16 +62,15 @@ void Engine::render()
 
             if (owner->get_is_active() && renderer->get_is_active())
             {
-                /*
                 sf::Transformable* transformable = dynamic_cast<sf::Transformable*>(renderer->get_object().get());
                 if (transformable)
                 {
-                    transformable->setPosition(owner->get_transform()->g);
-                    transformable->setRotation(owner->get_rotation());
-                    transformable->setScale(owner->get_scale());
+                    transformable->setPosition(owner->get_transform().get_position());
+                    transformable->setRotation(owner->get_transform().get_rotation());
+                    transformable->setScale(owner->get_transform().get_scale());
 				}
 
-                this->window->draw();*/
+                this->window->draw(*renderer->get_object());
             }
         }
 	}
@@ -82,6 +81,8 @@ void Engine::render()
 // Main loop function
 void Engine::run()
 {
+	scene.load();
+
     while (this->window->isOpen())
     {
         auto start = std::chrono::high_resolution_clock::now();

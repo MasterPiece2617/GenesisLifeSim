@@ -10,9 +10,9 @@
 class Transform : public Component
 {
 protected:
-	sf::Vector2f position;
-	sf::Vector2f scale;
-	float angle; // Grades
+	sf::Vector2f position = sf::Vector2f(0, 0);
+	sf::Vector2f scale = sf::Vector2f(1, 1);
+	float angle = 0; // Grades
 	std::weak_ptr<Entity> parent;
 	std::vector<std::shared_ptr<Entity>> children;
 
