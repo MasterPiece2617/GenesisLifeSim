@@ -3,10 +3,12 @@
 #include <iostream>
 #include <vector>
 
+#include <event_manager.hpp>
 #include <transform.hpp>
 
 class Component; // Forward declaration
-
+class EventManager; // Forward declaration
+enum class EventType; // Forward declaration
 
 class Entity : public std::enable_shared_from_this<Entity>
 {
@@ -64,6 +66,7 @@ public:
 		std::shared_ptr<T> entity = std::make_shared<T>(name);
 		entity->init_transform();
 		entity->init();
+		EventManager::publish(Event(EventType::ENTITY_CREATED, EntityEvent(entity)));
 		return entity;
 	}
 };

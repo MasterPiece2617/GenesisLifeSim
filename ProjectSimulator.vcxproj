@@ -103,6 +103,7 @@
       <PreprocessorDefinitions>SFML_STATIC;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(SolutionDir)libs\SFML\include;$(SolutionDir)simulator\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -130,6 +131,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="simulator\src\event_manager.cpp" />
+    <ClCompile Include="simulator\src\renderer.cpp" />
     <ClCompile Include="simulator\src\transform.cpp" />
     <ClCompile Include="simulator\main.cpp" />
     <ClCompile Include="simulator\src\component.cpp" />
@@ -142,6 +145,7 @@
     <None Include="docs\component.md" />
     <None Include="docs\engine_loop.md" />
     <None Include="docs\entity.md" />
+    <None Include="docs\event_manager.md" />
     <None Include="docs\intro_estructura.md" />
     <None Include="docs\main.md" />
     <None Include="docs\scene.md" />
@@ -153,11 +157,16 @@
     <ClInclude Include="simulator\include\component_test.hpp" />
     <ClInclude Include="simulator\include\engine_loop.hpp" />
     <ClInclude Include="simulator\include\entity_test.hpp" />
+    <ClInclude Include="simulator\include\event_manager.hpp" />
     <ClInclude Include="simulator\include\graph.hpp" />
+    <ClInclude Include="simulator\include\renderer.hpp" />
     <ClInclude Include="simulator\include\scene.hpp" />
     <ClInclude Include="simulator\include\transform.hpp" />
     <ClInclude Include="src\map\map.hpp" />
     <ClInclude Include="simulator\include\entity.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\..\EDA.png" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
