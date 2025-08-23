@@ -40,13 +40,13 @@ public:
 	void set_local_rotation(float _angle);
 	float get_local_rotation() const;
 
-	void translate_mod(const sf::Vector2f& offset);
-	void rotate_mod(float _angle);
-	void scale_mod(const sf::Vector2f& offset);
+	void translate(const sf::Vector2f& offset);
+	void rotate(float _angle);
+	void add_scale(const sf::Vector2f& offset);
 
 	sf::Vector2f get_forward() const;
 	void look_at(const sf::Vector2f& target);
 
 
-	~Transform() override = default;
+	~Transform() override;
 };

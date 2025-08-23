@@ -234,19 +234,19 @@ float Transform::get_local_rotation() const
 }
 
 // Modifying transform
-void Transform::translate_mod(const sf::Vector2f &offset)
+void Transform::translate(const sf::Vector2f &offset)
 {
 	position += offset;
 }
 
-void Transform::scale_mod(const sf::Vector2f &offset)
+void Transform::add_scale(const sf::Vector2f &offset)
 {
 	// Element-wise multiplication for sf::Vector2f
 	scale.x *= offset.x;
 	scale.y *= offset.y;
 }
 
-void Transform::rotate_mod(float _angle)
+void Transform::rotate(float _angle)
 {
 	angle += _angle;
 }
@@ -262,4 +262,25 @@ void Transform::look_at(const sf::Vector2f &target)
 {
 	sf::Vector2f direction = target - position;
 	angle = atan2(direction.y, direction.x) * 180.f / 3.14159265f; // Convert to degrees to rotate
+}
+
+// destructor Transform
+Transform::~Transform()
+{
+	for (auto &child : children)
+	{
+		if (child)
+		{
+			remove_child(child);
+			child.reset();
+		}
+	}
+	children.clear();
+
+	if (!parent.expired())
+	{
+		auto p = parent.lock();
+		auto &parent_transform = p->get_transform();
+		parent_transform.remove_child(owner.lock());
+	}
 }

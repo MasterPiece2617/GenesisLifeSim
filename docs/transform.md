@@ -129,17 +129,17 @@ Esta función devuelve un `float` que representa la rotación relativa de la entid
 Estos métodos aplican transformaciones a la entidad, modificando su posición, escala o rotación en relación a su estado actual.
 #### `translate_mod`
 ```cpp
-	void translate_mod(const sf::Vector2f& offset);
+	void translate(const sf::Vector2f& offset);
 ```
 Función que aplica una transformación de traslación a la entidad, modificando su posición actual en el espacio 2D. El parámetro `offset` es un vector `sf::Vector2f` que indica cuánto se debe desplazar la entidad.
 #### `rotate_mod`
 ```cpp
-	void rotate_mod(float _angle);
+	void rotate(float _angle);
 ```	
 Función que aplica una transformación de rotación a la entidad, modificando su ángulo actual en grados. El parámetro `_angle` es un `float` que indica cuánto se debe rotar la entidad.
 #### `scale_mod`
 ```cpp
-	void scale_mod(const sf::Vector2f& offsset);
+	void add__scale(const sf::Vector2f& offsset);
 ```
 Función que aplica una transformación de escala a la entidad, modificando su escala actual en el espacio 2D. El parámetro `offset` es un vector `sf::Vector2f` que indica cuánto se debe escalar la entidad.
 

@@ -123,17 +123,17 @@ void Engine::run()
 
     // Test translate_mod
     sf::Vector2f offset(3.f, 4.f);
-    transform->translate_mod(offset);
+    transform->translate(offset);
     std::cout << "Posicion tras translate_mod: (" << transform->get_position().x << ", " << transform->get_position().y << ")\n";
 
     // Test rotate_mod
     float rotOffset = 15.f;
-    transform->rotate_mod(rotOffset);
+    transform->rotate(rotOffset);
     std::cout << "Rotación tras rotate_mod: " << transform->get_rotation() << "\n";
 
     // Test scale_mod
     sf::Vector2f scaleOffset(0.5f, 0.5f);
-    transform->scale_mod(scaleOffset);
+    transform->add_scale(scaleOffset);
     std::cout << "Escala tras scale_mod: (" << transform->get_scale().x << ", " << transform->get_scale().y << ")\n";
 
     // Test get_forward
