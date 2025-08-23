@@ -6,13 +6,15 @@
 
 class Scene
 {
+
 protected:
-	Hierarchy hierarchy;
+
+	std::vector<std::shared_ptr<Entity>> entities;
 
 public:
+
 	Scene() = default; // Provisional
-	void add_entity(std::shared_ptr<Entity> entity); // Provisional
-	void start();
-	void update();
+	void add_entity(std::shared_ptr<Entity> entity);
+	std::vector<std::shared_ptr<Entity>> get_entities() const;
 	~Scene() = default; 
 };

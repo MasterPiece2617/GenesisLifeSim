@@ -39,6 +39,8 @@ como eventos del sistema, de entrada, de física y de entidades.
 		TRIGGER_EXIT,
 
 		// Entity events
+		RENDERER_CREATED,
+		RENDERER_DESTROYED,
 		ENTITY_CREATED,
 		ENTITY_DESTROYED,
 
@@ -82,24 +84,8 @@ Este `struct` contiene información sobre donde termina cada categoría de eventos
 
 Un `Event` es el núcleo del sistema de eventos. Representa un cambio de estado o una acción que ha ocurrido en el sistema. Cada `Event` está asociado a un `EventType` y puede contener datos adicionales relevantes para el evento en `data`.
 ```cpp
-	class Event
-	{
-	protected:
-
 		EventType type;
 		EventData data;
-
-	public:
-
-		Event(EventType event_type);
-		Event(EventType event_type, EventData _data);
-		EventCategory get_event_category() const;
-		EventType get_event_type() const;
-
-		template<typename T>
-		T get_data() const;
-	};
-
 ```
 
 ### Funciones de `Event`
@@ -114,52 +100,21 @@ Estos constructores permiten crear un `Event` con un tipo específico y opcionalm
 
 #### `get_event_category`
 ```cpp
-	EventCategory Event::get_event_category() const
-{
-	if (type < EventTypeInfo::custom_end)
-	{
-		return EventCategory::SYSTEM_EVENT;
-	}
-	else if (type < EventTypeInfo::input_end)
-	{
-		return EventCategory::INPUT_EVENT;
-	}
-	else if (type < EventTypeInfo::physics_end)
-	{
-		return EventCategory::PHYSICS_EVENT;
-	}
-	else if (type < EventTypeInfo::entity_end)
-	{
-		return EventCategory::ENTITY_EVENT;
-	}
-	else if (type < EventTypeInfo::custom_end)
-	{
-		return EventCategory::CUSTOM_DIRECT_EVENT;
-	}
-	else
-	{
-		return EventCategory::CUSTOM_GLOBAL_EVENT;
-	}
+	EventCategory Event::get_event_category() const;
 }
 ```
 Función que devuelve la categoría del evento. Utiliza el `EventType` del evento para determinar a qué categoría pertenece, basándose en los límites definidos en `EventTypeInfo`.
 
 #### `get_event_type`
 ```cpp
-	EventType Event::get_event_type() const
-{
-	return type;
-}
+	EventType Event::get_event_type() const;
 ```
 Función que devuelve el tipo de evento. Simplemente retorna el `EventType` del evento.
 
 #### `get_data`
 ```cpp
 	template<typename T>
-	T Event::get_data() const
-	{
-		return std::get<T>(data);
-	}
+	T Event::get_data() const;
 ```
 Función plantilla que permite obtener los datos del evento en un tipo específico. Utiliza `std::get` para extraer el dato del [`EventData`](#eventdata), que es un `std::variant` que puede contener diferentes tipos de datos.
 
@@ -167,21 +122,7 @@ Función plantilla que permite obtener los datos del evento en un tipo específico
 
 El `EventManager` es el componente central del sistema de eventos. Se encarga de gestionar la suscripción y publicación de eventos, así como de enrutar los eventos a los suscriptores correspondientes. Utiliza un [`EventBus`](#eventbus) para almacenar las funciones callback asociadas a cada tipo de evento.
 ```cpp
-	class EventManager
-	{
-	protected:
-
 		static EventBus event_bus;
-
-		EventManager();
-
-	public:
-
-		static void suscribe(Actor self, EventType event_type, EventCallback callback);
-		static bool desuscribe(Actor self, EventType event_type);
-		static void publish(const Event& event);
-		static void publish(const Event& event, Actor target);
-	};
 ```
 
 ### Funciones de `EventManager`
@@ -197,61 +138,26 @@ Función que permite a un [`Actor`](#actor) suscribirse a un tipo específico de e
 
 #### `desuscribe`
 ```cpp
-	bool EventManager::desuscribe(Actor self, EventType event_type)
-	{
-		auto& callbacks = event_bus[static_cast<size_t>(event_type)];
-		auto it = callbacks.find(self);
-		if (it != callbacks.end())
-		{
-			callbacks.erase(it);
-			return true;
-		}
-		return false;
-	}
+	bool EventManager::desuscribe(Actor self, EventType event_type);
 ```
 Función que permite a un [`Actor`](#actor) desuscribirse de un tipo específico de evento. Busca el [`Actor`](#actor) en el [`EventBus`](#eventbus) bajo el `EventType` correspondiente y lo elimina si se encuentra. Retorna `true` si se desuscribió correctamente, o `false` si el actor no estaba suscrito. Es importante
 implementar esta función en el destructor del objeto que estamos suscribiendo a eventos para evitar fugas de memoria y mantener el [`EventBus`](#eventbus) limpio.
 
 #### `publish`
 ```cpp
-	switch (event.get_event_category())
-	{
-		case EventCategory::SYSTEM_EVENT:
-		case EventCategory::INPUT_EVENT:
-		case EventCategory::ENTITY_EVENT:
-		case EventCategory::CUSTOM_GLOBAL_EVENT:
-
-			for (const auto& callback : event_bus[static_cast<size_t>(event.get_event_type())])
-			{
-				callback.second(event);
-			}
-
-			break;
-
-		default:
-			std::cerr << "Error: Event type does need target argument." << std::endl;
-			break;
-	}
+	void EventManager::publish(const Event& event);
 ```
 Función que permite publicar y enrutar un `Event` a todos los suscriptores del `EventType` correspondiente. Recorre el [`EventBus`](#eventbus) y ejecuta las funciones [`callback`](#eventcallback) de todos los [`Actor`](#actor) suscritos al tipo de evento.
 
 ```cpp
-	void EventManager::publish(const Event& event, Actor target)
-	{
-		auto& callbacks = event_bus[static_cast<size_t>(event.get_event_type())];
-		auto it = callbacks.find(target);
-		if (it != callbacks.end())
-		{
-			it->second(event);
-		}
-	}
+	void EventManager::publish(const Event& event, Actor target);
 ```
 Función que permite publicar y enrutar un `Event` a un [`Actor`](#actor) específico. Busca el [`Actor`](#actor) en el [`EventBus`](#eventbus) bajo el `EventType` correspondiente y ejecuta su función [`callback`](#eventcallback) si se encuentra. Esto es útil para eventos que solo deben ser manejados por un [`Actor`](#actor) específico.
 
 ## Tipos de datos de eventos
 
 Los tipos de datos de eventos son estructuras que contienen información adicional relevante para ciertos tipos de eventos. Estos datos se almacenan en el `Event` y pueden ser accedidos por los suscriptores a través de la función `get_data`.
-Es posible agregar más tipos de datos según sea necesario, dependiendo de los eventos que se manejen en el sistema, pero es importente agregarlos dentro de [`EventData`](#eventdata).
+Es posible agregar más tipos de datos según sea necesario, dependiendo de los eventos que se manejen en el sistema, pero es importante agregarlos dentro de [`EventData`](#eventdata).
 
 #### `EmptyEvent`
 ```cpp

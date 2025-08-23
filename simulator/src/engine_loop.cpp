@@ -9,12 +9,21 @@ Engine::Engine()
     {
         this->window->close();
 	});
+
+    EventManager::suscribe(this->window, EventType::RENDERER_CREATED, [&](const Event& event)
+    {
+        auto renderer = event.get_data<EntityEvent>().entity->get_component<Renderer>();
+
+        if (renderer)
+        {
+            uint8_t layer = renderer->get_layer();
+            this->render_queue[layer].push_back(renderer);
+		}
+    });
 }
 
 // Destructor
-Engine::~Engine()
-{
-}
+Engine::~Engine() {}
 
 void Engine::update()
 {
@@ -32,12 +41,41 @@ void Engine::update()
     }
 
     // Update
-
+    for (auto& entity : scene.get_entities())
+    {
+        if (entity->get_is_active())
+        {
+            entity->update();
+        }
+    }
 }
 
 void Engine::render()
 {
     this->window->clear();
+
+    for (const std::vector<std::shared_ptr<Renderer>>& layer : this->render_queue)
+    {
+        for (const std::shared_ptr<Renderer>& renderer : layer)
+        {
+			std::shared_ptr<Entity> owner = renderer->get_owner().lock();
+
+            if (owner->get_is_active() && renderer->get_is_active())
+            {
+                /*
+                sf::Transformable* transformable = dynamic_cast<sf::Transformable*>(renderer->get_object().get());
+                if (transformable)
+                {
+                    transformable->setPosition(owner->get_transform()->g);
+                    transformable->setRotation(owner->get_rotation());
+                    transformable->setScale(owner->get_scale());
+				}
+
+                this->window->draw();*/
+            }
+        }
+	}
+
     this->window->display();
 }
 
@@ -45,22 +83,17 @@ void Engine::render()
 void Engine::run()
 {
 	// código de prueba que será eliminado
-	Scene scenario;
 	std::shared_ptr<Entity> entity1 = EntityFactory<EntityTest>::create("Test1");
-	scenario.add_entity(entity1);
+	scene.add_entity(entity1);
     entity1->add_component(std::make_shared<EventTest1>(entity1->shared_from_this()));
-    entity1->start();
 	std::shared_ptr<Entity> entity2 = EntityFactory<EntityTest>::create("Hijo de Test1");
 	std::shared_ptr<Entity> entity3 = EntityFactory<Entity>::create("Padre de test1");
     entity3->add_component(std::make_shared<ComponentTest>(entity3->shared_from_this()));
-	scenario.add_entity(entity2);
+	scene.add_entity(entity2);
 	entity1->add_child(entity2);
-	scenario.add_entity(entity3);
+	scene.add_entity(entity3);
 	entity1->set_parent(entity3);
-
 	entity1->~Entity();
-
-	scenario.start();
 
 	// termina código de prueba que será eliminado
     while (this->window->isOpen())
