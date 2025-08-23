@@ -82,25 +82,11 @@ void Engine::render()
 // Main loop function
 void Engine::run()
 {
-	// código de prueba que será eliminado
-	std::shared_ptr<Entity> entity1 = EntityFactory<EntityTest>::create("Test1");
-	scene.add_entity(entity1);
-    entity1->add_component(std::make_shared<EventTest1>(entity1->shared_from_this()));
-	std::shared_ptr<Entity> entity2 = EntityFactory<EntityTest>::create("Hijo de Test1");
-	std::shared_ptr<Entity> entity3 = EntityFactory<Entity>::create("Padre de test1");
-    entity3->add_component(std::make_shared<ComponentTest>(entity3->shared_from_this()));
-	scene.add_entity(entity2);
-	entity1->add_child(entity2);
-	scene.add_entity(entity3);
-	entity1->set_parent(entity3);
-	entity1->~Entity();
-
-	// termina código de prueba que será eliminado
     while (this->window->isOpen())
     {
         auto start = std::chrono::high_resolution_clock::now();
-		this->update();
-		this->render();
+        this->update();
+        this->render();
 
         auto end = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration<double, std::milli>(end - start);
