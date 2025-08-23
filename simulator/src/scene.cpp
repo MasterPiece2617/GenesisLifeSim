@@ -2,24 +2,11 @@
 
 void Scene::add_entity(std::shared_ptr<Entity> entity)
 {
-	hierarchy.add_entity(entity);
+	entities.push_back(entity);
+	entity->start();
 }
 
-void Scene::start()
+std::vector<std::shared_ptr<Entity>> Scene::get_entities() const
 {
-	for (auto& entity : hierarchy.get_entities())
-	{
-		entity->start();
-	}
-}
-
-void Scene::update()
-{
-	for (auto& entity : hierarchy.get_entities())
-	{
-		if (entity->get_is_active())
-		{
-			entity->update();
-		}
-	}
+	return entities;
 }
