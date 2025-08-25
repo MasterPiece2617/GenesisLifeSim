@@ -114,3 +114,26 @@ void EventManager::publish(const Event& event, Actor target)
 }
 
 EntityEvent::EntityEvent(const std::shared_ptr<Entity>& entity_ptr) : entity(entity_ptr) {}
+
+MouseWheelEvent::MouseWheelEvent(float _delta) : delta(_delta) {}
+
+float InputManager::scroll_delta;
+
+void InputManager::init()
+{
+	EventManager::suscribe(std::shared_ptr<Entity>(nullptr), EventType::MOUSE_WHEEL_SCROLLED, [&](const Event& event)
+		{
+			scroll_delta = event.get_data<MouseWheelEvent>().delta;
+		});
+}
+
+void InputManager::update()
+{
+	scroll_delta = 0.0f;
+}
+
+float InputManager::get_scroll_delta()
+{
+	return scroll_delta;
+}
+

@@ -3,6 +3,7 @@
 #include <array>
 #include <functional>
 #include <memory>
+#include <optional>
 #include <unordered_map>
 #include <variant>
 
@@ -26,6 +27,7 @@ enum class EventType
 	KEY_RELEASED,
 	MOUSE_BUTTON_PRESSED,
 	MOUSE_BUTTON_RELEASED,
+	MOUSE_WHEEL_SCROLLED,
 	MOUSE_MOVED,
 
 	// Physics events
@@ -75,8 +77,15 @@ struct EntityEvent
 	const std::shared_ptr<Entity> entity;
 };
 
+struct MouseWheelEvent
+{
+	MouseWheelEvent(float _delta);
+	const float delta;
+};
+
 using EventData = std::variant<
 							EmptyEvent,
+							MouseWheelEvent,
 							EntityEvent>;
 
 using Actor = std::variant<std::shared_ptr<sf::RenderWindow>, std::shared_ptr<Entity>>;
@@ -126,4 +135,17 @@ public:
 	static bool desuscribe(Actor self, EventType event_type);
 	static void publish(const Event& event);
 	static void publish(const Event& event, Actor target);
+};
+
+class InputManager
+{
+protected:
+
+	static float scroll_delta;
+
+public:
+
+	static void init();
+	static void update();
+	static float get_scroll_delta();
 };
