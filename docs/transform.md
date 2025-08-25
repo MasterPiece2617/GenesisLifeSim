@@ -157,6 +157,6 @@ Función que devuelve un vector `sf::Vector2f` que representa la dirección normal
 Fucción que establece la dirección de la entidad hacia un punto específico en el espacio 2D.
 ### Destructor
 ```cpp
-	~Transform() override = default;
+	~Transform() override;
 ```
-Destructor por defecto heredado de [`Component`](component.md).
+Destructor encargado de eliminar el transform de la entidad y todos los hijos (referencias incluidas).
