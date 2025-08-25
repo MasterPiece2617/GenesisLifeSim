@@ -1,98 +1,117 @@
 #include <engine_loop.hpp>
-#include <entity_test.hpp>
-#include <scene.hpp>
 
 // Constructor
 Engine::Engine()
 {
-    this->window = std::make_shared<sf::RenderWindow>(sf::VideoMode::getDesktopMode(), "SFML works!");
+    this->window = std::make_shared<sf::RenderWindow>(sf::VideoMode(Config::WINDOW_WIDTH, Config::WINDOW_HEIGHT), "Genesis BioSim");
+
+    EventManager::suscribe(this->window, EventType::WINDOW_CLOSED, [&](const Event& event)
+    {
+        this->window->close();
+	});
+
+    EventManager::suscribe(this->window, EventType::RENDERER_CREATED, [&](const Event& event)
+    {
+        auto renderer = event.get_data<EntityEvent>().entity->get_component<Renderer>();
+
+        if (renderer)
+        {
+            uint8_t layer = renderer->get_layer();
+            this->render_queue[layer].push_back(renderer);
+		}
+    });
+
+	InputManager::init();
 }
 
 // Destructor
-Engine::~Engine()
-{
-}
+Engine::~Engine() {}
 
 void Engine::update()
 {
-	// Poll events
+	InputManager::update();
+    /*
+    std::shared_ptr<Entity> entity1 = EntityFactory<Entity>::create("Bobby");
+
+    sf::CircleShape circle(50);
+    circle.setFillColor(sf::Color::Blue);
+
+    entity1->add_component(std::make_shared<Renderer>(entity1, std::make_shared<sf::CircleShape>(circle)));
+    scene.add_entity(entity1);
+*/
+	// Poll events:
+
+	// System events
     sf::Event ev;
     while (this->window->pollEvent(ev))
     {
-        if (ev.type == sf::Event::Closed)
-            this->window->close();
+        switch (ev.type)
+        {
+            case sf::Event::Closed:
+                EventManager::publish(Event(EventType::WINDOW_CLOSED, EventData()));
+                break;
+			case sf::Event::MouseWheelScrolled:
+                EventManager::publish(Event(EventType::MOUSE_WHEEL_SCROLLED, EventData(MouseWheelEvent(ev.mouseWheelScroll.delta))));
+				break;
+        }
     }
 
     // Update
+    for (auto& entity : scene.get_entities())
+    {
+        if (entity->get_is_active())
+        {
+            entity->update();
+        }
+    }
 
+    this->window->setView(scene.get_main_camera()->get_view());
 }
 
 void Engine::render()
 {
     this->window->clear();
+
+    for (const std::vector<std::shared_ptr<Renderer>>& layer : this->render_queue)
+    {
+        for (const std::shared_ptr<Renderer>& renderer : layer)
+        {
+			std::shared_ptr<Entity> owner = renderer->get_owner().lock();
+
+            if (owner->get_is_active() && renderer->get_is_active())
+            {
+                sf::Transformable* transformable = dynamic_cast<sf::Transformable*>(renderer->get_object().get());
+                if (transformable)
+                {
+                    transformable->setPosition(owner->get_transform().get_position());
+                    transformable->setRotation(owner->get_transform().get_rotation());
+                    transformable->setScale(owner->get_transform().get_scale());
+				}
+
+                this->window->draw(*renderer->get_object());
+            }
+        }
+	}
+
     this->window->display();
 }
 
 // Main loop function
 void Engine::run()
 {
-	// código de prueba que será eliminado
-	Scene scenario;
-	std::shared_ptr<Entity> entity1 = EntityFactory<EntityTest>::create("Test1");
-	scenario.add_entity(entity1);
-	entity1->print();
-	std::shared_ptr<Entity> entity2 = EntityFactory<EntityTest>::create("Hijo de Test1");
+	scene.load();
+	this->window->setView(scene.get_main_camera()->get_view());
 
-	std::shared_ptr<Entity> entity3 = EntityFactory<Entity>::create("Padre de test1");
-    if (entity3->get_component<ComponentTest>() != nullptr)
-        std::cout << "Si" << std::endl;
-    else
-    {
-		std::cout << "No" << std::endl;
-    }
-
-    if (entity3->remove_component<ComponentTest>())
-        std::cout << "Se ha eliminado el componente" << std::endl;
-    else
-		std::cout << "No se ha eliminado el componente" << std::endl;
-
-    entity3->add_component(std::make_shared<ComponentTest>(entity3->shared_from_this()));
-	scenario.add_entity(entity2);
-	entity1->add_child(entity2);
-	scenario.add_entity(entity3);
-
-    if (entity3->get_component<ComponentTest>() != nullptr)
-        std::cout << "Si" << std::endl;
-    else
-    {
-        std::cout << "No" << std::endl;
-    }
-
-    if (entity3->remove_component<ComponentTest>())
-        std::cout << "Se ha eliminado el componente" << std::endl;
-    else
-        std::cout << "No se ha eliminado el componente" << std::endl;
-    if (entity3->get_component<ComponentTest>() != nullptr)
-        std::cout << "Si" << std::endl;
-    else
-    {
-        std::cout << "No" << std::endl;
-    }
-	entity1->set_parent(entity3);
-
-	entity1->print_family();
-
-	scenario.start();
-	// termina código de prueba que será eliminado
     while (this->window->isOpen())
     {
+        Time::update();
         auto start = std::chrono::high_resolution_clock::now();
-		this->update();
-		this->render();
+        this->update();
+        this->render();
 
         auto end = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration<double, std::milli>(end - start);
         double fps = (duration.count() > 0) ? (1000 / duration.count()) : 0;
-        this->window->setTitle("SFML works! FPS: " + std::to_string(fps));
+        this->window->setTitle("Genesis BioSim: " + std::to_string(fps) + " " + std::to_string(scene.get_entities().size()));
     }
 }

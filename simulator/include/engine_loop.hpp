@@ -5,14 +5,22 @@
 #include <chrono>
 #include <memory>
 
+#include <config.hpp>
+#include <entity_test.hpp>
+#include <event_manager.hpp>
+#include <renderer.hpp>
+#include <scene.hpp>
+#include <time.hpp>
+
 class Engine
 {
-private:
+protected:
 
-	// Private variables
 	std::shared_ptr<sf::RenderWindow> window;
+	Scene scene;
+	std::vector<std::vector<std::shared_ptr<Renderer>>> render_queue = std::vector<std::vector<std::shared_ptr<Renderer>>>(256, std::vector<std::shared_ptr<Renderer>>());
+	float z = 0;
 
-	// Private methods
 	void update();
 	void render();
 

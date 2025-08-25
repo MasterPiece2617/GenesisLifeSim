@@ -1,18 +1,25 @@
 #pragma once
 
 #include <entity_test.hpp>
+#include <camera.hpp>
 #include <component_test.hpp>
 #include <graph.hpp>
+#include <renderer.hpp>
 
 class Scene
 {
+
 protected:
-	Hierarchy hierarchy;
+
+	std::vector<std::shared_ptr<Entity>> entities;
+	std::shared_ptr<Camera> main_camera;
 
 public:
-	Scene() = default; // Provisional
-	void add_entity(std::shared_ptr<Entity> entity); // Provisional
-	void start();
-	void update();
+
+	Scene(); // Provisional
+	void add_entity(std::shared_ptr<Entity> entity);
+	void load(); // Provisional
+	std::shared_ptr<Camera> get_main_camera() const;
+	std::vector<std::shared_ptr<Entity>> get_entities() const;
 	~Scene() = default; 
 };
