@@ -15,8 +15,11 @@ protected:
 	float angle = 0; // Grades
 	std::weak_ptr<Entity> parent;
 	std::vector<std::shared_ptr<Entity>> children;
+	bool dirty = false;
 
 public:
+
+	//void update() override;
 
 	Transform(std::weak_ptr<Entity> _owner);
 	std::shared_ptr<Entity> get_owner() const;

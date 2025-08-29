@@ -13,6 +13,7 @@ También tiene un `weak_ptr` a su entidad padre y un vector  de `shared_ptr` a su
 	float angle; 
 	std::weak_ptr<Entity> parent;
 	std::vector<std::shared_ptr<Entity>> children;
+	bool dirty;
 ```
 
 ## Métodos de Transform

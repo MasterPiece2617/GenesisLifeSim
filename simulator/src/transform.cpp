@@ -1,4 +1,5 @@
 #include <stack>
+#include <queue>
 #include <unordered_map>
 
 #include <transform.hpp>
@@ -51,6 +52,39 @@ static bool search_valid_parent(const std::shared_ptr<Entity>& poss_parent, cons
 	return true; // No cycle or indirect parent-child relationship found
 }
 
+template<typename Func>
+static void child_propagation(std::shared_ptr<Entity> entity, Func func)
+{
+	std::queue<std::shared_ptr<Entity>> qEntity;
+	std::unordered_map<std::shared_ptr<Entity>, bool> visited;
+
+    for (auto& child : entity->get_children())
+    {
+        if (visited.find(child) != visited.end())
+            continue;
+        visited[child] = true;
+        qEntity.push(child);
+    }
+
+    while (!qEntity.empty())
+    {
+        auto &current = qEntity.front();
+        qEntity.pop();
+        func(current);
+
+        for (auto& child : current->get_children())
+        {
+            if (visited.find(child) == visited.end())
+            {
+                visited[child] = true;
+                qEntity.push(child);
+            }
+        }
+    }
+}
+
+
+// Parent-child relationship management
 bool Transform::set_parent(std::shared_ptr<Entity> _parent) 
 {
 	if (!_parent) 
@@ -128,6 +162,24 @@ std::vector<std::shared_ptr<Entity>> Transform::get_children() const
 void Transform::set_position(const sf::Vector2f &pos)
 {
 	position = pos;
+	// Children propagation
+	const auto &ownered = owner.lock();
+	child_propagation(ownered, [&](std::shared_ptr<Entity> child_entity) 
+	{
+		if (child_entity) 
+		{
+			auto& child_transform = child_entity->get_transform();
+			sf::Vector2f local = child_transform.get_local_position();
+			float radians = ownered->get_transform().get_rotation() * 3.14159265f / 180.f;
+			sf::Vector2f rotated_local( // Rotate local position by parent's rotation, like the moon around the earth
+				local.x * cos(radians) - local.y * sin(radians),
+				local.x * sin(radians) + local.y * cos(radians)
+			);
+
+			child_transform.set_position(ownered->get_transform().get_position() + rotated_local);
+		}
+	});
+	dirty = true;
 }
 
 sf::Vector2f Transform::get_position() const
@@ -138,6 +190,18 @@ sf::Vector2f Transform::get_position() const
 void Transform::set_scale(const sf::Vector2f &_scale)
 {
 	scale = _scale;
+	// Children propagation
+	const auto& ownered = owner.lock();
+	child_propagation(ownered, [&](std::shared_ptr<Entity> child_entity) 
+	{
+		if (child_entity)
+		{
+			auto& child_transform = child_entity->get_transform();
+			child_transform.set_scale(sf::Vector2f(ownered->get_transform().get_scale().x * child_transform.get_local_scale().x,
+				ownered->get_transform().get_scale().y * child_transform.get_scale().y));
+		}
+	});
+	dirty = true;
 }
 
 sf::Vector2f Transform::get_scale() const
@@ -148,6 +212,17 @@ sf::Vector2f Transform::get_scale() const
 void Transform::set_rotation(float _angle)
 {
 	angle = _angle;
+	// Children propagation
+	const auto& ownered = owner.lock();
+	child_propagation(ownered, [&](std::shared_ptr<Entity> child_entity)
+		{
+			if (child_entity)
+			{
+				auto& child_transform = child_entity->get_transform();
+				child_transform.set_rotation(ownered->get_transform().get_rotation() + child_transform.get_local_rotation());
+			}
+		});
+	dirty = true;
 }
 
 float Transform::get_rotation() const
@@ -237,6 +312,7 @@ float Transform::get_local_rotation() const
 void Transform::translate(const sf::Vector2f &offset)
 {
 	position += offset;
+	dirty = true;
 }
 
 void Transform::add_scale(const sf::Vector2f &offset)
@@ -244,12 +320,15 @@ void Transform::add_scale(const sf::Vector2f &offset)
 	// Element-wise multiplication for sf::Vector2f
 	scale.x *= offset.x;
 	scale.y *= offset.y;
+	dirty = true;
 }
 
 void Transform::rotate(float _angle)
 {
 	angle += _angle;
+	dirty = true;
 }
+
 
 // Getting forward vector
 sf::Vector2f Transform::get_forward() const
