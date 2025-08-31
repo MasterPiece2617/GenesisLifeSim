@@ -134,7 +134,8 @@
     <ClCompile Include="simulator\src\camera.cpp" />
     <ClCompile Include="simulator\src\event_manager.cpp" />
     <ClCompile Include="simulator\src\renderer.cpp" />
-    <ClCompile Include="simulator\src\time.cpp" />
+    <ClCompile Include="simulator\src\texture.cpp" />
+    <ClCompile Include="simulator\src\utils.cpp" />
     <ClCompile Include="simulator\src\transform.cpp" />
     <ClCompile Include="simulator\main.cpp" />
     <ClCompile Include="simulator\src\component.cpp" />
@@ -165,7 +166,8 @@
     <ClInclude Include="simulator\include\graph.hpp" />
     <ClInclude Include="simulator\include\renderer.hpp" />
     <ClInclude Include="simulator\include\scene.hpp" />
-    <ClInclude Include="simulator\include\time.hpp" />
+    <ClInclude Include="simulator\include\texture.hpp" />
+    <ClInclude Include="simulator\include\utils.hpp" />
     <ClInclude Include="simulator\include\transform.hpp" />
     <ClInclude Include="src\map\map.hpp" />
     <ClInclude Include="simulator\include\entity.hpp" />

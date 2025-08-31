@@ -45,7 +45,10 @@
     <ClCompile Include="simulator\src\camera.cpp">
       <Filter>Archivos de origen</Filter>
     </ClCompile>
-    <ClCompile Include="simulator\src\time.cpp">
+    <ClCompile Include="simulator\src\utils.cpp">
+      <Filter>Archivos de origen</Filter>
+    </ClCompile>
+    <ClCompile Include="simulator\src\texture.cpp">
       <Filter>Archivos de origen</Filter>
     </ClCompile>
   </ItemGroup>
@@ -100,7 +103,10 @@
     <ClInclude Include="simulator\include\config.hpp">
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
-    <ClInclude Include="simulator\include\time.hpp">
+    <ClInclude Include="simulator\include\utils.hpp">
+      <Filter>Archivos de encabezado</Filter>
+    </ClInclude>
+    <ClInclude Include="simulator\include\texture.hpp">
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
   </ItemGroup>

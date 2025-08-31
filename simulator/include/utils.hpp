@@ -15,3 +15,11 @@ public:
 
 	static float get_delta();
 };
+
+class Constants
+{
+public:
+	static const int px_mt = 32; // pixels per meter
+	static const int map_size = 4096;
+	static const int chunk_size = 4;
+};

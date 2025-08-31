@@ -34,8 +34,8 @@ void CameraController::update()
 
 	if (camera_ptr) 
 	{
-		camera_ptr->set_zoom(1 + (InputManager::get_scroll_delta() * speed * Time::get_delta()));
-
+		camera_ptr->set_zoom(1 - (InputManager::get_scroll_delta() / 10));
+		
 		camera_ptr->get_view().setCenter(owner.lock()->get_transform().get_position());
 
 		camera_ptr->get_transform().translate_mod(sf::Vector2f(
