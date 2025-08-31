@@ -8,23 +8,24 @@
 
 #include <component.hpp>
 #include <event_manager.hpp>
+#include <texture.hpp>
 
-class Renderer : public Component
+
+class SpriteRenderer : public Component
 {
 	protected:
-	std::shared_ptr<sf::Drawable> object;
-	std::shared_ptr<sf::Texture> texture;
+	sf::VertexArray vertices;
+	std::string texture_id;
+	sf::IntRect texture_coords;
 	uint8_t layer;
 
-	static std::shared_ptr<sf::Texture> error_texture;
-	static void set_error_texture();
-
 	public:
-	Renderer(std::weak_ptr<Entity> _owner, std::shared_ptr<sf::Drawable> _object = nullptr, std::shared_ptr<sf::Texture> _texture = std::make_shared<sf::Texture>(), uint8_t _layer = 0);
+	SpriteRenderer(std::weak_ptr<Entity> _owner, std::string _texture = "error_texture", uint8_t _layer = 0);
 	uint8_t get_layer() const;
-	std::shared_ptr<sf::Drawable> get_object() const;
-	void change_texture(std::shared_ptr<sf::Texture> new_texture);
+	void set_texture(std::string _texture_id);
+	void build_batch();
+	sf::VertexArray& get_batch();
 	void start() override;
 	void update() override;
-	~Renderer() override = default;
+	~SpriteRenderer() override = default;
 };

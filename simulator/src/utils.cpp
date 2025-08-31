@@ -1,4 +1,4 @@
-#include <time.hpp>
+#include <utils.hpp>
 
 sf::Clock Time::clock;
 sf::Time Time::delta_time;

@@ -14,12 +14,12 @@ Engine::Engine()
 
     EventManager::suscribe(this->window, EventType::RENDERER_CREATED, [&](const Event& event)
     {
-        auto renderer = event.get_data<EntityEvent>().entity->get_component<Renderer>();
+        auto renderer = event.get_data<EntityEvent>().entity->get_component<SpriteRenderer>();
 
         if (renderer)
         {
             uint8_t layer = renderer->get_layer();
-            this->render_queue[layer].push_back(renderer);
+            //this->render_queue[layer].push_back(renderer);
 		}
     });
 
@@ -32,15 +32,7 @@ Engine::~Engine() {}
 void Engine::update()
 {
 	InputManager::update();
-    /*
-    std::shared_ptr<Entity> entity1 = EntityFactory<Entity>::create("Bobby");
-
-    sf::CircleShape circle(50);
-    circle.setFillColor(sf::Color::Blue);
-
-    entity1->add_component(std::make_shared<Renderer>(entity1, std::make_shared<sf::CircleShape>(circle)));
-    scene.add_entity(entity1);
-*/
+ 
 	// Poll events:
 
 	// System events
@@ -76,26 +68,64 @@ void Engine::update()
 void Engine::render()
 {
     this->window->clear();
+    std::vector<std::vector<std::shared_ptr<SpriteRenderer>>> render_queue = std::vector<std::vector<std::shared_ptr<SpriteRenderer>>>(256, std::vector<std::shared_ptr<SpriteRenderer>>());
 
-    for (const std::vector<std::shared_ptr<Renderer>>& layer : this->render_queue)
+    sf::View view = scene.get_main_camera()->get_view();
+    sf::FloatRect bounds(
+        view.getCenter().x - view.getSize().x / 2.0f,
+        view.getCenter().y - view.getSize().y / 2.0f,
+        view.getSize().x,
+        view.getSize().y
+    );
+
+    int chunk_size_world = Constants::px_mt * Constants::chunk_size;
+
+    int start_x = static_cast<int>(std::floor(bounds.left / chunk_size_world)) * Constants::chunk_size;
+    int end_x = static_cast<int>(std::ceil((bounds.left + bounds.width) / chunk_size_world)) * Constants::chunk_size;
+
+    int start_y = static_cast<int>(std::floor(bounds.top / chunk_size_world)) * Constants::chunk_size;
+    int end_y = static_cast<int>(std::ceil((bounds.top + bounds.height) / chunk_size_world)) * Constants::chunk_size;
+
+
+    for (int y = start_y; y < end_y; y += Constants::chunk_size)
     {
-        for (const std::shared_ptr<Renderer>& renderer : layer)
+        for (int x = start_x; x < end_x; x += Constants::chunk_size)
         {
-			std::shared_ptr<Entity> owner = renderer->get_owner().lock();
+            std::vector<std::shared_ptr<Entity>> _entities = scene.get_chunk_entities(sf::Vector2f(x, y));
+            if (_entities.size() > 0)
 
-            if (owner->get_is_active() && renderer->get_is_active())
+            for (auto& entity : _entities)
             {
-                sf::Transformable* transformable = dynamic_cast<sf::Transformable*>(renderer->get_object().get());
-                if (transformable)
-                {
-                    transformable->setPosition(owner->get_transform().get_position());
-                    transformable->setRotation(owner->get_transform().get_rotation());
-                    transformable->setScale(owner->get_transform().get_scale());
-				}
+                std::shared_ptr<SpriteRenderer> renderer = entity->get_component<SpriteRenderer>();
 
-                this->window->draw(*renderer->get_object());
+                if (!renderer)
+                {
+                    continue;
+                }
+
+                if (entity->get_is_active() && renderer->get_is_active())
+                {
+                    render_queue[renderer->get_layer()].push_back(renderer);
+                }
             }
         }
+    }
+    
+    for (const std::vector<std::shared_ptr<SpriteRenderer>>& layer : render_queue)
+    {
+        sf::VertexArray final_vertices(sf::Quads);
+
+        for (const std::shared_ptr<SpriteRenderer>& renderer : layer)
+        {
+            const sf::VertexArray& batch = renderer->get_batch();
+
+            for (size_t i = 0; i < batch.getVertexCount(); ++i)
+            {
+                final_vertices.append(batch[i]);
+            }
+        }
+
+        this->window->draw(final_vertices, &Texture::get_atlas());
 	}
 
 	ImGui::SFML::Render(*this->window);

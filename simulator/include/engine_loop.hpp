@@ -12,7 +12,8 @@
 #include <event_manager.hpp>
 #include <renderer.hpp>
 #include <scene.hpp>
-#include <time.hpp>
+#include <texture.hpp>
+#include <utils.hpp>
 
 class Engine
 {
@@ -20,8 +21,9 @@ protected:
 
 	std::shared_ptr<sf::RenderWindow> window;
 	Scene scene;
-	std::vector<std::vector<std::shared_ptr<Renderer>>> render_queue = std::vector<std::vector<std::shared_ptr<Renderer>>>(256, std::vector<std::shared_ptr<Renderer>>());
-	float z = 0;
+	//std::vector<std::vector<std::shared_ptr<SpriteRenderer>>> render_queue = std::vector<std::vector<std::shared_ptr<SpriteRenderer>>>(256, std::vector<std::shared_ptr<SpriteRenderer>>());
+	int frame_count = 0;
+	double frame_times = 0.0f;
 
 	void update();
 	void render();

@@ -6,7 +6,7 @@
 #include <config.hpp>
 #include <entity.hpp>
 #include <event_manager.hpp>
-#include <time.hpp>
+#include <utils.hpp>
 
 class Camera : public Entity
 {
