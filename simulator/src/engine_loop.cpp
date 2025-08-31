@@ -4,6 +4,8 @@
 Engine::Engine()
 {
     this->window = std::make_shared<sf::RenderWindow>(sf::VideoMode(Config::WINDOW_WIDTH, Config::WINDOW_HEIGHT), "Genesis BioSim");
+	ImGui::SFML::Init(*this->window);
+
 
     EventManager::suscribe(this->window, EventType::WINDOW_CLOSED, [&](const Event& event)
     {
@@ -42,6 +44,7 @@ void Engine::update()
 	// Poll events:
 
 	// System events
+	sf::Clock deltaClock;
     sf::Event ev;
     while (this->window->pollEvent(ev))
     {
@@ -54,6 +57,7 @@ void Engine::update()
                 EventManager::publish(Event(EventType::MOUSE_WHEEL_SCROLLED, EventData(MouseWheelEvent(ev.mouseWheelScroll.delta))));
 				break;
         }
+		ImGui::SFML::ProcessEvent(ev);
     }
 
     // Update
@@ -65,6 +69,7 @@ void Engine::update()
         }
     }
 
+	ImGui::SFML::Update(*this->window, deltaClock.restart());
     this->window->setView(scene.get_main_camera()->get_view());
 }
 
@@ -93,6 +98,7 @@ void Engine::render()
         }
 	}
 
+	ImGui::SFML::Render(*this->window);
     this->window->display();
 }
 
@@ -107,11 +113,20 @@ void Engine::run()
         Time::update();
         auto start = std::chrono::high_resolution_clock::now();
         this->update();
+
+        ImGui::Begin("Info");
+		ImGui::Text("Entities: %d", scene.get_entities().size());
+		ImGui::Text("FPS: %.2f", 1.0f / Time::get_delta());
+        ImGui::End();
+
         this->render();
 
+		
         auto end = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration<double, std::milli>(end - start);
-        double fps = (duration.count() > 0) ? (1000 / duration.count()) : 0;
-        this->window->setTitle("Genesis BioSim: " + std::to_string(fps) + " " + std::to_string(scene.get_entities().size()));
+        //double fps = (duration.count() > 0) ? (1000 / duration.count()) : 0;
+        this->window->setTitle("Genesis BioSim");
     }
+
+	ImGui::SFML::Shutdown();
 }
