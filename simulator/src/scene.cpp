@@ -26,7 +26,7 @@ void Scene::add_entity(std::shared_ptr<Entity> entity)
 
 void Scene::load() // Provisional
 {
-	for (int i = 0; i < 65536; ++i)
+	for (int i = 0; i < 10; ++i)
 	{
 		std::shared_ptr<Entity> entity = EntityFactory<Entity>::create("Entity " + std::to_string(i));
 		entity->get_transform().set_position(sf::Vector2f(i / 256, i % 256));
