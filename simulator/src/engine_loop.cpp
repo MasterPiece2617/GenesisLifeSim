@@ -68,6 +68,12 @@ void Engine::update()
 void Engine::render()
 {
     this->window->clear();
+
+    if(this->terrain)
+    {
+        this->terrain->draw(*this->window, sf::RenderStates::Default);
+	}
+
     std::vector<std::vector<std::shared_ptr<SpriteRenderer>>> render_queue = std::vector<std::vector<std::shared_ptr<SpriteRenderer>>>(256, std::vector<std::shared_ptr<SpriteRenderer>>());
 
     sf::View view = scene.get_main_camera()->get_view();
@@ -136,6 +142,12 @@ void Engine::render()
 void Engine::run()
 {
 	scene.load();
+
+    // to create terrain, provisional?
+    this->texture_atlas = std::make_shared<Atlas>();
+    this->terrain = std::make_shared<EntityTerrain>("resources/maps/map_2.zadat", this->texture_atlas);
+	this->scene.add_entity(this->terrain);
+
 	this->window->setView(scene.get_main_camera()->get_view());
 
     while (this->window->isOpen())

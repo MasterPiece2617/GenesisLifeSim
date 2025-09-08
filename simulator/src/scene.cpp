@@ -20,7 +20,11 @@ Scene::Scene()
 void Scene::add_entity(std::shared_ptr<Entity> entity)
 {
 	entities.push_back(entity);
-	chunks[quantize(entity->get_transform().get_position())].push_back(entity);
+	if (entity->get_component<SpriteRenderer>() != nullptr)
+	{
+		chunks[quantize(entity->get_transform().get_position())].push_back(entity);
+	}
+	
 	entity->start();
 }
 

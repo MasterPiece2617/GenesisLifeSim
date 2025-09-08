@@ -7,6 +7,7 @@ struct CellData
 {
 	uint8_t typeCell;
 	uint8_t textureCell;
+	bool is_walkable;
 };
 
 int main()
@@ -24,11 +25,11 @@ int main()
 		{
 			if (x == 0 || x == width - 1 || y == 0 || y == height - 1)
 			{
-				cells[y * width + x] = { 2, 2 }; // Agua (tipo 2, textura 2)
+				cells[y * width + x] = { 2, 2, false }; // Agua (tipo 2, textura 2)
 			}
 			else
 			{
-				cells[y * width + x] = { 1, 1 }; // Pasto (tipo 1, textura 1)
+				cells[y * width + x] = { 1, 1, true }; // Pasto (tipo 1, textura 1)
 			}
 		}
 	}

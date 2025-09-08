@@ -14,12 +14,17 @@
 #include <scene.hpp>
 #include <texture.hpp>
 #include <utils.hpp>
+#include <entity_terrain.hpp>
 
 class Engine
 {
 protected:
 
 	std::shared_ptr<sf::RenderWindow> window;
+	// To load terrain
+	std::shared_ptr<Atlas> texture_atlas;
+	std::shared_ptr<EntityTerrain> terrain;
+	// Main scene
 	Scene scene;
 	//std::vector<std::vector<std::shared_ptr<SpriteRenderer>>> render_queue = std::vector<std::vector<std::shared_ptr<SpriteRenderer>>>(256, std::vector<std::shared_ptr<SpriteRenderer>>());
 	int frame_count = 0;
