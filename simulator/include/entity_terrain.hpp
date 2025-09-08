@@ -8,6 +8,7 @@
 #include <entity.hpp>
 #include <terrain.hpp>
 #include <renderer.hpp>
+#include <utils.hpp>
 
 class EntityTerrain : public Entity
 {
@@ -25,6 +26,7 @@ public:
 	// methods with terrain data
 	bool walkable(uint16_t x, uint16_t y) const;
 	void set_cell(uint16_t x, uint16_t y, const CellData& cell);
+	CellData get_cell(uint16_t x, uint16_t y) const;
 	uint16_t get_width() const;
 	uint16_t get_height() const;
 

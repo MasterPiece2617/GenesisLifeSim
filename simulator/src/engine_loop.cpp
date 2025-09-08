@@ -134,6 +134,45 @@ void Engine::render()
         this->window->draw(final_vertices, &Texture::get_atlas());
 	}
 
+    // Provisional debug celldata
+    if (this->terrain)
+    {
+        // Obtiene la posicion del mouse en la ventana
+        sf::Vector2i mouse_pos_win = sf::Mouse::getPosition(*this->window);
+
+        // Convierte la posicion del mouse a coordenadas del mundo (ajustando por la camara)
+        sf::Vector2f mouse_pos_world = this->window->mapPixelToCoords(mouse_pos_win);
+
+        // Calcula las coordenadas de la celda
+        uint16_t cell_x = static_cast<uint16_t>(mouse_pos_world.x / Constants::px_mt);
+        uint16_t cell_y = static_cast<uint16_t>(mouse_pos_world.y / Constants::px_mt);
+
+        ImGui::Begin("Info de Celda");
+        ImGui::Text("Posicion del mouse (mundo): (%.1f, %.1f)", mouse_pos_world.x, mouse_pos_world.y);
+
+        // Verifica si la celda esta dentro de los limites del mapa
+        if (cell_x < this->terrain->get_width() && cell_y < this->terrain->get_height())
+        {
+            // Obtiene los datos de la celda
+            CellData cell_data = this->terrain->get_cell(cell_x, cell_y);
+
+            // Muestra los datos de la celda
+            ImGui::Separator();
+            ImGui::Text("Coordenadas de la celda: (%d, %d)", cell_x, cell_y);
+            ImGui::Text("Tipo de terreno: %d", cell_data.terrain_type);
+            ImGui::Text("ID de textura: %d", cell_data.texture_id);
+            ImGui::Text("caminable: %s", cell_data.is_walkable ? "Si" : "No");
+        }
+        else
+        {
+            ImGui::Separator();
+            ImGui::Text("Fuera de los limites del mapa");
+        }
+
+        ImGui::End();
+    }
+
+
 	ImGui::SFML::Render(*this->window);
     this->window->display();
 }

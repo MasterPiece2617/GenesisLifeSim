@@ -1,7 +1,5 @@
 #include <entity_terrain.hpp>
 
-const float TILE_SIZE = 32.0f; // Size of each cell in pixels
-
 EntityTerrain::EntityTerrain(const std::string& map_from_file, const std::shared_ptr<Atlas>& _atlas)
 	: Entity("Terrain"), atlas(_atlas) 
 {
@@ -37,10 +35,10 @@ void EntityTerrain::generate_vertices()
 
 			size_t quad_index = (y * terrain.get_width() + x) * 4;
 
-			vertices[quad_index + 0].position = sf::Vector2f(x * TILE_SIZE, y * TILE_SIZE);
-			vertices[quad_index + 1].position = sf::Vector2f((x + 1) * TILE_SIZE, y * TILE_SIZE);
-			vertices[quad_index + 2].position = sf::Vector2f((x + 1) * TILE_SIZE, (y + 1) * TILE_SIZE);
-			vertices[quad_index + 3].position = sf::Vector2f(x * TILE_SIZE, (y + 1) * TILE_SIZE);
+			vertices[quad_index + 0].position = sf::Vector2f(x * Constants::px_mt, y * Constants::px_mt);
+			vertices[quad_index + 1].position = sf::Vector2f((x + 1) * Constants::px_mt, y * Constants::px_mt);
+			vertices[quad_index + 2].position = sf::Vector2f((x + 1) * Constants::px_mt, (y + 1) * Constants::px_mt);
+			vertices[quad_index + 3].position = sf::Vector2f(x * Constants::px_mt, (y + 1) * Constants::px_mt);
 
 			// Asigna las coordenadas de textura
 			vertices[quad_index + 0].texCoords = sf::Vector2f(texture_rect.left, texture_rect.top);
@@ -71,12 +69,17 @@ void EntityTerrain::set_cell(uint16_t x, uint16_t y, const CellData& cell)
 
 	// Update the corresponding vertices
 	sf::IntRect texture_rect = atlas->get_regions().at(texture_id_map[terrain.get_cell(x, y).texture_id]);
-	size_t quad_index = (y * terrain.get_width() + x) * 4;
+	size_t quad_index = (y * terrain.get_width() + x) * Constants::chunk_size;
 
 	vertices[quad_index + 0].texCoords = sf::Vector2f(texture_rect.left, texture_rect.top);
 	vertices[quad_index + 1].texCoords = sf::Vector2f(texture_rect.left + texture_rect.width, texture_rect.top);
 	vertices[quad_index + 2].texCoords = sf::Vector2f(texture_rect.left + texture_rect.width, texture_rect.top + texture_rect.height);
 	vertices[quad_index + 3].texCoords = sf::Vector2f(texture_rect.left, texture_rect.top + texture_rect.height);
+}
+
+CellData EntityTerrain::get_cell(uint16_t x, uint16_t y) const
+{
+	return terrain.get_cell(x, y);
 }
 
 uint16_t EntityTerrain::get_width() const
