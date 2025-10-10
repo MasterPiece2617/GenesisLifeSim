@@ -83,9 +83,16 @@ struct MouseWheelEvent
 	const float delta;
 };
 
+struct MouseButtonEvent
+{
+	MouseButtonEvent(sf::Mouse::Button _button);
+	const sf::Mouse::Button button;
+};
+
 using EventData = std::variant<
 							EmptyEvent,
 							MouseWheelEvent,
+							MouseButtonEvent,
 							EntityEvent>;
 
 using Actor = std::variant<std::shared_ptr<sf::RenderWindow>, std::shared_ptr<Entity>>;

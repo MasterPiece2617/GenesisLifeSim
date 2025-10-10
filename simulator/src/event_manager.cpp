@@ -117,6 +117,8 @@ EntityEvent::EntityEvent(const std::shared_ptr<Entity>& entity_ptr) : entity(ent
 
 MouseWheelEvent::MouseWheelEvent(float _delta) : delta(_delta) {}
 
+MouseButtonEvent::MouseButtonEvent(sf::Mouse::Button _button) : button(_button) {}
+
 float InputManager::scroll_delta;
 
 void InputManager::init()
@@ -136,4 +138,3 @@ float InputManager::get_scroll_delta()
 {
 	return scroll_delta;
 }
-

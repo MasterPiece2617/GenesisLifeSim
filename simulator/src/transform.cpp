@@ -343,6 +343,21 @@ void Transform::look_at(const sf::Vector2f &target)
 	angle = atan2(direction.y, direction.x) * 180.f / 3.14159265f; // Convert to degrees to rotate
 }
 
+bool Transform::get_dirty()
+{
+	return dirty;
+}
+
+void Transform::set_dirty()
+{
+	dirty = true;
+}
+
+void Transform::reset_dirty()
+{
+	dirty = false;
+}
+
 // destructor Transform
 Transform::~Transform()
 {

@@ -19,6 +19,7 @@ protected:
 	std::vector<std::string> tags;
 	std::shared_ptr<Transform> transform;
 	bool is_active = true;
+	bool del = false;
 
 public:
 	
@@ -49,6 +50,8 @@ public:
 	std::vector<std::shared_ptr<Entity>> get_children() const;
 	bool add_child(std::shared_ptr<Entity> child);
 	bool remove_child(std::shared_ptr<Entity> child);
+	bool get_delete();
+	void set_delete();
 
 	void start();
 	void update();

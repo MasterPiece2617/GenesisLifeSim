@@ -50,6 +50,9 @@ public:
 	sf::Vector2f get_forward() const;
 	void look_at(const sf::Vector2f& target);
 
+	bool get_dirty();
+	void set_dirty();
+	void reset_dirty();
 
 	~Transform() override;
 };

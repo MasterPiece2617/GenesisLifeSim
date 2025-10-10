@@ -32,7 +32,6 @@ sf::IntRect Texture::get_region(const std::string& name)
 Atlas::Atlas()
 {
     atlas = std::make_unique<sf::Texture>();
-    std::cout << "i";
     std::vector<std::pair<std::string, sf::Image>> images;
     std::filesystem::path folder = "resources/textures";
 
@@ -46,7 +45,6 @@ Atlas::Atlas()
                 {
                     if (file.path().extension() == ".png")
                     {
-                        std::cout << file.path().string() << std::endl;
                         sf::Image img;
 
                         if (img.loadFromFile(file.path().string()))
@@ -68,7 +66,6 @@ Atlas::Atlas()
     }
 
     sf::Image raw_atlas;
-    std::cout << images.size();
     size_t N = images.size() + 1;
     unsigned cols = std::ceil(std::sqrt(N));
     unsigned rows = std::ceil(float(N) / cols);

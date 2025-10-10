@@ -35,12 +35,12 @@ void CameraController::update()
 	if (camera_ptr) 
 	{
 		camera_ptr->set_zoom(1 - (InputManager::get_scroll_delta() / 10));
-		
-		camera_ptr->get_view().setCenter(owner.lock()->get_transform().get_position());
 
 		camera_ptr->get_transform().translate(sf::Vector2f(
 			(sf::Keyboard::isKeyPressed(sf::Keyboard::D) - sf::Keyboard::isKeyPressed(sf::Keyboard::A)) * speed * Time::get_delta() * camera_ptr->get_zoom() * 10,
 			(sf::Keyboard::isKeyPressed(sf::Keyboard::S) - sf::Keyboard::isKeyPressed(sf::Keyboard::W)) * speed * Time::get_delta() * camera_ptr->get_zoom() * 10
 		));
+
+		camera_ptr->get_view().setCenter(owner.lock()->get_transform().get_position());
 	}
 }

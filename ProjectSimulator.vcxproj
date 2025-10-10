@@ -136,8 +136,10 @@
     <ClCompile Include="libs\imgui\imgui_draw.cpp" />
     <ClCompile Include="libs\imgui\imgui_tables.cpp" />
     <ClCompile Include="libs\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="simulator\src\behaviour_tree.cpp" />
     <ClCompile Include="simulator\src\camera.cpp" />
     <ClCompile Include="simulator\src\event_manager.cpp" />
+    <ClCompile Include="simulator\src\organism.cpp" />
     <ClCompile Include="simulator\src\renderer.cpp" />
     <ClCompile Include="simulator\src\texture.cpp" />
     <ClCompile Include="simulator\src\utils.cpp" />
@@ -170,6 +172,8 @@
     <ClInclude Include="libs\imgui\imstb_rectpack.h" />
     <ClInclude Include="libs\imgui\imstb_textedit.h" />
     <ClInclude Include="libs\imgui\imstb_truetype.h" />
+    <ClInclude Include="simulator\include\behaviour_tree.hpp" />
+    <ClInclude Include="simulator\include\organism.hpp" />
     <ClInclude Include="simulator\include\camera.hpp" />
     <ClInclude Include="simulator\include\component.hpp" />
     <ClInclude Include="simulator\include\component_test.hpp" />

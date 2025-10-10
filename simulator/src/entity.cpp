@@ -170,6 +170,17 @@ bool Entity::remove_child(std::shared_ptr<Entity> child)
 	return false;
 }
 
+bool Entity::get_delete()
+{
+	return del;
+}
+
+void Entity::set_delete()
+{
+	del = true;
+	transform->set_dirty();
+}
+
 void Entity::start()
 {
 	for (auto& component : components)

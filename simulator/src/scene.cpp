@@ -9,6 +9,33 @@ sf::Vector2i Scene::quantize(sf::Vector2f pos)
 
 }
 
+std::vector<sf::Vector2i> Scene::get_covered_chunks(const sf::Vector2f& center, const sf::Vector2f& scale)
+{
+	std::vector<sf::Vector2i> covered;
+
+	sf::FloatRect bounds(
+		center.x - scale.x * 0.5f,
+		center.y - scale.y * 0.5f,
+		scale.x,
+		scale.y
+	);
+
+	int min_x = static_cast<int>(std::floor(bounds.left / Constants::chunk_size));
+	int max_x = static_cast<int>(std::floor((bounds.left + bounds.width) / Constants::chunk_size));
+	int min_y = static_cast<int>(std::floor(bounds.top / Constants::chunk_size));
+	int max_y = static_cast<int>(std::floor((bounds.top + bounds.height) / Constants::chunk_size));
+
+	for (int x = min_x; x <= max_x; ++x)
+	{
+		for (int y = min_y; y <= max_y; ++y)
+		{
+			covered.push_back(sf::Vector2i(x, y));
+		}
+	}
+
+	return covered;
+}
+
 Scene::Scene()
 {
 	main_camera = EntityFactory<Camera>::create("Main Camera");
@@ -20,17 +47,25 @@ Scene::Scene()
 void Scene::add_entity(std::shared_ptr<Entity> entity)
 {
 	entities.push_back(entity);
-	chunks[quantize(entity->get_transform().get_position())].push_back(entity);
+
+	auto& transform = entity->get_transform();
+	auto covered_chunks = get_covered_chunks(transform.get_position(), transform.get_scale());
+
+	for (const auto& chunk : covered_chunks)
+	{
+		chunks[chunk].push_back(entity);
+	}
+
 	entity->start();
 }
 
 void Scene::load() // Provisional
 {
-	for (int i = 0; i < 65536; ++i)
+	add_entity(EntityFactory<FoodGenerator>::create("food generator"));
+
+	for (int i = 0; i < 1; ++i)
 	{
-		std::shared_ptr<Entity> entity = EntityFactory<Entity>::create("Entity " + std::to_string(i));
-		entity->get_transform().set_position(sf::Vector2f(i / 256, i % 256));
-		entity->add_component(std::make_shared<SpriteRenderer>(entity, "being"));
+		std::shared_ptr<Entity> entity = EntityFactory<Organism>::create("Organism " + std::to_string(i));
 
 		add_entity(entity);
 	}
@@ -46,22 +81,72 @@ std::vector<std::shared_ptr<Entity>> Scene::get_entities() const
 	return entities;
 }
 
+bool Scene::has_entity(std::shared_ptr<Entity> entity) const
+{
+	auto it = std::find(entities.begin(), entities.end(), entity);
+
+	if (it == entities.end())
+	{
+		return false;
+	}
+
+	return true;
+}
+
+bool Scene::remove_entity(std::shared_ptr<Entity> entity)
+{
+	auto it = std::find(entities.begin(), entities.end(), entity);
+
+	if (it == entities.end())
+	{
+		return false;
+	}
+
+	entities.erase(it);
+
+	std::vector<sf::Vector2i> e_chuncks = get_covered_chunks(entity->get_transform().get_position(), entity->get_transform().get_scale());
+
+	for (auto& c : e_chuncks)
+	{
+		auto it = std::find(chunks[c].begin(), chunks[c].end(), entity);
+
+		if (it != chunks[c].end())
+		{
+			chunks[c].erase(it);
+		}
+	}
+
+	entity->get_transform().set_dirty();
+	entity->set_delete();
+
+	return true;
+}
+
 std::vector<std::shared_ptr<Entity>> Scene::get_chunk_entities(sf::Vector2f coords)
 {
 	return chunks[quantize(coords)];
 }
 
-void Scene::update_entity_grid(std::shared_ptr<Entity> entity, sf::Vector2f old_coords)
+void Scene::update_entity_grid(std::shared_ptr<Entity> entity, sf::Vector2f old_coords, sf::Vector2f old_scale)
 {
-	sf::Vector2f coords = entity->get_transform().get_position();
-	std::vector<std::shared_ptr<Entity>>& entities_vector = chunks[quantize(old_coords)];
+	auto old_chunks = get_covered_chunks(old_coords, old_scale);
 
-	auto it = std::find(entities_vector.begin(), entities_vector.end(), entity);
-
-	if (it != entities_vector.end())
+	for (const auto& chunk : old_chunks)
 	{
-		entities_vector.erase(it);
+		auto& vec = chunks[chunk];
+		vec.erase(std::remove(vec.begin(), vec.end(), entity), vec.end());
 	}
 
-	chunks[quantize(coords)].push_back(entity);
+	if (entity->get_delete())
+	{
+		return;
+	}
+
+	auto& transform = entity->get_transform();
+	auto new_chunks = get_covered_chunks(transform.get_position(), transform.get_scale());
+
+	for (const auto& chunk : new_chunks)
+	{
+		chunks[chunk].push_back(entity);
+	}
 }
