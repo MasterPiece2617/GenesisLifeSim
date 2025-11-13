@@ -9,6 +9,8 @@
 #include <component.hpp>
 #include <event_manager.hpp>
 #include <texture.hpp>
+#include <transform.hpp>
+#include <entity.hpp>
 
 
 class SpriteRenderer : public Component

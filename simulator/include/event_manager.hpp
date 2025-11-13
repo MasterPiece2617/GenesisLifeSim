@@ -3,15 +3,15 @@
 #include <array>
 #include <functional>
 #include <memory>
+#include <iostream>
 #include <optional>
 #include <unordered_map>
 #include <variant>
 
 #include <SFML/Graphics.hpp>
 #include <SFML/System.hpp>
-
-#include <entity.hpp>
-
+// #include <entity.hpp>
+// Forward declaration to avoid circular include with entity.hpp
 class Entity; // Forward declaration
 
 enum class EventType
