@@ -17,11 +17,17 @@ set(IMGUI_SRCS
     #libs/imgui/backends/imgui_impl_opengl3.cpp
 )
 
+set(IMPLOT_SRCS
+    libs/implot/implot.cpp
+    libs/implot/implot_items.cpp
+)
+
 file (GLOB SIM_SRC simulator/src/*.cpp)
 add_executable(my_app
     simulator/main.cpp
     ${SIM_SRC}
     ${IMGUI_SRCS}
+    ${IMPLOT_SRCS}
 )
 
 # Exclude helper/tools that contain their own `main()` from the main executable.
@@ -33,6 +39,7 @@ list(REMOVE_ITEM SIM_SRC "${CMAKE_CURRENT_SOURCE_DIR}/simulator/src/map_generato
 
 target_include_directories(my_app PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/libs/imgui
+    ${CMAKE_CURRENT_SOURCE_DIR}/libs/implot
     ${CMAKE_CURRENT_SOURCE_DIR}/simulator/include
     #imgui/backends
 )

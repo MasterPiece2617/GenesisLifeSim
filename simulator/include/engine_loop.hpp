@@ -1,12 +1,14 @@
 #pragma once
 
-#include "imgui-SFML.h"
-#include "imgui.h"
-#include <SFML/Graphics.hpp>
 #include <chrono>
 #include <cmath>
 #include <iostream>
 #include <memory>
+
+#include "imgui-SFML.h"
+#include "imgui.h"
+#include <SFML/Graphics.hpp>
+#include <implot.h>
 
 #include <config.hpp>
 #include <entity_terrain.hpp>
@@ -16,6 +18,7 @@
 #include <scene.hpp>
 #include <texture.hpp>
 #include <utils.hpp>
+#include <imgui_debugger.hpp>
 
 class Engine {
 protected:

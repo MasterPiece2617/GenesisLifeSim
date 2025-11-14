@@ -126,44 +126,10 @@ void Engine::render() {
     this->window->draw(final_vertices, &Texture::get_atlas());
   }
 
-  // Provisional debug celldata
-  if (this->terrain) {
-    // Obtiene la posicion del mouse en la ventana
-    sf::Vector2i mouse_pos_win = sf::Mouse::getPosition(*this->window);
-
-    // Convierte la posicion del mouse a coordenadas del mundo (ajustando por la
-    // camara)
-    sf::Vector2f mouse_pos_world =
-        this->window->mapPixelToCoords(mouse_pos_win);
-
-    // Calcula las coordenadas de la celda
-    uint16_t cell_x =
-        static_cast<uint16_t>(mouse_pos_world.x / Constants::px_mt);
-    uint16_t cell_y =
-        static_cast<uint16_t>(mouse_pos_world.y / Constants::px_mt);
-
-    ImGui::Begin("Info de Celda");
-    ImGui::Text("Posicion del mouse (mundo): (%.1f, %.1f)", mouse_pos_world.x,
-                mouse_pos_world.y);
-
-    // Verifica si la celda esta dentro de los limites del mapa
-    if (cell_x < this->terrain->get_width() &&
-        cell_y < this->terrain->get_height()) {
-      // Obtiene los datos de la celda
-      CellData cell_data = this->terrain->get_cell(cell_x, cell_y);
-
-      // Muestra los datos de la celda
-      ImGui::Separator();
-      ImGui::Text("Coordenadas de la celda: (%d, %d)", cell_x, cell_y);
-      ImGui::Text("Tipo de terreno: %d", cell_data.terrain_type);
-      ImGui::Text("ID de textura: %d", cell_data.texture_id);
-      ImGui::Text("caminable: %s", cell_data.is_walkable ? "Si" : "No");
-    } else {
-      ImGui::Separator();
-      ImGui::Text("Fuera de los limites del mapa");
-    }
-
-    ImGui::End();
+  // debug celldata with imgui
+  if (this->terrain) 
+  {
+    Debugger::imgui_terrain(this->terrain, this->window);
   }
 
   ImGui::SFML::Render(*this->window);
@@ -178,6 +144,10 @@ void Engine::run() {
   this->texture_atlas = std::make_shared<Atlas>();
   this->terrain = std::make_shared<EntityTerrain>("resources/maps/map_2.zadat",
                                                   this->texture_atlas);
+
+  ImGui::CreateContext();
+  ImPlot::CreateContext();
+
   this->scene.add_entity(this->terrain);
 
   this->window->setView(scene.get_main_camera()->get_view());
@@ -187,9 +157,21 @@ void Engine::run() {
     auto start = std::chrono::high_resolution_clock::now();
     this->update();
 
-    ImGui::Begin("Info");
-    ImGui::Text("Entities: %d", scene.get_entities().size());
-    ImGui::Text("FPS: %.2f", 1.0f / Time::get_delta());
+    // debug scene with imgui
+    Debugger::imgui_scene(this->scene);
+
+    ImGui::Begin("Ejemplo implot");
+    if (ImPlot::BeginPlot("Mi primer plot")) 
+    {
+      static float x_data[1000];
+      static float y_data[1000];
+      for (int i = 0; i < 1000; i++) {
+        x_data[i] = i * 0.01f;
+        y_data[i] = std::sin(x_data[i]);
+      }
+      ImPlot::PlotLine("Seno", x_data, y_data, 1000);
+      ImPlot::EndPlot();
+    }
     ImGui::End();
 
     this->render();
@@ -199,6 +181,9 @@ void Engine::run() {
     // double fps = (duration.count() > 0) ? (1000 / duration.count()) : 0;
     this->window->setTitle("Genesis BioSim");
   }
+
+  ImPlot::DestroyContext();
+  ImGui::DestroyContext();
 
   ImGui::SFML::Shutdown();
 }

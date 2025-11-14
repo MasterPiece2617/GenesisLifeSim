@@ -10,6 +10,8 @@ Es un proyecto sobre simular el ciclo de vida y evolución de distintas especies
 -   Utilizaremos visual estudio 2022 como IDE, el proyecto ya ha sido configurado para su compilación inmediata en sistemas Windows de 64bits.
 -   SFML será la librería gráfica utilizada.
 -   Usaremos distintos archivos.md en la carpeta docs para documentar el proyecto y sus módulos, esto es importante para mantener el órden y entendimiento de las diferentes funcionalidades.
+-   El proyecto cuenta con un archivo CMakeList para poder ser compilado y ejecutado en otros sistemas operativos, las bibliotecas estan incluidas ya, solo se necesita el proyecto completo y nada más.
+
 
 ## Estilo de código
 
