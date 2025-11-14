@@ -49,6 +49,19 @@ void EntityTerrain::generate_vertices()
 	}
 }
 
+std::vector<std::string> EntityTerrain::get_map_files(const std::string& directory_path, const std::string& extension)
+{
+	std::vector<std::string> map_files;
+	for (const auto& entry : std::filesystem::directory_iterator(directory_path))
+	{
+		if (entry.path().extension() == extension)
+		{
+			map_files.push_back(entry.path().string());
+		}
+	}
+	return map_files;
+}
+
 void EntityTerrain::draw(sf::RenderTarget& target, sf::RenderStates states) const
 {
 	// Apply the texture

@@ -13,29 +13,25 @@ struct CellData
 int main()
 {
 	// Just a test file
-	const uint16_t width = 10;
-	const uint16_t height = 10;
+	const uint16_t width = 100;
+	const uint16_t height = 100;
 
 	std::vector<CellData> cells(static_cast<size_t>(width) * height);
 
 	// Initialize cells with some data
-	for (uint16_t y = 0; y < height; ++y)
-	{
-		for (uint16_t x = 0; x < width; ++x)
-		{
-			if (x == 0 || x == width - 1 || y == 0 || y == height - 1)
-			{
-				cells[y * width + x] = { 2, 2, false }; // Agua (tipo 2, textura 2)
-			}
-			else
-			{
-				cells[y * width + x] = { 1, 1, true }; // Pasto (tipo 1, textura 1)
-			}
-		}
-	}
+	for (int y = 0; y < height; ++y) {
+        for (int x = 0; x < width; ++x) {
+            if (y < 10 || y >= height - 10 ||
+                x < 10 || x >= width - 10) {
+                cells[y * width + x] = {2, 2, false}; // Agua en los bordes
+            } else {
+                cells[y * width + x] = {1, 1, true}; // Tierra en el centro
+            }
+        }
+    }
 
 	// Write to binary file
-	std::ofstream file("map.zadat", std::ios::binary);
+	std::ofstream file("map_2.zadat", std::ios::binary);
 
 	if (!file)
 	{
@@ -50,6 +46,6 @@ int main()
 
 	file.close();
 
-	std::cout << "Map file 'map.zadat' generado chevere." << std::endl;
+	std::cout << "Map file 'map_2.zadat' generado chevere." << std::endl;
 	return 0;
 }

@@ -57,11 +57,11 @@ target_link_libraries(my_app PUBLIC
 # running from the build directory.
 add_custom_command(TARGET my_app POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_SOURCE_DIR}/resources $<TARGET_FILE_DIR:my_app>/maps
+        ${CMAKE_SOURCE_DIR}/resources $<TARGET_FILE_DIR:my_app>/resources
 )
 
-# Also copy top-level textures folder if present.
-add_custom_command(TARGET my_app POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_SOURCE_DIR}/resources $<TARGET_FILE_DIR:my_app>/textures
-)
+## Also copy top-level textures folder if present.
+#add_custom_command(TARGET my_app POST_BUILD
+#    COMMAND ${CMAKE_COMMAND} -E copy_directory
+#        ${CMAKE_SOURCE_DIR}/resources $<TARGET_FILE_DIR:my_app>/textures
+#)

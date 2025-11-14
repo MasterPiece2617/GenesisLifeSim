@@ -26,6 +26,7 @@ protected:
   // To load terrain
   std::shared_ptr<Atlas> texture_atlas;
   std::shared_ptr<EntityTerrain> terrain;
+  bool map_loaded = false;
   // Main scene
   Scene scene;
   // std::vector<std::vector<std::shared_ptr<SpriteRenderer>>> render_queue =

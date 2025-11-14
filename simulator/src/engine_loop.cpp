@@ -140,15 +140,10 @@ void Engine::render() {
 void Engine::run() {
   scene.load();
 
-  // to create terrain, provisional?
-  this->texture_atlas = std::make_shared<Atlas>();
-  this->terrain = std::make_shared<EntityTerrain>("resources/maps/map_2.zadat",
-                                                  this->texture_atlas);
-
   ImGui::CreateContext();
   ImPlot::CreateContext();
 
-  this->scene.add_entity(this->terrain);
+  static std::string selected_map = "";
 
   this->window->setView(scene.get_main_camera()->get_view());
 
@@ -157,22 +152,57 @@ void Engine::run() {
     auto start = std::chrono::high_resolution_clock::now();
     this->update();
 
-    // debug scene with imgui
-    Debugger::imgui_scene(this->scene);
-
-    ImGui::Begin("Ejemplo implot");
-    if (ImPlot::BeginPlot("Mi primer plot")) 
+    // cargador de mapa
+    if (!map_loaded)
     {
-      static float x_data[1000];
-      static float y_data[1000];
-      for (int i = 0; i < 1000; i++) {
-        x_data[i] = i * 0.01f;
-        y_data[i] = std::sin(x_data[i]);
+      ImGui::Begin("Selccionar mapa");
+  
+      std::vector<std::string> map_files = this->terrain->get_map_files("resources/maps", ".zadat");
+  
+      ImGui::Text("Mapas disponibles:");
+      ImGui::Separator();
+  
+      for (const auto& map_file : map_files)
+      {
+          if (ImGui::Selectable(map_file.c_str(), selected_map == map_file))
+          {
+              selected_map = map_file;
+          }
       }
-      ImPlot::PlotLine("Seno", x_data, y_data, 1000);
-      ImPlot::EndPlot();
+  
+      ImGui::Separator();
+      ImGui::Text("Mapa seleccionado: %s", selected_map.c_str());
+  
+      if (ImGui::Button("Cargar mapa") && !selected_map.empty())
+      {
+          this->texture_atlas = std::make_shared<Atlas>();
+          this->terrain = std::make_shared<EntityTerrain>(selected_map, this->texture_atlas);
+          this->scene.add_entity(this->terrain);
+          map_loaded = true; // To close the map selection window
+          ImGui::CloseCurrentPopup();
+      } 
+      ImGui::End();
+
+    } else {
+
+      // debug scene with imgui
+      Debugger::imgui_scene(this->scene);
+  
+      ImGui::Begin("Ejemplo implot");
+      if (ImPlot::BeginPlot("Mi primer plot")) 
+      {
+        static float x_data[1000];
+        static float y_data[1000];
+        for (int i = 0; i < 1000; i++) {
+          x_data[i] = i * 0.01f;
+          y_data[i] = std::sin(x_data[i]);
+        }
+        ImPlot::PlotLine("Seno", x_data, y_data, 1000);
+        ImPlot::EndPlot();
+      }
+      ImGui::End();
+
     }
-    ImGui::End();
 
     this->render();
 

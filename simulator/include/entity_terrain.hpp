@@ -1,5 +1,7 @@
 #pragma once
 
+#include <filesystem>
+
 #include <SFML/Graphics/Vertex.hpp>
 #include <SFML/Graphics/RenderStates.hpp>
 #include <SFML/Graphics/RenderTarget.hpp>
@@ -21,6 +23,8 @@ protected:
 public:
 	EntityTerrain(const std::string& map_from_file, const std::shared_ptr<Atlas>& atlas);
 	
+	static std::vector<std::string> get_map_files(const std::string& directory_path, const std::string& extension);
+
 	void draw(sf::RenderTarget& target, sf::RenderStates states) const;
 
 	// methods with terrain data
