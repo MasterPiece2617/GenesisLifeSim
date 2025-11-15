@@ -3,6 +3,7 @@
 Organism::Organism(std::string _name, const OrganismConfig& _organism_config) : Entity(_name), organism_config(_organism_config)
 {
 	this->stats.vision = _organism_config.vision_radius;
+	this->stats.color = _organism_config.color;
 	this->stats.hunger = 100;
 	this->is_alive = true;
 
@@ -13,7 +14,8 @@ Organism::Organism(std::string _name, const OrganismConfig& _organism_config) : 
 void Organism::init()
 {
 	components.push_back(std::make_shared<Behaviour>(weak_from_this(), this->organism_config));
-    components.push_back(std::make_shared<SpriteRenderer>(shared_from_this(), "being"));
+    components.push_back(std::make_shared<SpriteRenderer>(shared_from_this(), stats.color, "being"));
+	
 }
 
 Stats& Organism::get_stats()

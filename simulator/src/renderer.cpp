@@ -6,6 +6,13 @@ SpriteRenderer::SpriteRenderer(std::weak_ptr<Entity> _owner, std::string _textur
     build_batch();
 }
 
+SpriteRenderer::SpriteRenderer(std::weak_ptr<Entity> _owner, sf::Color _color, std::string _texture_id, uint8_t _layer)
+    : Component(_owner), color(_color), layer(_layer)
+{
+    set_texture(_texture_id);
+    build_batch();
+}
+
 void SpriteRenderer::start()
 {
    
@@ -85,6 +92,7 @@ void SpriteRenderer::build_batch()
         }
 
         vertices[i] = sf::Vertex(world_pos, tex_coord);
+		vertices[i].color = color;
     }
 }
 

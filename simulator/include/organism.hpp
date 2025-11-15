@@ -19,6 +19,7 @@ struct Stats
 {
 	float hunger = 100;
 	int vision = 5;
+	sf::Color color = sf::Color::Red;
 };
 
 class Organism : public Entity

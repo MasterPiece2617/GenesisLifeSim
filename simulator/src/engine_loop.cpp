@@ -206,9 +206,6 @@ void Engine::render()
 // Main loop function
 void Engine::run()
 {
-    Scene::instance().load(organism_config);
-    this->window->setView(Scene::instance().get_main_camera()->get_view());
-
     float fps_accumulator = 0.0f;
     float fps_display = 0.0f;
     float fps_timer = 0.0f;
@@ -237,28 +234,38 @@ void Engine::run()
             // --- NUEVO CÓDIGO PARA MODIFICAR STATS ---
 
             ImGui::Text("Stats del Organismo:");
-            // Conecta el SliderInt a g_Config.vision
+            // Conecta el SliderInt a organism_config.vision_radius
             ImGui::SliderInt("Vision", &organism_config.vision_radius, 1, 20);
          
             ImGui::Separator();
             ImGui::Text("Stats de Comportamiento:");
-            // Conecta el SliderFloat a g_Config.speed
+            // Conecta el SliderFloat a organism_config.move_speed
             ImGui::SliderFloat("Velocidad (Speed)", &organism_config.move_speed, 1.0f, 15.0f);
+
+            // Selector de color en el menú inicial (no runtime)
+            {
+                sf::Color sc = organism_config.color;
+                float ccol[4] = { sc.r / 255.0f, sc.g / 255.0f, sc.b / 255.0f, sc.a / 255.0f };
+                if (ImGui::ColorEdit4("Color del Organismo", ccol))
+                {
+                    organism_config.color = sf::Color(
+                        static_cast<sf::Uint8>(ccol[0] * 255.0f),
+                        static_cast<sf::Uint8>(ccol[1] * 255.0f),
+                        static_cast<sf::Uint8>(ccol[2] * 255.0f),
+                        static_cast<sf::Uint8>(ccol[3] * 255.0f)
+                    );
+                }
+            }
 
             // --- FIN DEL NUEVO CÓDIGO ---
 
             ImGui::Separator();
 
-            // El ImGui::Selectable() que tenías no hacía nada útil aquí.
-
             if (ImGui::Button("Cargar Caracteristicas"))
             {
                 caract_load = true;
-
-                // ¡IMPORTANTE! 
-                // Ahora, tu función que crea los organismos debe usar g_Config
-                // Ejemplo:
-                Scene::instance().load(organism_config); 
+                Scene::instance().load(organism_config);
+                this->window->setView(Scene::instance().get_main_camera()->get_view());
             }
 
             ImGui::End();
