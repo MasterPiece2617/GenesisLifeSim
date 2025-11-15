@@ -163,6 +163,9 @@
     <ClInclude Include="simulator\include\behaviour_tree.hpp">
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
+    <ClInclude Include="simulator\include\organism_config.hpp">
+      <Filter>Archivos de encabezado</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="..\..\EDA.png">

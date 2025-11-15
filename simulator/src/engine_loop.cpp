@@ -91,6 +91,9 @@ void Engine::update()
     }
 
     // Update
+    if (caract_load)
+    {
+    
     for (auto& entity : Scene::instance().get_entities())
     {
         if (entity->get_is_active())
@@ -108,6 +111,7 @@ void Engine::update()
             }
         }
     }
+    }
 
     ImGui::SFML::Update(*this->window, deltaClock.restart());
     this->window->setView(Scene::instance().get_main_camera()->get_view());
@@ -116,6 +120,8 @@ void Engine::update()
 void Engine::render()
 {
     this->window->clear();
+
+    
     std::vector<std::vector<std::shared_ptr<SpriteRenderer>>> render_queue = std::vector<std::vector<std::shared_ptr<SpriteRenderer>>>(256, std::vector<std::shared_ptr<SpriteRenderer>>());
 
     sf::View view = Scene::instance().get_main_camera()->get_view();
@@ -135,6 +141,9 @@ void Engine::render()
     int end_y = static_cast<int>(std::ceil((bounds.top + bounds.height) / chunk_size_world)) * Constants::chunk_size;
 
     std::unordered_set<std::shared_ptr<Entity>> visited_entities;
+
+    if (caract_load)
+    {
 
     for (int y = start_y; y < end_y; y += Constants::chunk_size)
     {
@@ -188,6 +197,8 @@ void Engine::render()
         this->window->draw(final_vertices, &Texture::get_atlas());
     }
 
+    }
+
     ImGui::SFML::Render(*this->window);
     this->window->display();
 }
@@ -195,12 +206,13 @@ void Engine::render()
 // Main loop function
 void Engine::run()
 {
-    Scene::instance().load();
+    Scene::instance().load(organism_config);
     this->window->setView(Scene::instance().get_main_camera()->get_view());
 
     float fps_accumulator = 0.0f;
     float fps_display = 0.0f;
     float fps_timer = 0.0f;
+
 
     while (this->window->isOpen())
     {
@@ -216,22 +228,61 @@ void Engine::run()
             fps_timer = 0.0f;
         }
 
-        sf::Vector2f mouse_world_pos = window->mapPixelToCoords(sf::Mouse::getPosition());
-        mouse_world_pos.x /= Constants::px_mt;
-        mouse_world_pos.y /= Constants::px_mt;
-
-        ImGui::Begin("Info");
-        ImGui::Text("Entities: %d", Scene::instance().get_entities().size());
-        ImGui::Text("FPS: %.2f", fps_display);
-        ImGui::Text("Zoom: %.2f", Scene::instance().get_main_camera()->get_zoom());
-        ImGui::Text("Mouse x: %f y: %f", mouse_world_pos.x, mouse_world_pos.y);
-
-        if (selected_entity)
+        if (!caract_load)
         {
-            ImGui::Text("%s", selected_entity->get_name().c_str());
-        }
+            ImGui::Begin("Seleccione las caracteristicas:");
+            ImGui::Text("Seleccione las caracteristicas que desea cargar en la simulacion.");
+            ImGui::Separator();
 
-        ImGui::End();
+            // --- NUEVO CÓDIGO PARA MODIFICAR STATS ---
+
+            ImGui::Text("Stats del Organismo:");
+            // Conecta el SliderInt a g_Config.vision
+            ImGui::SliderInt("Vision", &organism_config.vision_radius, 1, 20);
+         
+            ImGui::Separator();
+            ImGui::Text("Stats de Comportamiento:");
+            // Conecta el SliderFloat a g_Config.speed
+            ImGui::SliderFloat("Velocidad (Speed)", &organism_config.move_speed, 1.0f, 15.0f);
+
+            // --- FIN DEL NUEVO CÓDIGO ---
+
+            ImGui::Separator();
+
+            // El ImGui::Selectable() que tenías no hacía nada útil aquí.
+
+            if (ImGui::Button("Cargar Caracteristicas"))
+            {
+                caract_load = true;
+
+                // ¡IMPORTANTE! 
+                // Ahora, tu función que crea los organismos debe usar g_Config
+                // Ejemplo:
+                Scene::instance().load(organism_config); 
+            }
+
+            ImGui::End();
+
+        }
+        else {
+
+            sf::Vector2f mouse_world_pos = window->mapPixelToCoords(sf::Mouse::getPosition());
+            mouse_world_pos.x /= Constants::px_mt;
+            mouse_world_pos.y /= Constants::px_mt;
+
+            ImGui::Begin("Info");
+            ImGui::Text("Entities: %d", Scene::instance().get_entities().size());
+            ImGui::Text("FPS: %.2f", fps_display);
+            ImGui::Text("Zoom: %.2f", Scene::instance().get_main_camera()->get_zoom());
+            ImGui::Text("Mouse x: %f y: %f", mouse_world_pos.x, mouse_world_pos.y);
+
+            if (selected_entity)
+            {
+                ImGui::Text("%s", selected_entity->get_name().c_str());
+            }
+
+            ImGui::End();
+        }
 
         this->render();
     }

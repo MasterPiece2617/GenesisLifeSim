@@ -13,6 +13,7 @@
 #include <renderer.hpp>
 #include <scene.hpp>
 #include <utils.hpp>
+#include <organism_config.hpp>
 
 struct Stats
 {
@@ -25,8 +26,9 @@ class Organism : public Entity
 protected:
 	Stats stats;
 	bool is_alive = true;
+	OrganismConfig organism_config;
 public:
-	Organism(std::string _name);
+	Organism(std::string _name, const OrganismConfig& _organism_config);
 	void init() override;
 	Stats& get_stats();
 };
@@ -41,7 +43,7 @@ protected:
 	bool moving = false;
 	float speed = 5;
 public:
-	Behaviour(std::weak_ptr<Entity> _owner);
+	Behaviour(std::weak_ptr<Entity> _owner, const OrganismConfig& _organism_config);
 	void start() override;
 	void update() override;
 	~Behaviour() = default;

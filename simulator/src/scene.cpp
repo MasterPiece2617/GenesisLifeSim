@@ -59,13 +59,13 @@ void Scene::add_entity(std::shared_ptr<Entity> entity)
 	entity->start();
 }
 
-void Scene::load() // Provisional
+void Scene::load(const OrganismConfig& organism_config) // Provisional
 {
 	add_entity(EntityFactory<FoodGenerator>::create("food generator"));
 
-	for (int i = 0; i < 1; ++i)
+	for (int i = 0; i < 10; ++i)
 	{
-		std::shared_ptr<Entity> entity = EntityFactory<Organism>::create("Organism " + std::to_string(i));
+		std::shared_ptr<Entity> entity = EntityFactory<Organism>::create("Organism " + std::to_string(i), organism_config);
 
 		add_entity(entity);
 	}

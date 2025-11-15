@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <vector>
+#include <utility>
 
 #include <event_manager.hpp>
 #include <transform.hpp>
@@ -63,10 +64,11 @@ class EntityFactory
 {
 public:
 
-	static std::shared_ptr<T> create(const std::string& name)
+	template<typename... Args>
+	static std::shared_ptr<T> create(Args&&... args)   //(const std::string& name)
 	{
 		static_assert(std::is_base_of<Entity, T>::value, "T must inherit from Entity");
-		std::shared_ptr<T> entity = std::make_shared<T>(name);
+		std::shared_ptr<T> entity = std::make_shared<T>(std::forward<Args>(args)...);
 		entity->init_transform();
 		entity->init();
 		EventManager::publish(Event(EventType::ENTITY_CREATED, EntityEvent(entity)));

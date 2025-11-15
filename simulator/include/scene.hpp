@@ -10,6 +10,7 @@
 #include <organism.hpp>
 #include <renderer.hpp>
 #include <utils.hpp>
+#include <organism_config.hpp>
 
 struct ChunkHash {
 	std::size_t operator()(const sf::Vector2i& p) const {
@@ -45,7 +46,7 @@ public:
 	}
 
 	void add_entity(std::shared_ptr<Entity> entity);
-	void load();
+	void load(const OrganismConfig& organism_config);
 	std::shared_ptr<Camera> get_main_camera() const;
 	std::vector<std::shared_ptr<Entity>> get_entities() const;
 	bool has_entity(std::shared_ptr<Entity> entity) const;

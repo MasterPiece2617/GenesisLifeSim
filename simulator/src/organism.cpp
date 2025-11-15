@@ -1,10 +1,18 @@
 #include "organism.hpp"
 
-Organism::Organism(std::string _name) : Entity(_name) {}
+Organism::Organism(std::string _name, const OrganismConfig& _organism_config) : Entity(_name), organism_config(_organism_config)
+{
+	this->stats.vision = _organism_config.vision_radius;
+	this->stats.hunger = 100;
+	this->is_alive = true;
+
+	//add_component(std::make_shared<Behaviour>(weak_from_this(), _organism_config));
+	//components.push_back(std::make_shared<Behaviour>(weak_from_this(), _organism_config));
+}
 
 void Organism::init()
 {
-	components.push_back(std::make_shared<Behaviour>(shared_from_this()));
+	components.push_back(std::make_shared<Behaviour>(weak_from_this(), this->organism_config));
     components.push_back(std::make_shared<SpriteRenderer>(shared_from_this(), "being"));
 }
 
@@ -13,7 +21,10 @@ Stats& Organism::get_stats()
     return stats;
 }
 
-Behaviour::Behaviour(std::weak_ptr<Entity> _owner) : Component(_owner), bt(std::make_shared<Node>(nullptr)) {}
+Behaviour::Behaviour(std::weak_ptr<Entity> _owner, const OrganismConfig& _organism_config) : Component(_owner), bt(std::make_shared<Node>(nullptr))
+{
+	this->speed = _organism_config.move_speed;
+}
 
 void Behaviour::start()
 {
