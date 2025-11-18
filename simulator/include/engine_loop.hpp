@@ -19,6 +19,7 @@
 #include <texture.hpp>
 #include <utils.hpp>
 #include <imgui_debugger.hpp>
+#include <imgui_menu.hpp>
 
 class Engine {
 protected:

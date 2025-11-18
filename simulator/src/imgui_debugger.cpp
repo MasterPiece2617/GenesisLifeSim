@@ -2,8 +2,7 @@
 
 void Debugger::imgui_terrain(std::shared_ptr<EntityTerrain> terrain, std::shared_ptr<sf::RenderWindow> window)
 {
-    {
-        sf::Vector2i mouse_pos_win = sf::Mouse::getPosition(*window);
+    sf::Vector2i mouse_pos_win = sf::Mouse::getPosition(*window);
 
     // Convierte la posicion del mouse a coordenadas del mundo (ajustando por la
     // camara)
@@ -38,7 +37,6 @@ void Debugger::imgui_terrain(std::shared_ptr<EntityTerrain> terrain, std::shared
     }
 
     ImGui::End();
-    }
 }
 
 void Debugger::imgui_scene(Scene scene)

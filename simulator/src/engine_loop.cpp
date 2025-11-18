@@ -155,33 +155,9 @@ void Engine::run() {
     // cargador de mapa
     if (!map_loaded)
     {
-      ImGui::Begin("Selccionar mapa");
-  
-      std::vector<std::string> map_files = this->terrain->get_map_files("resources/maps", ".zadat");
-  
-      ImGui::Text("Mapas disponibles:");
-      ImGui::Separator();
-  
-      for (const auto& map_file : map_files)
-      {
-          if (ImGui::Selectable(map_file.c_str(), selected_map == map_file))
-          {
-              selected_map = map_file;
-          }
-      }
-  
-      ImGui::Separator();
-      ImGui::Text("Mapa seleccionado: %s", selected_map.c_str());
-  
-      if (ImGui::Button("Cargar mapa") && !selected_map.empty())
-      {
-          this->texture_atlas = std::make_shared<Atlas>();
-          this->terrain = std::make_shared<EntityTerrain>(selected_map, this->texture_atlas);
-          this->scene.add_entity(this->terrain);
-          map_loaded = true; // To close the map selection window
-          ImGui::CloseCurrentPopup();
-      } 
-      ImGui::End();
+      ImGuiMenu::show_select_map_window(this->map_loaded, selected_map, 
+                                        EntityTerrain::get_map_files("resources/maps", ".zadat"),
+                                        this->terrain, this->scene, this->texture_atlas);
 
     } else {
 
