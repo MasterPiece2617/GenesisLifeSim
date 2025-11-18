@@ -70,6 +70,10 @@
       <Filter>Archivos de origen</Filter>
     </ClCompile>
     <ClCompile Include="simulator\src\behaviour_tree.cpp">
+    <ClCompile Include="simulator\src\terrain.cpp">
+      <Filter>Archivos de origen</Filter>
+    </ClCompile>
+    <ClCompile Include="simulator\src\entity_terrain.cpp">
       <Filter>Archivos de origen</Filter>
     </ClCompile>
   </ItemGroup>
@@ -164,6 +168,10 @@
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
     <ClInclude Include="simulator\include\organism_config.hpp">
+    <ClInclude Include="simulator\include\terrain.hpp">
+      <Filter>Archivos de encabezado</Filter>
+    </ClInclude>
+    <ClInclude Include="simulator\include\entity_terrain.hpp">
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
   </ItemGroup>

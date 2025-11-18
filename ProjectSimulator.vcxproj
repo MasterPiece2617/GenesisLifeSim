@@ -138,9 +138,11 @@
     <ClCompile Include="libs\imgui\imgui_widgets.cpp" />
     <ClCompile Include="simulator\src\behaviour_tree.cpp" />
     <ClCompile Include="simulator\src\camera.cpp" />
+    <ClCompile Include="simulator\src\entity_terrain.cpp" />
     <ClCompile Include="simulator\src\event_manager.cpp" />
     <ClCompile Include="simulator\src\organism.cpp" />
     <ClCompile Include="simulator\src\renderer.cpp" />
+    <ClCompile Include="simulator\src\terrain.cpp" />
     <ClCompile Include="simulator\src\texture.cpp" />
     <ClCompile Include="simulator\src\utils.cpp" />
     <ClCompile Include="simulator\src\transform.cpp" />
@@ -179,6 +181,7 @@
     <ClInclude Include="simulator\include\component_test.hpp" />
     <ClInclude Include="simulator\include\config.hpp" />
     <ClInclude Include="simulator\include\engine_loop.hpp" />
+    <ClInclude Include="simulator\include\entity_terrain.hpp" />
     <ClInclude Include="simulator\include\entity_test.hpp" />
     <ClInclude Include="simulator\include\event_manager.hpp" />
     <ClInclude Include="simulator\include\graph.hpp" />
@@ -188,6 +191,7 @@
     </ClInclude>
     <ClInclude Include="simulator\include\renderer.hpp" />
     <ClInclude Include="simulator\include\scene.hpp" />
+    <ClInclude Include="simulator\include\terrain.hpp" />
     <ClInclude Include="simulator\include\texture.hpp" />
     <ClInclude Include="simulator\include\utils.hpp" />
     <ClInclude Include="simulator\include\transform.hpp" />

@@ -89,11 +89,11 @@ void Engine::update()
 
         ImGui::SFML::ProcessEvent(ev);
     }
+    ImGui::SFML::ProcessEvent(ev);
+  
 
     // Update
-    if (caract_load)
-    {
-    
+  
     for (auto& entity : Scene::instance().get_entities())
     {
         if (entity->get_is_active())
@@ -110,7 +110,6 @@ void Engine::update()
                 Scene::instance().update_entity_grid(entity, pos, scale);
             }
         }
-    }
     }
 
     ImGui::SFML::Update(*this->window, deltaClock.restart());
@@ -132,13 +131,16 @@ void Engine::render()
         view.getSize().y
     );
 
-    int chunk_size_world = Constants::px_mt * Constants::chunk_size;
+  std::vector<std::vector<std::shared_ptr<SpriteRenderer>>> render_queue =
+      std::vector<std::vector<std::shared_ptr<SpriteRenderer>>>(
+          256, std::vector<std::shared_ptr<SpriteRenderer>>());
 
-    int start_x = static_cast<int>(std::floor(bounds.left / chunk_size_world)) * Constants::chunk_size;
-    int end_x = static_cast<int>(std::ceil((bounds.left + bounds.width) / chunk_size_world)) * Constants::chunk_size;
+  sf::View view = scene.get_main_camera()->get_view();
+  sf::FloatRect bounds(view.getCenter().x - view.getSize().x / 2.0f,
+                       view.getCenter().y - view.getSize().y / 2.0f,
+                       view.getSize().x, view.getSize().y);
 
-    int start_y = static_cast<int>(std::floor(bounds.top / chunk_size_world)) * Constants::chunk_size;
-    int end_y = static_cast<int>(std::ceil((bounds.top + bounds.height) / chunk_size_world)) * Constants::chunk_size;
+  int chunk_size_world = Constants::px_mt * Constants::chunk_size;
 
     std::unordered_set<std::shared_ptr<Entity>> visited_entities;
 
@@ -161,11 +163,27 @@ void Engine::render()
                 visited_entities.insert(entity);
 
                 std::shared_ptr<SpriteRenderer> renderer = entity->get_component<SpriteRenderer>();
+  int start_x = static_cast<int>(std::floor(bounds.left / chunk_size_world)) *
+                Constants::chunk_size;
+  int end_x = static_cast<int>(
+                  std::ceil((bounds.left + bounds.width) / chunk_size_world)) *
+              Constants::chunk_size;
 
-                if (!renderer)
-                {
-                    continue;
-                }
+  int start_y = static_cast<int>(std::floor(bounds.top / chunk_size_world)) *
+                Constants::chunk_size;
+  int end_y = static_cast<int>(
+                  std::ceil((bounds.top + bounds.height) / chunk_size_world)) *
+              Constants::chunk_size;
+
+  for (int y = start_y; y < end_y; y += Constants::chunk_size) {
+    for (int x = start_x; x < end_x; x += Constants::chunk_size) {
+      std::vector<std::shared_ptr<Entity>> _entities =
+          scene.get_chunk_entities(sf::Vector2f(x, y));
+      if (_entities.size() > 0)
+
+        for (auto &entity : _entities) {
+          std::shared_ptr<SpriteRenderer> renderer =
+              entity->get_component<SpriteRenderer>();
 
                 if (entity->get_is_active() && renderer->get_is_active())
                 {
@@ -183,16 +201,23 @@ void Engine::render()
     for (const std::vector<std::shared_ptr<SpriteRenderer>>& layer : render_queue)
     {
         sf::VertexArray final_vertices(sf::Quads);
+          if (!renderer) {
+            continue;
+          }
 
-        for (const std::shared_ptr<SpriteRenderer>& renderer : layer)
-        {
-            const sf::VertexArray& batch = renderer->get_batch();
-
-            for (size_t i = 0; i < batch.getVertexCount(); ++i)
-            {
-                final_vertices.append(batch[i]);
-            }
+          if (entity->get_is_active() && renderer->get_is_active()) {
+            render_queue[renderer->get_layer()].push_back(renderer);
+          }
         }
+    }
+  }
+
+  for (const std::vector<std::shared_ptr<SpriteRenderer>> &layer :
+       render_queue) {
+    sf::VertexArray final_vertices(sf::Quads);
+
+    for (const std::shared_ptr<SpriteRenderer> &renderer : layer) {
+      const sf::VertexArray &batch = renderer->get_batch();
 
         this->window->draw(final_vertices, &Texture::get_atlas());
     }
@@ -210,13 +235,43 @@ void Engine::run()
     float fps_display = 0.0f;
     float fps_timer = 0.0f;
 
+      for (size_t i = 0; i < batch.getVertexCount(); ++i) {
+        final_vertices.append(batch[i]);
+      }
+    }
 
-    while (this->window->isOpen())
-    {
-        Time::update();
-        this->update();
+    this->window->draw(final_vertices, &Texture::get_atlas());
+  }
 
-        float delta = Time::get_delta();
+  // debug celldata with imgui
+  if (this->terrain) 
+  {
+    Debugger::imgui_terrain(this->terrain, this->window);
+  }
+
+  ImGui::SFML::Render(*this->window);
+  this->window->display();
+}
+
+// Main loop function
+void Engine::run() {
+  float fps_accumulator = 0.0f;
+  float fps_display = 0.0f;
+  float fps_timer = 0.0f;
+
+  ImGui::CreateContext();
+  ImPlot::CreateContext();
+
+  static std::string selected_map = "";
+
+  this->window->setView(scene.get_main_camera()->get_view());
+
+  while (this->window->isOpen()) {
+    Time::update();
+    //auto start = std::chrono::high_resolution_clock::now();
+    this->update();
+
+    float delta = Time::get_delta();
         fps_timer += delta;
 
         if (fps_timer >= 1.0f)
@@ -225,13 +280,19 @@ void Engine::run()
             fps_timer = 0.0f;
         }
 
-        if (!caract_load)
-        {
+    // cargador de mapa
+    if (!map_loaded)
+    {
+
+      ImGuiMenu::show_select_map_window(this->map_loaded, selected_map, 
+                                        EntityTerrain::get_map_files("resources/maps", ".zadat"),
+                                        this->terrain, this->scene, this->texture_atlas);
+      } else if (!caract_load){
             ImGui::Begin("Seleccione las caracteristicas:");
             ImGui::Text("Seleccione las caracteristicas que desea cargar en la simulacion.");
             ImGui::Separator();
 
-            // --- NUEVO CÓDIGO PARA MODIFICAR STATS ---
+            // --- NUEVO Cï¿½DIGO PARA MODIFICAR STATS ---
 
             ImGui::Text("Stats del Organismo:");
             // Conecta el SliderInt a organism_config.vision_radius
@@ -242,7 +303,7 @@ void Engine::run()
             // Conecta el SliderFloat a organism_config.move_speed
             ImGui::SliderFloat("Velocidad (Speed)", &organism_config.move_speed, 1.0f, 15.0f);
 
-            // Selector de color en el menú inicial (no runtime)
+            // Selector de color en el menï¿½ inicial (no runtime)
             {
                 sf::Color sc = organism_config.color;
                 float ccol[4] = { sc.r / 255.0f, sc.g / 255.0f, sc.b / 255.0f, sc.a / 255.0f };
@@ -257,7 +318,7 @@ void Engine::run()
                 }
             }
 
-            // --- FIN DEL NUEVO CÓDIGO ---
+            // --- FIN DEL NUEVO Cï¿½DIGO ---
 
             ImGui::Separator();
 
@@ -270,8 +331,7 @@ void Engine::run()
 
             ImGui::End();
 
-        }
-        else {
+        } else {
 
             sf::Vector2f mouse_world_pos = window->mapPixelToCoords(sf::Mouse::getPosition());
             mouse_world_pos.x /= Constants::px_mt;
@@ -289,10 +349,34 @@ void Engine::run()
             }
 
             ImGui::End();
+
+            Debugger::imgui_scene(this->scene);
+  
+      ImGui::Begin("Ejemplo implot");
+      if (ImPlot::BeginPlot("Mi primer plot")) 
+      {
+        static float x_data[1000];
+        static float y_data[1000];
+        for (int i = 0; i < 1000; i++) {
+          x_data[i] = i * 0.01f;
+          y_data[i] = std::sin(x_data[i]);
+        }
+        ImPlot::PlotLine("Seno", x_data, y_data, 1000);
+        ImPlot::EndPlot();
+      }
+      ImGui::End();
         }
 
         this->render();
     }
 
-    ImGui::SFML::Shutdown();
-}
+    // double fps = (duration.count() > 0) ? (1000 / duration.count()) : 0;
+    this->window->setTitle("Genesis BioSim");
+
+     ImPlot::DestroyContext();
+  ImGui::DestroyContext();
+
+  ImGui::SFML::Shutdown();
+
+} 
+
