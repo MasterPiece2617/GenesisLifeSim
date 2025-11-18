@@ -16,6 +16,8 @@ enum class DecoratorPolicy
 	INVERT, REPEAT
 };
 
+// class Scene; // Forward declaration
+
 class Node
 {
 protected:

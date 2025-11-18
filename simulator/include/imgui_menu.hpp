@@ -14,7 +14,7 @@ class ImGuiMenu {
 protected:
 public:
     static void show_select_map_window(bool& map_loaded, std::string& selected_map, const std::vector<std::string>& map_files, 
-                                        std::shared_ptr<EntityTerrain>& terrain, Scene scene, std::shared_ptr<Atlas> texture_atlas);
+                                        std::shared_ptr<EntityTerrain>& terrain, std::shared_ptr<Atlas>& texture_atlas);
 };
 
 class ImPlotMenu {

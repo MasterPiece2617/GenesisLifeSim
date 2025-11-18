@@ -13,5 +13,5 @@ protected:
 public:
     //auto 
     static void imgui_terrain(std::shared_ptr<EntityTerrain> t, std::shared_ptr<sf::RenderWindow> window);
-    static void imgui_scene(Scene scene); 
+    static void imgui_scene(float& fps_display, sf::Vector2f& mouse_world_pos, std::shared_ptr<Entity>& selected_entity); 
 };

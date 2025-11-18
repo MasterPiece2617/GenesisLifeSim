@@ -13,9 +13,8 @@ Organism::Organism(std::string _name, const OrganismConfig& _organism_config) : 
 
 void Organism::init()
 {
-	components.push_back(std::make_shared<Behaviour>(weak_from_this(), this->organism_config));
-    components.push_back(std::make_shared<SpriteRenderer>(shared_from_this(), stats.color, "being"));
-	
+	add_component(std::make_shared<Behaviour>(weak_from_this(), this->organism_config));
+    add_component(std::make_shared<SpriteRenderer>(shared_from_this(), stats.color, "being"));
 }
 
 Stats& Organism::get_stats()
@@ -50,12 +49,33 @@ void Behaviour::start()
 
 			if (std::sqrt(delta.x * delta.x + delta.y * delta.y) >= length)
 			{
-				owner.lock()->get_transform().set_position(goal);
+				sf::Vector2f final_goal = goal;
+				// Clamp the final goal position to ensure it's within map boundaries
+				auto terrain_entity = Scene::instance().get_entity("Terrain");
+				if (auto terrain = std::dynamic_pointer_cast<EntityTerrain>(terrain_entity))
+				{
+					final_goal.x = std::max(0.f, std::min(final_goal.x, (float)terrain->get_width() - 1));
+					final_goal.y = std::max(0.f, std::min(final_goal.y, (float)terrain->get_height() - 1));
+				}
+
+				owner.lock()->get_transform().set_position(final_goal);
 				moving = false;
 			}
 			else
 			{
-				owner.lock()->get_transform().translate(delta);
+				sf::Vector2f new_pos = pos + delta;
+
+				// Final safety check: Clamp the new position to map boundaries before translating
+				auto terrain_entity = Scene::instance().get_entity("Terrain");
+				if (auto terrain = std::dynamic_pointer_cast<EntityTerrain>(terrain_entity))
+				{
+					new_pos.x = std::max(0.f, std::min(new_pos.x, (float)terrain->get_width() - 1));
+					new_pos.y = std::max(0.f, std::min(new_pos.y, (float)terrain->get_height() - 1));
+				}
+
+				// We set the position directly instead of translating to ensure it's clamped.
+				// The difference is negligible for small deltas.
+				owner.lock()->get_transform().set_position(new_pos);
 			}
 		}
 
@@ -98,7 +118,17 @@ void Behaviour::start()
 			float radius = radius_dist(rng);
 
 			sf::Vector2f offset(std::cos(angle_rad) * radius, std::sin(angle_rad) * radius);
-			goal = pos + offset;
+			sf::Vector2f potential_goal = pos + offset;
+
+			// Clamp the goal to be within map boundaries - get a fresh pointer inside the lambda
+			auto terrain_entity = Scene::instance().get_entity("Terrain");
+			if (auto terrain = std::dynamic_pointer_cast<EntityTerrain>(terrain_entity))
+			{
+				potential_goal.x = std::max(0.f, std::min(potential_goal.x, (float)terrain->get_width() - 1));
+				potential_goal.y = std::max(0.f, std::min(potential_goal.y, (float)terrain->get_height() - 1));
+			}
+
+			goal = potential_goal;
 
 			owner.lock()->get_transform().set_rotation(angle_deg);
 			moving = true;
@@ -127,10 +157,19 @@ void Behaviour::start()
 
 		std::shared_ptr<Organism> entity = std::dynamic_pointer_cast<Organism>(owner.lock());
 
-		int x_min = std::floor(pos.x - entity->get_stats().vision);
-		int x_max = std::ceil(pos.x + entity->get_stats().vision);
-		int y_min = std::floor(pos.y - entity->get_stats().vision);
-		int y_max = std::ceil(pos.y + entity->get_stats().vision);
+		// Get map boundaries to clamp vision search
+		auto terrain_entity = Scene::instance().get_entity("Terrain"); // Get a fresh pointer inside the lambda
+		uint16_t map_width = 0;
+		uint16_t map_height = 0;
+		if (auto terrain = std::dynamic_pointer_cast<EntityTerrain>(terrain_entity)) {
+			map_width = terrain->get_width();
+			map_height = terrain->get_height();
+		}
+
+		int x_min = std::max(0, (int)std::floor(pos.x - entity->get_stats().vision));
+		int x_max = std::min((int)map_width, (int)std::ceil(pos.x + entity->get_stats().vision));
+		int y_min = std::max(0, (int)std::floor(pos.y - entity->get_stats().vision));
+		int y_max = std::min((int)map_height, (int)std::ceil(pos.y + entity->get_stats().vision));
 
 		std::unordered_set<std::shared_ptr<Entity>> visited;
 		std::pair<std::shared_ptr<Entity>, float> min_distance = { nullptr, std::numeric_limits<float>::max() };
@@ -174,8 +213,8 @@ void Behaviour::start()
 		fixed_entity = min_distance.first;
 		goal = min_distance.first->get_transform().get_position();
 		sf::Vector2f dir = goal - pos;
-		float angle_rad = std::atan2(dir.y, dir.x);
-		float angle_deg = angle_rad * 180.f / std::_Pi_val;
+		float angle_rad = std::atan2(dir.y, dir.x); // Calculate angle in radians
+		float angle_deg = angle_rad * 180.f / Constants::pi_val; // Convert to degrees using M_PI from cmath for linux
 		entity->get_transform().set_rotation(angle_deg);
 
 		return BTStatus::SUCCESS;
@@ -225,7 +264,7 @@ void Behaviour::update()
 
 	if (auto organism = std::dynamic_pointer_cast<Organism>(owner.lock()))
 	{
-		organism->get_stats().hunger -= 5 * Time::get_delta();
+		organism->get_stats().hunger -= 0.5 * Time::get_delta();
 
 		if (organism->get_stats().hunger <= 0)
 		{
@@ -256,25 +295,21 @@ void FoodGenerator::init()
 FoodSpawner::FoodSpawner(std::weak_ptr<Entity> _owner) : Component(_owner) {}
 
 void FoodSpawner::update()
-{
-	time += Time::get_delta();
-
-	if (time >= 5.0f)
-	{
-		
-		for (int i = 0; i < 20; ++i)
-		{
-			std::shared_ptr<Food> food = EntityFactory<Food>::create("fruit");
-
-			float x = static_cast<float>(std::rand() % 121 - 60);
-			float y = static_cast<float>(std::rand() % 121 - 60);
-
+{//
+ 	time += Time::get_delta();
+    if (time >= 5.0f)
+    {
+	for (int i = 0; i < 20; ++i)
+    	{
+    		std::shared_ptr<Food> food = EntityFactory<Food>::create("fruit");
+    		auto terrain = Scene::instance().get_entity("Terrain"); // Use get_entity for safety
+    		uint16_t map_width = terrain ? std::dynamic_pointer_cast<EntityTerrain>(terrain)->get_width() : 100;
+    		uint16_t map_height = terrain ? std::dynamic_pointer_cast<EntityTerrain>(terrain)->get_height() : 100;
+    		float x = static_cast<float>(std::rand() % map_width);
+    		float y = static_cast<float>(std::rand() % map_height);
 			food->get_transform().set_position(sf::Vector2f(x, y));
-
-
 			Scene::instance().add_entity(food);
-		}
-
-		time = 0;
-	}
+    	}
+    time = 0;
+    }
 }

@@ -39,10 +39,16 @@ void Debugger::imgui_terrain(std::shared_ptr<EntityTerrain> terrain, std::shared
     ImGui::End();
 }
 
-void Debugger::imgui_scene(Scene scene)
+void Debugger::imgui_scene(float& fps_display, sf::Vector2f& mouse_world_pos, std::shared_ptr<Entity>& selected_entity)
 {
     ImGui::Begin("Info");
-    ImGui::Text("Entities: %d", scene.get_entities().size());
-    ImGui::Text("FPS: %.2f", 1.0f / Time::get_delta());
+    ImGui::Text("Entities: %d", Scene::instance().get_entities().size());
+    ImGui::Text("FPS: %.2f", fps_display);
+    ImGui::Text("Zoom: %.2f", Scene::instance().get_main_camera()->get_zoom());
+    ImGui::Text("Mouse x: %f y: %f", mouse_world_pos.x, mouse_world_pos.y);
+    if (selected_entity)
+    {
+        ImGui::Text("%s", selected_entity->get_name().c_str());
+    }
     ImGui::End();
 }

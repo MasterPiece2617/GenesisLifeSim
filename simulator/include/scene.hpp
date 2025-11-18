@@ -49,6 +49,7 @@ public:
 	void load(const OrganismConfig& organism_config);
 	std::shared_ptr<Camera> get_main_camera() const;
 	std::vector<std::shared_ptr<Entity>> get_entities() const;
+	std::shared_ptr<Entity> get_entity(const std::string& name) const;
 	bool has_entity(std::shared_ptr<Entity> entity) const;
 	bool remove_entity(std::shared_ptr<Entity> entity);
 	std::vector<std::shared_ptr<Entity>> get_chunk_entities(sf::Vector2f coords);

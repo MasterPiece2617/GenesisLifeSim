@@ -35,13 +35,9 @@ protected:
   // std::vector<std::vector<std::shared_ptr<SpriteRenderer>>> render_queue =
   // std::vector<std::vector<std::shared_ptr<SpriteRenderer>>>(256,
   // std::vector<std::shared_ptr<SpriteRenderer>>());
-  int frame_count = 0;
-  double frame_times = 0.0f;
 
-	std::shared_ptr<sf::RenderWindow> window;
 	std::shared_ptr<Entity> selected_entity;
 	OrganismConfig organism_config;
-
 	bool caract_load = false;
 
 	//std::vector<std::vector<std::shared_ptr<SpriteRenderer>>> render_queue = std::vector<std::vector<std::shared_ptr<SpriteRenderer>>>(256, std::vector<std::shared_ptr<SpriteRenderer>>());

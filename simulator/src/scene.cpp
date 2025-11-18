@@ -63,10 +63,18 @@ void Scene::load(const OrganismConfig& organism_config) // Provisional
 {
 	add_entity(EntityFactory<FoodGenerator>::create("food generator"));
 
-	for (int i = 0; i < 10; ++i)
+	for (int i = 0; i < 50; ++i)
 	{
-		std::shared_ptr<Entity> entity = EntityFactory<Organism>::create("Organism " + std::to_string(i), organism_config);
+		auto entity = EntityFactory<Organism>::create("Organism " + std::to_string(i), organism_config);
 
+		// Get map dimensions to spawn organisms inside
+		auto terrain = Scene::instance().get_entity("Terrain");
+		uint16_t map_width = terrain ? std::dynamic_pointer_cast<EntityTerrain>(terrain)->get_width() : 100;
+		uint16_t map_height = terrain ? std::dynamic_pointer_cast<EntityTerrain>(terrain)->get_height() : 100;
+		float x = static_cast<float>(std::rand() % map_width);
+		float y = static_cast<float>(std::rand() % map_height);
+
+		entity->get_transform().set_position({x, y});
 		add_entity(entity);
 	}
 }
@@ -79,6 +87,19 @@ std::shared_ptr<Camera> Scene::get_main_camera() const
 std::vector<std::shared_ptr<Entity>> Scene::get_entities() const
 {
 	return entities;
+}
+// To manage terrain perfectly, we need to be able to get entities by name
+std::shared_ptr<Entity> Scene::get_entity(const std::string& name) const
+{
+	for (const auto& entity : entities)
+	{
+		if (entity->get_name() == name)
+		{
+			return entity;
+		}
+	}
+
+	return nullptr;
 }
 
 bool Scene::has_entity(std::shared_ptr<Entity> entity) const
