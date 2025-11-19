@@ -44,26 +44,30 @@ void Behaviour::start()
 				moving = false;
 			}
 
-			sf::Vector2f dir_normalized = direction / length;
-            
-            // to imitate different terrain speeds    
-            float terrain_multiplier = 1.0f;
-
+            float current_effort = 1.0f;
             auto terrain_entity = Scene::instance().get_entity("Terrain");
-            if (auto terrain = std::dynamic_pointer_cast<EntityTerrain>(terrain_entity))
+            std::shared_ptr<EntityTerrain> terrain = nullptr;
+
+            if (terrain_entity)
             {
-                sf::Vector2f current_pos = owner.lock()->get_transform().get_position();
+                terrain = std::dynamic_pointer_cast<EntityTerrain>(terrain_entity);
 
-                int pos_x = static_cast<int>(std::floor(current_pos.x));
-                int pos_y = static_cast<int>(std::floor(current_pos.y));
-
-                if (!terrain->walkable(static_cast<uint16_t>(pos_x), static_cast<uint16_t>(pos_y)))
+                if (terrain)
                 {
-                    terrain_multiplier = 0.5f;
+                    sf::Vector2f current_pos = owner.lock()->get_transform().get_position();
+
+                    int pos_x = static_cast<int>(std::floor(current_pos.x));
+                    int pos_y = static_cast<int>(std::floor(current_pos.y));
+
+                    current_effort = terrain->get_effort(static_cast<uint16_t>(pos_x), static_cast<uint16_t>(pos_y));
                 }
             }
 
-			sf::Vector2f delta = dir_normalized * (speed * terrain_multiplier) * Time::get_delta();
+            float effective_speed = speed / current_effort;
+
+			sf::Vector2f dir_normalized = direction / length;
+
+			sf::Vector2f delta = dir_normalized * effective_speed * Time::get_delta();
 
 			if (std::sqrt(delta.x * delta.x + delta.y * delta.y) >= length)
 			{
@@ -84,7 +88,7 @@ void Behaviour::start()
 
 				// Final safety check: Clamp the new position to map boundaries before translating
 				//auto terrain_entity = Scene::instance().get_entity("Terrain");
-				if (auto terrain = std::dynamic_pointer_cast<EntityTerrain>(terrain_entity))
+				if (terrain)
 				{
 					new_pos.x = std::max(0.f, std::min(new_pos.x, (float)terrain->get_width() - 1));
 					new_pos.y = std::max(0.f, std::min(new_pos.y, (float)terrain->get_height() - 1));
@@ -105,7 +109,7 @@ void Behaviour::start()
         {
             if (organism->get_stats().hunger < 99)
             {
-				std::cout << "hungry\n";
+				//std::cout << "hungry\n";
                 return BTStatus::FAILURE;
             }
         }
@@ -164,7 +168,7 @@ void Behaviour::start()
 
 					if (entity)
 					{
-						entity->get_stats().hunger += food->get_nu();
+						entity->get_stats().hunger = 100.0f; // Restore hunger food.nu just plus, never going to starving
 						Scene::instance().remove_entity(food);
 						fixed_entity.reset();
 					}
@@ -233,14 +237,14 @@ void Behaviour::start()
 		float angle_rad = std::atan2(dir.y, dir.x); // Calculate angle in radians
 		float angle_deg = angle_rad * 180.f / Constants::pi_val; // Convert to degrees using M_PI from cmath for linux
 		entity->get_transform().set_rotation(angle_deg);
-
+        moving = true;
 		return BTStatus::SUCCESS;
     };
 
 	std::function<BTStatus()> reproduction = [&]()
 	{
 		auto organism = std::dynamic_pointer_cast<Organism>(owner.lock());
-		std::cout << organism->get_stats().hunger << std::endl;
+		//std::cout << organism->get_stats().hunger << std::endl;
 		return BTStatus::RUNNING;
 	};
 
@@ -285,6 +289,7 @@ void Behaviour::update()
 
 		if (organism->get_stats().hunger <= 0)
 		{
+            std::cout << "Organism " << owner.lock()->get_name() << " has died of starvation." << std::endl;
 			Scene::instance().remove_entity(owner.lock());
 		}
 	}

@@ -104,3 +104,8 @@ uint16_t EntityTerrain::get_height() const
 {
 	return terrain.get_height();
 }
+
+float EntityTerrain::get_effort(uint16_t x, uint16_t y) const
+{
+	return terrain.get_effort(x, y);
+}
