@@ -22,7 +22,7 @@ bool Terrain::load_from_file(const std::string &filename)
 
 	if (width == 0 || height == 0)
 	{
-		std::cerr << "Error: El archivo de mapa está vacío o es inválido." << std::endl;
+		std::cerr << "Error: El archivo de mapa estï¿½ vacï¿½o o es invï¿½lido." << std::endl;
 		cells.clear();
 		width = 0;
 		height = 0;
@@ -76,6 +76,15 @@ uint16_t Terrain::get_width() const
 uint16_t Terrain::get_height() const
 { 
 	return height; 
+}
+
+float Terrain::get_effort(uint16_t x, uint16_t y) const
+{
+	if (x >= width || y >= height)
+	{
+		return 100.0f;
+	}
+	return static_cast<float>(get_cell(x, y).effort);
 }
 
 bool Terrain::walkable(uint16_t x, uint16_t y) const

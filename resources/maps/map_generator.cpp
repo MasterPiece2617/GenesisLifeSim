@@ -7,6 +7,7 @@ struct CellData
 {
 	uint8_t typeCell;
 	uint8_t textureCell;
+	uint8_t effort;
 	bool is_walkable;
 };
 
@@ -23,9 +24,9 @@ int main()
         for (int x = 0; x < width; ++x) {
             if (y < 10 || y >= height - 10 ||
                 x < 10 || x >= width - 10) {
-                cells[y * width + x] = {2, 2, false}; // Agua en los bordes
+                cells[y * width + x] = {2, 2, 2,false}; // Agua en los bordes
             } else {
-                cells[y * width + x] = {1, 1, true}; // Tierra en el centro
+                cells[y * width + x] = {1, 1, 1,true}; // Tierra en el centro
             }
         }
     }

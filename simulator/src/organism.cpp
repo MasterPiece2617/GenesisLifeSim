@@ -45,13 +45,30 @@ void Behaviour::start()
 			}
 
 			sf::Vector2f dir_normalized = direction / length;
-			sf::Vector2f delta = dir_normalized * speed * Time::get_delta();
+            
+            // to imitate different terrain speeds    
+            float terrain_multiplier = 1.0f;
+
+            auto terrain_entity = Scene::instance().get_entity("Terrain");
+            if (auto terrain = std::dynamic_pointer_cast<EntityTerrain>(terrain_entity))
+            {
+                sf::Vector2f current_pos = owner.lock()->get_transform().get_position();
+
+                int pos_x = static_cast<int>(std::floor(current_pos.x));
+                int pos_y = static_cast<int>(std::floor(current_pos.y));
+
+                if (!terrain->walkable(static_cast<uint16_t>(pos_x), static_cast<uint16_t>(pos_y)))
+                {
+                    terrain_multiplier = 0.5f;
+                }
+            }
+
+			sf::Vector2f delta = dir_normalized * (speed * terrain_multiplier) * Time::get_delta();
 
 			if (std::sqrt(delta.x * delta.x + delta.y * delta.y) >= length)
 			{
 				sf::Vector2f final_goal = goal;
 				// Clamp the final goal position to ensure it's within map boundaries
-				auto terrain_entity = Scene::instance().get_entity("Terrain");
 				if (auto terrain = std::dynamic_pointer_cast<EntityTerrain>(terrain_entity))
 				{
 					final_goal.x = std::max(0.f, std::min(final_goal.x, (float)terrain->get_width() - 1));
@@ -66,7 +83,7 @@ void Behaviour::start()
 				sf::Vector2f new_pos = pos + delta;
 
 				// Final safety check: Clamp the new position to map boundaries before translating
-				auto terrain_entity = Scene::instance().get_entity("Terrain");
+				//auto terrain_entity = Scene::instance().get_entity("Terrain");
 				if (auto terrain = std::dynamic_pointer_cast<EntityTerrain>(terrain_entity))
 				{
 					new_pos.x = std::max(0.f, std::min(new_pos.x, (float)terrain->get_width() - 1));
