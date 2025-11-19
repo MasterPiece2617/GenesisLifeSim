@@ -17,6 +17,11 @@ EntityTerrain::EntityTerrain(const std::string& map_from_file, const std::shared
 std::unordered_map<uint16_t, std::string> texture_id_map = {
 	{1, "grass_floor"},
 	{2, "water_floor"},
+	{3, "sand_floor"},
+	{4, "stone_floor"},
+	{5, "swamp_floor"},
+	{6, "dark_grass_floor"},
+	{7, "rough_sea_floor"},
 };
 
 void EntityTerrain::generate_vertices()
