@@ -77,6 +77,7 @@ void Behaviour::start()
 				// The difference is negligible for small deltas.
 				owner.lock()->get_transform().set_position(new_pos);
 			}
+			return BTStatus::RUNNING;
 		}
 
 		return BTStatus::SUCCESS;
@@ -86,139 +87,122 @@ void Behaviour::start()
     {
         if (auto organism = std::dynamic_pointer_cast<Organism>(owner.lock())) 
         {
-            if (organism->get_stats().hunger < 99)
+            if (organism->get_stats().hunger > 99)
             {
-				std::cout << "hungry\n";
-                return BTStatus::FAILURE;
+                return BTStatus::SUCCESS;
             }
+
+			return BTStatus::FAILURE;
         }
 
         return BTStatus::SUCCESS;
     };
 
-    std::function<BTStatus()> look_food = [&]()
-    {
-		if (fixed_entity && !Scene::instance().has_entity(fixed_entity))
-		{
-			fixed_entity.reset();
-			moving = false;
-			return BTStatus::RUNNING;
-		}
+    std::function<BTStatus()> look_food = [&]() {
+        auto organism = std::dynamic_pointer_cast<Organism>(owner.lock());
+        if (!organism) return BTStatus::FAILURE;
 
-		sf::Vector2f pos = owner.lock()->get_transform().get_position();
+        if (organism->get_stats().hunger >= 99) {
+            fixed_entity.reset();
+            moving = false;
+            return BTStatus::SUCCESS;
+        }
 
-		if (!moving && !fixed_entity)
-		{
-			static std::mt19937 rng(std::random_device{}());
-			std::uniform_real_distribution<float> angle_deg_dist(0.0f, 360.0f);
-			std::uniform_real_distribution<float> radius_dist(0.0f, 10.0f);
+        if (fixed_entity && !Scene::instance().has_entity(fixed_entity)) {
+            fixed_entity.reset();
+            moving = false;
+            return BTStatus::RUNNING;
+        }
 
-			float angle_deg = angle_deg_dist(rng);
-			float angle_rad = angle_deg * 3.14159265f / 180.0f;
-			float radius = radius_dist(rng);
+        const sf::Vector2f pos = organism->get_transform().get_position();
 
-			sf::Vector2f offset(std::cos(angle_rad) * radius, std::sin(angle_rad) * radius);
-			sf::Vector2f potential_goal = pos + offset;
+        if (!moving && !fixed_entity) {
+            static std::mt19937 rng(std::random_device{}());
+            std::uniform_real_distribution<float> angle_deg_dist(0.0f, 360.0f);
+            std::uniform_real_distribution<float> radius_dist(0.0f, 10.0f);
 
-			// Clamp the goal to be within map boundaries - get a fresh pointer inside the lambda
-			auto terrain_entity = Scene::instance().get_entity("Terrain");
-			if (auto terrain = std::dynamic_pointer_cast<EntityTerrain>(terrain_entity))
-			{
-				potential_goal.x = std::max(0.f, std::min(potential_goal.x, (float)terrain->get_width() - 1));
-				potential_goal.y = std::max(0.f, std::min(potential_goal.y, (float)terrain->get_height() - 1));
-			}
+            const float angle_deg = angle_deg_dist(rng);
+            const float angle_rad = angle_deg * 3.14159265f / 180.0f;
+            const float radius = radius_dist(rng);
 
-			goal = potential_goal;
+            const sf::Vector2f offset(std::cos(angle_rad) * radius, std::sin(angle_rad) * radius);
+            goal = pos + offset;
 
-			owner.lock()->get_transform().set_rotation(angle_deg);
-			moving = true;
+            organism->get_transform().set_rotation(angle_deg);
+            moving = true;
+            return BTStatus::RUNNING;
+        }
 
-			return BTStatus::RUNNING;
-		}
-		else if (pos == goal)
-		{
-			std::shared_ptr<Food> food = std::dynamic_pointer_cast<Food>(fixed_entity);
+        const float eps = 0.001f;
+        const sf::Vector2f d = goal - pos;
+        const float dist2 = d.x * d.x + d.y * d.y;
 
-			if (food)
-			{
-				if (fixed_entity->get_transform().get_position() == owner.lock()->get_transform().get_position())
-				{
-					std::shared_ptr<Organism> entity = std::dynamic_pointer_cast<Organism>(owner.lock());
+        if (dist2 <= eps * eps) {
+            if (auto food = std::dynamic_pointer_cast<Food>(fixed_entity)) 
+            {
 
-					if (entity)
-					{
-						entity->get_stats().hunger += food->get_nu();
-						Scene::instance().remove_entity(food);
-						fixed_entity.reset();
-					}
-				}
-			}
-		}
+                const sf::Vector2f fpos = food->get_transform().get_position();
+                const sf::Vector2f df = fpos - organism->get_transform().get_position();
+                if (df.x * df.x + df.y * df.y <= eps * eps) {
 
-		std::shared_ptr<Organism> entity = std::dynamic_pointer_cast<Organism>(owner.lock());
+                    organism->get_stats().hunger = organism->get_stats().hunger + food->get_nu();
+                    Scene::instance().remove_entity(food);
+                    fixed_entity.reset();
 
-		// Get map boundaries to clamp vision search
-		auto terrain_entity = Scene::instance().get_entity("Terrain"); // Get a fresh pointer inside the lambda
-		uint16_t map_width = 0;
-		uint16_t map_height = 0;
-		if (auto terrain = std::dynamic_pointer_cast<EntityTerrain>(terrain_entity)) {
-			map_width = terrain->get_width();
-			map_height = terrain->get_height();
-		}
+                    if (organism->get_stats().hunger < 99) {
+                        moving = false;
+                        return BTStatus::RUNNING;
+                    }
 
-		int x_min = std::max(0, (int)std::floor(pos.x - entity->get_stats().vision));
-		int x_max = std::min((int)map_width, (int)std::ceil(pos.x + entity->get_stats().vision));
-		int y_min = std::max(0, (int)std::floor(pos.y - entity->get_stats().vision));
-		int y_max = std::min((int)map_height, (int)std::ceil(pos.y + entity->get_stats().vision));
+                    moving = false;
+                    return BTStatus::SUCCESS;
+                }
+            }
+        }
 
-		std::unordered_set<std::shared_ptr<Entity>> visited;
-		std::pair<std::shared_ptr<Entity>, float> min_distance = { nullptr, std::numeric_limits<float>::max() };
+        {
+            int vision = organism->get_stats().vision;
+            int x_min = std::floor(pos.x - vision);
+            int x_max = std::ceil(pos.x + vision);
+            int y_min = std::floor(pos.y - vision);
+            int y_max = std::ceil(pos.y + vision);
 
-		for (int i = y_min; i < y_max; i += Constants::chunk_size)
-		{
-			for (int j = x_min; j < x_max; j += Constants::chunk_size)
-			{
-				std::vector<std::shared_ptr<Entity>> chunk_entities = Scene::instance().get_chunk_entities(sf::Vector2f(j, i));
+            std::unordered_set<std::shared_ptr<Entity>> visited;
+            std::pair<std::shared_ptr<Entity>, float> min_distance = { nullptr, std::numeric_limits<float>::max() };
 
-				for (auto& e : chunk_entities)
-				{
-					std::shared_ptr<Food> food = std::dynamic_pointer_cast<Food>(e);
+            for (int i = y_min; i < y_max; i += Constants::chunk_size) {
+                for (int j = x_min; j < x_max; j += Constants::chunk_size) {
+                    auto chunk_entities = Scene::instance().get_chunk_entities(sf::Vector2f(j, i));
+                    for (auto& e : chunk_entities) {
+                        if (auto food = std::dynamic_pointer_cast<Food>(e)) {
+                            if (visited.insert(food).second) {
+                                float dx = food->get_transform().get_position().x - pos.x;
+                                float dy = food->get_transform().get_position().y - pos.y;
+                                float abs = std::sqrt(dx * dx + dy * dy);
+                                if (abs <= vision && abs < min_distance.second) {
+                                    min_distance = { food, abs };
+                                }
+                            }
+                        }
+                    }
+                }
+            }
 
-					if (food)
-					{
-						if (visited.find(food) == visited.end())
-						{
-							visited.insert(food);
+            if (min_distance.first) {
+                fixed_entity = min_distance.first;
+                goal = fixed_entity->get_transform().get_position();
+                sf::Vector2f dir = goal - pos;
+                float angle_rad = std::atan2(dir.y, dir.x);
+                float angle_deg = angle_rad * 180.f / 3.14159265f;
+                organism->get_transform().set_rotation(angle_deg);
+                moving = true;
+                return BTStatus::RUNNING;
+            }
+        }
 
-							float abs = std::sqrt(std::pow(food->get_transform().get_position().x - pos.x, 2) + std::pow(food->get_transform().get_position().y - pos.y, 2));
-
-							if (abs <= entity->get_stats().vision)
-							{
-								if (min_distance.second > abs)
-								{
-									min_distance = { food, abs };
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-
-		if (!min_distance.first)
-		{
-			return BTStatus::RUNNING;
-		}
-
-		fixed_entity = min_distance.first;
-		goal = min_distance.first->get_transform().get_position();
-		sf::Vector2f dir = goal - pos;
-		float angle_rad = std::atan2(dir.y, dir.x); // Calculate angle in radians
-		float angle_deg = angle_rad * 180.f / Constants::pi_val; // Convert to degrees using M_PI from cmath for linux
-		entity->get_transform().set_rotation(angle_deg);
-
-		return BTStatus::SUCCESS;
+        return BTStatus::RUNNING;
     };
+
 
 	std::function<BTStatus()> reproduction = [&]()
 	{
