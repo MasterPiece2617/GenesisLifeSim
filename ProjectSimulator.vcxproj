@@ -138,7 +138,6 @@
     <ClCompile Include="libs\imgui\imgui_widgets.cpp" />
     <ClCompile Include="libs\implot\implot.cpp" />
     <ClCompile Include="libs\implot\implot_items.cpp" />
-    <ClCompile Include="resources\maps\map_generator.cpp" />
     <ClCompile Include="simulator\src\behaviour_tree.cpp" />
     <ClCompile Include="simulator\src\camera.cpp" />
     <ClCompile Include="simulator\src\entity_terrain.cpp" />
@@ -168,9 +167,7 @@
     <None Include="docs\scene.md" />
     <None Include="docs\transform.md" />
     <None Include="README.md" />
-    <None Include="resources\maps\map.zadat" />
-    <None Include="resources\maps\map_2.zadat" />
-    <None Include="resources\maps\map_3.zadat" />
+    <None Include="\\wsl.localhost\Debian\home\darxj\Workbench\Proyecto_AYDA\proyecto_ayda\resources\maps\map_noise_1_v2.zadat" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="libs\imgui\imconfig-SFML.h" />
@@ -184,7 +181,6 @@
     <ClInclude Include="libs\imgui\imstb_truetype.h" />
     <ClInclude Include="libs\implot\implot.h" />
     <ClInclude Include="libs\implot\implot_internal.h" />
-    <ClInclude Include="resources\maps\FastNoiseLite.h" />
     <ClInclude Include="simulator\include\behaviour_tree.hpp" />
     <ClInclude Include="simulator\include\imgui_debugger.hpp" />
     <ClInclude Include="simulator\include\imgui_menu.hpp" />
