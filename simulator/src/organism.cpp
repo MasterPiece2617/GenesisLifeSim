@@ -121,12 +121,35 @@ void Behaviour::start()
             std::uniform_real_distribution<float> angle_deg_dist(0.0f, 360.0f);
             std::uniform_real_distribution<float> radius_dist(0.0f, 10.0f);
 
-            const float angle_deg = angle_deg_dist(rng);
+            float angle_deg = angle_deg_dist(rng);
             const float angle_rad = angle_deg * 3.14159265f / 180.0f;
             const float radius = radius_dist(rng);
 
-            const sf::Vector2f offset(std::cos(angle_rad) * radius, std::sin(angle_rad) * radius);
+            sf::Vector2f offset(std::cos(angle_rad) * radius, std::sin(angle_rad) * radius);
             goal = pos + offset;
+
+            auto terrain_entity = Scene::instance().get_entity("Terrain");
+            if (auto terrain = std::dynamic_pointer_cast<EntityTerrain>(terrain_entity))
+            {
+                float map_w = (float)terrain->get_width();
+                float map_h = (float)terrain->get_height();
+
+                // --- LÓGICA DE REBOTE (BOUNCE) ---
+                // Si el punto cae fuera, invertimos el offset para que vaya hacia adentro.
+                if (goal.x < 0.f || goal.x > map_w - 1.0f ||
+                    goal.y < 0.f || goal.y > map_h - 1.0f)
+                {
+                    offset = -offset; // Invertir dirección
+                    goal = pos + offset;
+                    
+                    // Recalculamos el ángulo para la rotación visual
+                    angle_deg = std::atan2(offset.y, offset.x) * 180.0f / 3.14159265f;
+                }
+
+                // Clamp final de seguridad (por si acaso)
+                goal.x = std::max(0.f, std::min(goal.x, map_w - 1.0f));
+                goal.y = std::max(0.f, std::min(goal.y, map_h - 1.0f));
+            }
 
             organism->get_transform().set_rotation(angle_deg);
             moving = true;
@@ -248,7 +271,7 @@ void Behaviour::update()
 
 	if (auto organism = std::dynamic_pointer_cast<Organism>(owner.lock()))
 	{
-		organism->get_stats().hunger -= 0.5 * Time::get_delta();
+		organism->get_stats().hunger -= 5 * Time::get_delta();
 
 		if (organism->get_stats().hunger <= 0)
 		{
