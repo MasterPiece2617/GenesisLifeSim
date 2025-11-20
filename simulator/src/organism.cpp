@@ -275,13 +275,6 @@ void Behaviour::start()
 	selector->add_child(move_to_target);
 	selector->add_child(alimentation_control);
     selector->add_child(reproduce);
-	/*
-	std::cout << root << " root \n";
-	std::cout << selector << " selector \n";
-	std::cout << alimentation_control << " alimentation_control \n";
-	std::cout << is_hungry << " is_hungry \n";
-	std::cout << searh_food << " searh_food \n";
-	std::cout << reproduce << " reproduce \n";*/
 }
 
 void Behaviour::update()
