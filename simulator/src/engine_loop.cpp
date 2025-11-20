@@ -4,6 +4,11 @@
 Engine::Engine()
 {
     this->window = std::make_shared<sf::RenderWindow>(sf::VideoMode(Config::WINDOW_WIDTH, Config::WINDOW_HEIGHT), "Genesis BioSim");
+
+    // Create the global texture atlas at startup
+    //this->texture_atlas = std::make_shared<Atlas>();
+    //Texture::set_atlas(this->texture_atlas);
+
     ImGui::SFML::Init(*this->window);
 
     EventManager::suscribe(this->window, EventType::WINDOW_CLOSED, [&](const Event& event)
@@ -89,17 +94,15 @@ void Engine::update()
 
         ImGui::SFML::ProcessEvent(ev);
     }
+    ImGui::SFML::ProcessEvent(ev);
+  
 
-    // Update
-    if (caract_load)
-    {
-    
+    // Update  
+  
     for (auto& entity : Scene::instance().get_entities())
     {
         if (entity->get_is_active())
         {
-            entity->get_transform().reset_dirty();
-
             sf::Vector2f pos = entity->get_transform().get_position();
             sf::Vector2f scale = entity->get_transform().get_scale();
 
@@ -111,7 +114,6 @@ void Engine::update()
             }
         }
     }
-    }
 
     ImGui::SFML::Update(*this->window, deltaClock.restart());
     this->window->setView(Scene::instance().get_main_camera()->get_view());
@@ -119,180 +121,189 @@ void Engine::update()
 
 void Engine::render()
 {
-    this->window->clear();
+  this->window->clear();
+  // Dibuja el terreno primero, si existe
+  if (terrain)
+  {
+      terrain->draw(*window, sf::RenderStates::Default);
+  }
 
-    
-    std::vector<std::vector<std::shared_ptr<SpriteRenderer>>> render_queue = std::vector<std::vector<std::shared_ptr<SpriteRenderer>>>(256, std::vector<std::shared_ptr<SpriteRenderer>>());
+  std::vector<std::vector<std::shared_ptr<SpriteRenderer>>> render_queue =
+      std::vector<std::vector<std::shared_ptr<SpriteRenderer>>>(
+          256, std::vector<std::shared_ptr<SpriteRenderer>>());
+  
+  sf::View view = Scene::instance().get_main_camera()->get_view();
+  sf::FloatRect bounds(view.getCenter().x - view.getSize().x / 2.0f,
+                       view.getCenter().y - view.getSize().y / 2.0f,
+                       view.getSize().x, view.getSize().y);
 
-    sf::View view = Scene::instance().get_main_camera()->get_view();
-    sf::FloatRect bounds(
-        view.getCenter().x - view.getSize().x / 2.0f,
-        view.getCenter().y - view.getSize().y / 2.0f,
-        view.getSize().x,
-        view.getSize().y
-    );
+  int chunk_size_world = Constants::px_mt * Constants::chunk_size;
 
-    int chunk_size_world = Constants::px_mt * Constants::chunk_size;
+  // Correct calculation for chunk coordinates from world coordinates
+  int start_x = static_cast<int>(std::floor(bounds.left / chunk_size_world));
+  int end_x = static_cast<int>(std::ceil((bounds.left + bounds.width) / chunk_size_world));
 
-    int start_x = static_cast<int>(std::floor(bounds.left / chunk_size_world)) * Constants::chunk_size;
-    int end_x = static_cast<int>(std::ceil((bounds.left + bounds.width) / chunk_size_world)) * Constants::chunk_size;
-
-    int start_y = static_cast<int>(std::floor(bounds.top / chunk_size_world)) * Constants::chunk_size;
-    int end_y = static_cast<int>(std::ceil((bounds.top + bounds.height) / chunk_size_world)) * Constants::chunk_size;
+  int start_y = static_cast<int>(std::floor(bounds.top / chunk_size_world));
+  int end_y = static_cast<int>(std::ceil((bounds.top + bounds.height) / chunk_size_world));
 
     std::unordered_set<std::shared_ptr<Entity>> visited_entities;
 
-    if (caract_load)
-    {
+	//if (caract_load)
+	
+		for (int y = start_y; y <= end_y; ++y)
+		{
+			for (int x = start_x; x <= end_x; ++x)
+			{
+				std::vector<std::shared_ptr<Entity>> _entities = Scene::instance().get_chunk_entities(sf::Vector2f(x * Constants::chunk_size, y * Constants::chunk_size));
+				for (auto& entity : _entities)
+				{
+					if (visited_entities.count(entity) > 0)
+					{
+						continue;
+					}
+					visited_entities.insert(entity);
 
-    for (int y = start_y; y < end_y; y += Constants::chunk_size)
-    {
-        for (int x = start_x; x < end_x; x += Constants::chunk_size)
-        {
-            std::vector<std::shared_ptr<Entity>> _entities = Scene::instance().get_chunk_entities(sf::Vector2f(x, y));
+					std::shared_ptr<SpriteRenderer> renderer = entity->get_component<SpriteRenderer>();
 
-            for (auto& entity : _entities)
-            {
-                if (visited_entities.count(entity) > 0)
-                {
-                    continue;
-                }
+					if (renderer && entity->get_is_active() && renderer->get_is_active())
+					{
+						if (entity->get_transform().get_dirty())
+						{
+							renderer->build_batch();
+							entity->get_transform().reset_dirty();
+						}
+						render_queue[renderer->get_layer()].push_back(renderer);
+					}
+				}
+			}
+		}
+	//}
 
-                visited_entities.insert(entity);
+	for (const auto& layer : render_queue)
+	{
+		sf::VertexArray final_vertices(sf::Quads); // 1. Crear un Ãºnico VertexArray por capa.
+		for (const auto& renderer : layer)
+		{
+			const sf::VertexArray& batch = renderer->get_batch();
+			for (size_t i = 0; i < batch.getVertexCount(); ++i)
+			{
+				final_vertices.append(batch[i]); // 2. Acumular los vÃ©rtices de todos los renderers.
+			}
+		}
+		// 3. Dibujar todos los vÃ©rtices acumulados de la capa de una sola vez.
+		this->window->draw(final_vertices, &Texture::get_atlas()); 
+	}
 
-                std::shared_ptr<SpriteRenderer> renderer = entity->get_component<SpriteRenderer>();
-
-                if (!renderer)
-                {
-                    continue;
-                }
-
-                if (entity->get_is_active() && renderer->get_is_active())
-                {
-                    if (entity->get_transform().get_dirty())
-                    {
-                        renderer->build_batch();
-                    }
-
-                    render_queue[renderer->get_layer()].push_back(renderer);
-                }
-            }
-        }
-    }
-
-    for (const std::vector<std::shared_ptr<SpriteRenderer>>& layer : render_queue)
-    {
-        sf::VertexArray final_vertices(sf::Quads);
-
-        for (const std::shared_ptr<SpriteRenderer>& renderer : layer)
-        {
-            const sf::VertexArray& batch = renderer->get_batch();
-
-            for (size_t i = 0; i < batch.getVertexCount(); ++i)
-            {
-                final_vertices.append(batch[i]);
-            }
-        }
-
-        this->window->draw(final_vertices, &Texture::get_atlas());
-    }
-
-    }
-
-    ImGui::SFML::Render(*this->window);
-    this->window->display();
+  ImGui::SFML::Render(*this->window);
+  this->window->display();
 }
 
 // Main loop function
-void Engine::run()
+void Engine::run() 
 {
-    float fps_accumulator = 0.0f;
-    float fps_display = 0.0f;
-    float fps_timer = 0.0f;
+  float fps_accumulator = 0.0f;
+  float fps_display = 0.0f;
+  float fps_timer = 0.0f;
+  static std::string selected_map = "";
 
+  ImGui::CreateContext();
+  ImPlot::CreateContext();
 
-    while (this->window->isOpen())
+  this->window->setView(scene.get_main_camera()->get_view());
+
+  while (this->window->isOpen()) {
+    Time::update();
+    //auto start = std::chrono::high_resolution_clock::now();
+    this->update();
+
+    float delta = Time::get_delta();
+    fps_timer += delta;
+    if (fps_timer >= 1.0f)
     {
-        Time::update();
-        this->update();
-
-        float delta = Time::get_delta();
-        fps_timer += delta;
-
-        if (fps_timer >= 1.0f)
-        {
-            fps_display = 1.0f / delta;
-            fps_timer = 0.0f;
-        }
-
-        if (!caract_load)
-        {
-            ImGui::Begin("Seleccione las caracteristicas:");
-            ImGui::Text("Seleccione las caracteristicas que desea cargar en la simulacion.");
-            ImGui::Separator();
-
-            // --- NUEVO CÓDIGO PARA MODIFICAR STATS ---
-
-            ImGui::Text("Stats del Organismo:");
-            // Conecta el SliderInt a organism_config.vision_radius
-            ImGui::SliderInt("Vision", &organism_config.vision_radius, 1, 20);
-         
-            ImGui::Separator();
-            ImGui::Text("Stats de Comportamiento:");
-            // Conecta el SliderFloat a organism_config.move_speed
-            ImGui::SliderFloat("Velocidad (Speed)", &organism_config.move_speed, 1.0f, 15.0f);
-
-            // Selector de color en el menú inicial (no runtime)
-            {
-                sf::Color sc = organism_config.color;
-                float ccol[4] = { sc.r / 255.0f, sc.g / 255.0f, sc.b / 255.0f, sc.a / 255.0f };
-                if (ImGui::ColorEdit4("Color del Organismo", ccol))
-                {
-                    organism_config.color = sf::Color(
-                        static_cast<sf::Uint8>(ccol[0] * 255.0f),
-                        static_cast<sf::Uint8>(ccol[1] * 255.0f),
-                        static_cast<sf::Uint8>(ccol[2] * 255.0f),
-                        static_cast<sf::Uint8>(ccol[3] * 255.0f)
-                    );
-                }
-            }
-
-            // --- FIN DEL NUEVO CÓDIGO ---
-
-            ImGui::Separator();
-
-            if (ImGui::Button("Cargar Caracteristicas"))
-            {
-                caract_load = true;
-                Scene::instance().load(organism_config);
-                this->window->setView(Scene::instance().get_main_camera()->get_view());
-            }
-
-            ImGui::End();
-
-        }
-        else {
-
-            sf::Vector2f mouse_world_pos = window->mapPixelToCoords(sf::Mouse::getPosition());
-            mouse_world_pos.x /= Constants::px_mt;
-            mouse_world_pos.y /= Constants::px_mt;
-
-            ImGui::Begin("Info");
-            ImGui::Text("Entities: %d", Scene::instance().get_entities().size());
-            ImGui::Text("FPS: %.2f", fps_display);
-            ImGui::Text("Zoom: %.2f", Scene::instance().get_main_camera()->get_zoom());
-            ImGui::Text("Mouse x: %f y: %f", mouse_world_pos.x, mouse_world_pos.y);
-
-            if (selected_entity)
-            {
-                ImGui::Text("%s", selected_entity->get_name().c_str());
-            }
-
-            ImGui::End();
-        }
-
-        this->render();
+        fps_display = 1.0f / delta;
+        fps_timer = 0.0f;
     }
 
-    ImGui::SFML::Shutdown();
-}
+    // cargador de mapa
+    if (!map_loaded)
+    {
+
+      ImGuiMenu::show_select_map_window(this->map_loaded, selected_map, 
+                                        EntityTerrain::get_map_files("resources/maps", ".zadat"),
+                                        this->terrain, this->texture_atlas);
+      } else {
+
+        // debug celldata with imgui
+        if (this->terrain) 
+        {
+          Debugger::imgui_terrain(this->terrain, this->window);
+        }
+        // cargador de caracteristicas
+        ImGui::Begin("Seleccione las caracteristicas:");
+        ImGui::Text("Seleccione las caracteristicas que desea cargar en la simulacion.");
+        ImGui::Separator();
+        // --- NUEVO Cï¿½DIGO PARA MODIFICAR STATS --
+        ImGui::Text("Stats del Organismo:");
+        // Conecta el SliderInt a organism_config.vision_radius
+        ImGui::SliderInt("Vision", &organism_config.vision_radius, 1, 20);
+      
+        ImGui::Separator();
+        ImGui::Text("Stats de Comportamiento:");
+        // Conecta el SliderFloat a organism_config.move_speed
+        ImGui::SliderFloat("Velocidad (Speed)", &organism_config.move_speed, 1.0f, 15.0f);
+        // Selector de color en el menï¿½ inicial (no runtime)
+        {
+            sf::Color sc = organism_config.color;
+            float ccol[4] = { sc.r / 255.0f, sc.g / 255.0f, sc.b / 255.0f, sc.a / 255.0f };
+            if (ImGui::ColorEdit4("Color del Organismo", ccol))
+            {
+                organism_config.color = sf::Color(
+                    static_cast<sf::Uint8>(ccol[0] * 255.0f),
+                    static_cast<sf::Uint8>(ccol[1] * 255.0f),
+                    static_cast<sf::Uint8>(ccol[2] * 255.0f),
+                    static_cast<sf::Uint8>(ccol[3] * 255.0f)
+                );
+            }
+        }
+        // --- FIN DEL NUEVO Cï¿½DIGO --
+        ImGui::Separator();
+        if (ImGui::Button("Cargar Caracteristicas"))
+        {
+            Scene::instance().load(organism_config);
+            this->window->setView(Scene::instance().get_main_camera()->get_view());
+        }
+        ImGui::End();
+
+        sf::Vector2f mouse_world_pos = window->mapPixelToCoords(sf::Mouse::getPosition());
+        mouse_world_pos.x /= Constants::px_mt;
+        mouse_world_pos.y /= Constants::px_mt;
+
+        Debugger::imgui_scene(fps_display, mouse_world_pos, selected_entity);
+  
+        ImGui::Begin("Ejemplo implot");
+        if (ImPlot::BeginPlot("Mi primer plot")) 
+        {
+          static float x_data[1000];
+          static float y_data[1000];
+          for (int i = 0; i < 1000; i++) {
+            x_data[i] = i * 0.01f;
+            y_data[i] = std::sin(x_data[i]);
+          }
+          ImPlot::PlotLine("Seno", x_data, y_data, 1000);
+          ImPlot::EndPlot();
+        }
+        ImGui::End();
+
+      }
+      
+      this->render();
+      this->window->setTitle("Genesis BioSim");  
+    }
+  
+  ImPlot::DestroyContext();
+  ImGui::DestroyContext();
+
+  ImGui::SFML::Shutdown();
+  }
+
+    

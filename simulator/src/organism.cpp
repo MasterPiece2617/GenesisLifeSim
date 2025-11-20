@@ -13,9 +13,8 @@ Organism::Organism(std::string _name, const OrganismConfig& _organism_config) : 
 
 void Organism::init()
 {
-	components.push_back(std::make_shared<Behaviour>(weak_from_this(), this->organism_config));
-    components.push_back(std::make_shared<SpriteRenderer>(shared_from_this(), stats.color, "being"));
-	
+	add_component(std::make_shared<Behaviour>(weak_from_this(), this->organism_config));
+    add_component(std::make_shared<SpriteRenderer>(shared_from_this(), stats.color, "being"));
 }
 
 Stats& Organism::get_stats()
@@ -45,17 +44,59 @@ void Behaviour::start()
 				moving = false;
 			}
 
+            float current_effort = 1.0f;
+            auto terrain_entity = Scene::instance().get_entity("Terrain");
+            std::shared_ptr<EntityTerrain> terrain = nullptr;
+
+            if (terrain_entity)
+            {
+                terrain = std::dynamic_pointer_cast<EntityTerrain>(terrain_entity);
+
+                if (terrain)
+                {
+                    sf::Vector2f current_pos = owner.lock()->get_transform().get_position();
+
+                    int pos_x = static_cast<int>(std::floor(current_pos.x));
+                    int pos_y = static_cast<int>(std::floor(current_pos.y));
+
+                    current_effort = terrain->get_effort(static_cast<uint16_t>(pos_x), static_cast<uint16_t>(pos_y));
+                }
+            }
+
+            float effective_speed = speed / current_effort;
+
 			sf::Vector2f dir_normalized = direction / length;
-			sf::Vector2f delta = dir_normalized * speed * Time::get_delta();
+
+			sf::Vector2f delta = dir_normalized * effective_speed * Time::get_delta();
 
 			if (std::sqrt(delta.x * delta.x + delta.y * delta.y) >= length)
 			{
-				owner.lock()->get_transform().set_position(goal);
+				sf::Vector2f final_goal = goal;
+				// Clamp the final goal position to ensure it's within map boundaries
+				if (auto terrain = std::dynamic_pointer_cast<EntityTerrain>(terrain_entity))
+				{
+					final_goal.x = std::max(0.f, std::min(final_goal.x, (float)terrain->get_width() - 1));
+					final_goal.y = std::max(0.f, std::min(final_goal.y, (float)terrain->get_height() - 1));
+				}
+
+				owner.lock()->get_transform().set_position(final_goal);
 				moving = false;
 			}
 			else
 			{
-				owner.lock()->get_transform().translate(delta);
+				sf::Vector2f new_pos = pos + delta;
+
+				// Final safety check: Clamp the new position to map boundaries before translating
+				//auto terrain_entity = Scene::instance().get_entity("Terrain");
+				if (terrain)
+				{
+					new_pos.x = std::max(0.f, std::min(new_pos.x, (float)terrain->get_width() - 1));
+					new_pos.y = std::max(0.f, std::min(new_pos.y, (float)terrain->get_height() - 1));
+				}
+
+				// We set the position directly instead of translating to ensure it's clamped.
+				// The difference is negligible for small deltas.
+				owner.lock()->get_transform().set_position(new_pos);
 			}
 			return BTStatus::RUNNING;
 		}
@@ -101,12 +142,35 @@ void Behaviour::start()
             std::uniform_real_distribution<float> angle_deg_dist(0.0f, 360.0f);
             std::uniform_real_distribution<float> radius_dist(0.0f, 10.0f);
 
-            const float angle_deg = angle_deg_dist(rng);
+            float angle_deg = angle_deg_dist(rng);
             const float angle_rad = angle_deg * 3.14159265f / 180.0f;
             const float radius = radius_dist(rng);
 
-            const sf::Vector2f offset(std::cos(angle_rad) * radius, std::sin(angle_rad) * radius);
+            sf::Vector2f offset(std::cos(angle_rad) * radius, std::sin(angle_rad) * radius);
             goal = pos + offset;
+
+            auto terrain_entity = Scene::instance().get_entity("Terrain");
+            if (auto terrain = std::dynamic_pointer_cast<EntityTerrain>(terrain_entity))
+            {
+                float map_w = (float)terrain->get_width();
+                float map_h = (float)terrain->get_height();
+
+                // --- LÓGICA DE REBOTE (BOUNCE) ---
+                // Si el punto cae fuera, invertimos el offset para que vaya hacia adentro.
+                if (goal.x < 0.f || goal.x > map_w - 1.0f ||
+                    goal.y < 0.f || goal.y > map_h - 1.0f)
+                {
+                    offset = -offset; // Invertir dirección
+                    goal = pos + offset;
+                    
+                    // Recalculamos el ángulo para la rotación visual
+                    angle_deg = std::atan2(offset.y, offset.x) * 180.0f / 3.14159265f;
+                }
+
+                // Clamp final de seguridad (por si acaso)
+                goal.x = std::max(0.f, std::min(goal.x, map_w - 1.0f));
+                goal.y = std::max(0.f, std::min(goal.y, map_h - 1.0f));
+            }
 
             organism->get_transform().set_rotation(angle_deg);
             moving = true;
@@ -187,7 +251,7 @@ void Behaviour::start()
 	std::function<BTStatus()> reproduction = [&]()
 	{
 		auto organism = std::dynamic_pointer_cast<Organism>(owner.lock());
-		std::cout << organism->get_stats().hunger << std::endl;
+		//std::cout << organism->get_stats().hunger << std::endl;
 		return BTStatus::RUNNING;
 	};
 
@@ -232,6 +296,7 @@ void Behaviour::update()
 
 		if (organism->get_stats().hunger <= 0)
 		{
+            std::cout << "Organism " << owner.lock()->get_name() << " has died of starvation." << std::endl;
 			Scene::instance().remove_entity(owner.lock());
 		}
 	}
@@ -259,25 +324,21 @@ void FoodGenerator::init()
 FoodSpawner::FoodSpawner(std::weak_ptr<Entity> _owner) : Component(_owner) {}
 
 void FoodSpawner::update()
-{
-	time += Time::get_delta();
-
-	if (time >= 5.0f)
-	{
-		
-		for (int i = 0; i < 20; ++i)
-		{
-			std::shared_ptr<Food> food = EntityFactory<Food>::create("fruit");
-
-			float x = static_cast<float>(std::rand() % 121 - 60);
-			float y = static_cast<float>(std::rand() % 121 - 60);
-
+{//
+ 	time += Time::get_delta();
+    if (time >= 5.0f)
+    {
+	for (int i = 0; i < 20; ++i)
+    	{
+    		std::shared_ptr<Food> food = EntityFactory<Food>::create("fruit");
+    		auto terrain = Scene::instance().get_entity("Terrain"); // Use get_entity for safety
+    		uint16_t map_width = terrain ? std::dynamic_pointer_cast<EntityTerrain>(terrain)->get_width() : 100;
+    		uint16_t map_height = terrain ? std::dynamic_pointer_cast<EntityTerrain>(terrain)->get_height() : 100;
+    		float x = static_cast<float>(std::rand() % map_width);
+    		float y = static_cast<float>(std::rand() % map_height);
 			food->get_transform().set_position(sf::Vector2f(x, y));
-
-
 			Scene::instance().add_entity(food);
-		}
-
-		time = 0;
-	}
+    	}
+    time = 0;
+    }
 }

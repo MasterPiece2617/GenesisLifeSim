@@ -1,5 +1,8 @@
 #pragma once 
 
+#include <cmath>
+#include <numbers>
+
 #include <SFML/System.hpp>
 
 class Time
@@ -22,4 +25,6 @@ public:
 	static const int px_mt = 32; // pixels per meter
 	static const int map_size = 4096;
 	static const int chunk_size = 4;
+	
+	static constexpr float pi_val = M_PI;
 };

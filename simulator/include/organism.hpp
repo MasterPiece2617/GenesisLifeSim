@@ -5,6 +5,9 @@
 #include <functional>
 #include <random>
 #include <unordered_set>
+#include <vector>
+#include <memory>
+#include <numbers>
 
 #include <SFML/System.hpp>
 
@@ -15,6 +18,7 @@
 #include <scene.hpp>
 #include <utils.hpp>
 #include <organism_config.hpp>
+#include <entity_terrain.hpp>
 
 struct Stats
 {

@@ -3,6 +3,7 @@
 #include <iostream>
 #include <filesystem>
 #include <unordered_map>
+#include <cmath>
 
 #include <SFML/Graphics.hpp>
 
