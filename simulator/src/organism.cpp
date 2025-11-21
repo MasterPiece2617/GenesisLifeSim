@@ -1,5 +1,7 @@
 #include "organism.hpp"
 
+Organism::Organism(std::string _name, const Stats _stats) : Entity(_name), stats(_stats) {}
+
 Organism::Organism(std::string _name, const OrganismConfig& _organism_config) : Entity(_name), organism_config(_organism_config)
 {
 	this->stats.vision = _organism_config.vision_radius;
@@ -214,16 +216,24 @@ void Behaviour::start()
             std::unordered_set<std::shared_ptr<Entity>> visited;
             std::pair<std::shared_ptr<Entity>, float> min_distance = { nullptr, std::numeric_limits<float>::max() };
 
-            for (int i = y_min; i < y_max; i += Constants::chunk_size) {
-                for (int j = x_min; j < x_max; j += Constants::chunk_size) {
+            for (int i = y_min; i < y_max; i += Constants::chunk_size) 
+            {
+                for (int j = x_min; j < x_max; j += Constants::chunk_size) 
+                {
                     auto chunk_entities = Scene::instance().get_chunk_entities(sf::Vector2f(j, i));
-                    for (auto& e : chunk_entities) {
-                        if (auto food = std::dynamic_pointer_cast<Food>(e)) {
-                            if (visited.insert(food).second) {
+
+                    for (auto& e : chunk_entities) 
+                    {
+                        if (auto food = std::dynamic_pointer_cast<Food>(e)) 
+                        {
+                            if (visited.insert(food).second) 
+                            {
                                 float dx = food->get_transform().get_position().x - pos.x;
                                 float dy = food->get_transform().get_position().y - pos.y;
                                 float abs = std::sqrt(dx * dx + dy * dy);
-                                if (abs <= vision && abs < min_distance.second) {
+
+                                if (abs <= vision && abs < min_distance.second) 
+                                {
                                     min_distance = { food, abs };
                                 }
                             }
@@ -248,12 +258,166 @@ void Behaviour::start()
     };
 
 
-	std::function<BTStatus()> reproduction = [&]()
-	{
-		auto organism = std::dynamic_pointer_cast<Organism>(owner.lock());
-		//std::cout << organism->get_stats().hunger << std::endl;
-		return BTStatus::RUNNING;
-	};
+    std::function<BTStatus()> reproduction = [&]()
+        {
+            auto owner_sp = owner.lock();
+            if (!owner_sp) return BTStatus::FAILURE;
+
+            auto og = std::dynamic_pointer_cast<Organism>(owner_sp);
+            if (!og) return BTStatus::RUNNING;
+
+            const sf::Vector2f pos = og->get_transform().get_position();
+
+            static std::unordered_map<const Organism*, int> cooldown_ticks;
+
+            const int COOLDOWN_TICKS = 300;
+
+            static std::mt19937 rng(std::random_device{}());
+            std::uniform_real_distribution<float> prob_dist(0.0f, 1.0f);
+            const float REPRODUCE_PROB = 0.05f;
+
+            {
+                auto it = cooldown_ticks.find(og.get());
+                if (it != cooldown_ticks.end() && it->second > 0) it->second--;
+            }
+
+            int vision = og->get_stats().vision;
+            int x_min = std::floor(pos.x - vision);
+            int x_max = std::ceil(pos.x + vision);
+            int y_min = std::floor(pos.y - vision);
+            int y_max = std::ceil(pos.y + vision);
+
+            std::unordered_set<std::shared_ptr<Entity>> visited;
+            std::shared_ptr<Organism> nearest = nullptr;
+            float min_dist = std::numeric_limits<float>::max();
+
+            for (int i = y_min; i < y_max; i += Constants::chunk_size)
+            {
+                for (int j = x_min; j < x_max; j += Constants::chunk_size)
+                {
+                    auto chunk_entities = Scene::instance().get_chunk_entities(sf::Vector2f(j, i));
+                    for (auto& e : chunk_entities)
+                    {
+                        if (e == owner_sp) continue;
+
+                        if (auto other_og = std::dynamic_pointer_cast<Organism>(e))
+                        {
+                            if (!visited.insert(other_og).second) continue;
+
+                            float dx = other_og->get_transform().get_position().x - pos.x;
+                            float dy = other_og->get_transform().get_position().y - pos.y;
+                            float dist = std::sqrt(dx * dx + dy * dy);
+
+                            if (dist <= vision && dist < min_dist)
+                            {
+                                min_dist = dist;
+                                nearest = other_og;
+                            }
+                        }
+                    }
+                }
+            }
+
+            const float reproduce_range = 1.0f;
+
+            if (nearest)
+            {
+                {
+                    auto it = cooldown_ticks.find(nearest.get());
+                    if (it != cooldown_ticks.end() && it->second > 0) it->second--;
+                }
+
+                if (min_dist <= reproduce_range)
+                {
+                    const int my_cd = cooldown_ticks[og.get()];
+                    const int other_cd = cooldown_ticks[nearest.get()];
+                    const bool can_reproduce = (my_cd <= 0) && (other_cd <= 0);
+
+                    const bool enough_hunger = (og->get_stats().hunger >= 30.0f) && (nearest->get_stats().hunger >= 30.0f);
+
+                    if (can_reproduce && enough_hunger && prob_dist(rng) <= REPRODUCE_PROB)
+                    {
+						Stats child_stats;
+						child_stats.hunger = 100.0f;
+						child_stats.vision = (og->get_stats().vision + nearest->get_stats().vision) / 2;
+						child_stats.color = sf::Color(og->get_stats().color.r + nearest->get_stats().color.r / 2, og->get_stats().color.g + nearest->get_stats().color.g / 2, og->get_stats().color.b + nearest->get_stats().color.b / 2);
+
+                        std::shared_ptr<Organism> child = EntityFactory<Organism>::create("Organism", child_stats);
+                        sf::Vector2f child_pos = pos;
+                        child_pos.x += static_cast<float>((std::rand() % 3) - 1);
+                        child_pos.y += static_cast<float>((std::rand() % 3) - 1);
+                        child->get_transform().set_position(child_pos);
+                        Scene::instance().add_entity(child);
+
+                        og->get_stats().hunger = std::max(0.0f, og->get_stats().hunger - 30.0f);
+                        nearest->get_stats().hunger = std::max(0.0f, nearest->get_stats().hunger - 30.0f);
+
+                        cooldown_ticks[og.get()] = COOLDOWN_TICKS;
+                        cooldown_ticks[nearest.get()] = COOLDOWN_TICKS;
+
+                        moving = false;
+                        fixed_entity.reset();
+
+                        return BTStatus::SUCCESS;
+                    }
+                    else
+                    {
+                        return BTStatus::RUNNING;
+                    }
+                }
+                else
+                {
+                    fixed_entity = nearest;
+                    goal = fixed_entity->get_transform().get_position();
+                    sf::Vector2f dir = goal - pos;
+                    float angle_rad = std::atan2(dir.y, dir.x);
+                    float angle_deg = angle_rad * 180.0f / 3.14159265f;
+                    og->get_transform().set_rotation(angle_deg);
+                    moving = true;
+                    return BTStatus::RUNNING;
+                }
+            }
+
+            if (!moving && !fixed_entity)
+            {
+                static std::mt19937 rng_walk(std::random_device{}());
+                std::uniform_real_distribution<float> angle_deg_dist(0.0f, 360.0f);
+                std::uniform_real_distribution<float> radius_dist(0.0f, 10.0f);
+
+                float angle_deg = angle_deg_dist(rng_walk);
+                const float angle_rad = angle_deg * 3.14159265f / 180.0f;
+                const float radius = radius_dist(rng_walk);
+
+                sf::Vector2f offset(std::cos(angle_rad) * radius, std::sin(angle_rad) * radius);
+                goal = pos + offset;
+
+                auto terrain_entity = Scene::instance().get_entity("Terrain");
+                if (auto terrain = std::dynamic_pointer_cast<EntityTerrain>(terrain_entity))
+                {
+                    float map_w = static_cast<float>(terrain->get_width());
+                    float map_h = static_cast<float>(terrain->get_height());
+
+                    if (goal.x < 0.f || goal.x > map_w - 1.0f ||
+                        goal.y < 0.f || goal.y > map_h - 1.0f)
+                    {
+                        offset = -offset;
+                        goal = pos + offset;
+                        angle_deg = std::atan2(offset.y, offset.x) * 180.0f / 3.14159265f;
+                    }
+
+                    goal.x = std::max(0.f, std::min(goal.x, map_w - 1.0f));
+                    goal.y = std::max(0.f, std::min(goal.y, map_h - 1.0f));
+                }
+
+                og->get_transform().set_rotation(angle_deg);
+                moving = true;
+                return BTStatus::RUNNING;
+            }
+
+            return BTStatus::RUNNING;
+        };
+
+
 
     std::shared_ptr<Node> root = bt.get_root();
     std::shared_ptr<SequenceNode> selector = std::make_shared<SequenceNode>(root);
@@ -275,13 +439,6 @@ void Behaviour::start()
 	selector->add_child(move_to_target);
 	selector->add_child(alimentation_control);
     selector->add_child(reproduce);
-	/*
-	std::cout << root << " root \n";
-	std::cout << selector << " selector \n";
-	std::cout << alimentation_control << " alimentation_control \n";
-	std::cout << is_hungry << " is_hungry \n";
-	std::cout << searh_food << " searh_food \n";
-	std::cout << reproduce << " reproduce \n";*/
 }
 
 void Behaviour::update()

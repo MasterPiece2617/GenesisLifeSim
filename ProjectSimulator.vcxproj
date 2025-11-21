@@ -102,7 +102,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>SFML_STATIC;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)libs\SFML\include;$(SolutionDir)simulator\include;$(SolutionDir)libs\imgui\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)libs\implot\;$(SolutionDir)libs\SFML\include;$(SolutionDir)simulator\include;$(SolutionDir)libs\imgui\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -120,7 +120,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>SFML_STATIC;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)libs\SFML\include;$(SolutionDir)simulator\include;$(SolutionDir)libs\imgui\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)libs\implot\;$(SolutionDir)libs\SFML\include;$(SolutionDir)simulator\include;$(SolutionDir)libs\imgui\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -136,10 +136,14 @@
     <ClCompile Include="libs\imgui\imgui_draw.cpp" />
     <ClCompile Include="libs\imgui\imgui_tables.cpp" />
     <ClCompile Include="libs\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="libs\implot\implot.cpp" />
+    <ClCompile Include="libs\implot\implot_items.cpp" />
     <ClCompile Include="simulator\src\behaviour_tree.cpp" />
     <ClCompile Include="simulator\src\camera.cpp" />
     <ClCompile Include="simulator\src\entity_terrain.cpp" />
     <ClCompile Include="simulator\src\event_manager.cpp" />
+    <ClCompile Include="simulator\src\imgui_debugger.cpp" />
+    <ClCompile Include="simulator\src\imgui_menu.cpp" />
     <ClCompile Include="simulator\src\organism.cpp" />
     <ClCompile Include="simulator\src\renderer.cpp" />
     <ClCompile Include="simulator\src\terrain.cpp" />
@@ -163,6 +167,7 @@
     <None Include="docs\scene.md" />
     <None Include="docs\transform.md" />
     <None Include="README.md" />
+    <None Include="\\wsl.localhost\Debian\home\darxj\Workbench\Proyecto_AYDA\proyecto_ayda\resources\maps\map_noise_1_v2.zadat" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="libs\imgui\imconfig-SFML.h" />
@@ -174,7 +179,11 @@
     <ClInclude Include="libs\imgui\imstb_rectpack.h" />
     <ClInclude Include="libs\imgui\imstb_textedit.h" />
     <ClInclude Include="libs\imgui\imstb_truetype.h" />
+    <ClInclude Include="libs\implot\implot.h" />
+    <ClInclude Include="libs\implot\implot_internal.h" />
     <ClInclude Include="simulator\include\behaviour_tree.hpp" />
+    <ClInclude Include="simulator\include\imgui_debugger.hpp" />
+    <ClInclude Include="simulator\include\imgui_menu.hpp" />
     <ClInclude Include="simulator\include\organism.hpp" />
     <ClInclude Include="simulator\include\camera.hpp" />
     <ClInclude Include="simulator\include\component.hpp" />

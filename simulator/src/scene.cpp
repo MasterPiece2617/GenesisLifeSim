@@ -67,7 +67,6 @@ void Scene::load(const OrganismConfig& organism_config) // Provisional
 	{
 		auto entity = EntityFactory<Organism>::create("Organism " + std::to_string(i), organism_config);
 
-		// Get map dimensions to spawn organisms inside
 		auto terrain = Scene::instance().get_entity("Terrain");
 		uint16_t map_width = terrain ? std::dynamic_pointer_cast<EntityTerrain>(terrain)->get_width() : 100;
 		uint16_t map_height = terrain ? std::dynamic_pointer_cast<EntityTerrain>(terrain)->get_height() : 100;
@@ -88,7 +87,7 @@ std::vector<std::shared_ptr<Entity>> Scene::get_entities() const
 {
 	return entities;
 }
-// To manage terrain perfectly, we need to be able to get entities by name
+
 std::shared_ptr<Entity> Scene::get_entity(const std::string& name) const
 {
 	for (const auto& entity : entities)

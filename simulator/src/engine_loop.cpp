@@ -245,7 +245,7 @@ void Engine::run()
         // --- NUEVO C�DIGO PARA MODIFICAR STATS --
         ImGui::Text("Stats del Organismo:");
         // Conecta el SliderInt a organism_config.vision_radius
-        ImGui::SliderInt("Vision", &organism_config.vision_radius, 1, 20);
+        ImGui::SliderFloat("Vision", &organism_config.vision_radius, 1.0f, 20.0f);
       
         ImGui::Separator();
         ImGui::Text("Stats de Comportamiento:");
