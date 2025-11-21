@@ -36,7 +36,7 @@ void ImGuiMenu::show_organism_config_window(OrganismConfig& organism_config, sf:
     ImGui::Text("Seleccione las caracteristicas que desea cargar en la simulacion.");
     ImGui::Separator();
     ImGui::Text("Stats del Organismo:");
-    ImGui::SliderInt("Vision", &organism_config.vision_radius, 1, 20);
+    ImGui::SliderFloat("Vision", &organism_config.vision_radius, 1, 20);
     ImGui::Separator();
     ImGui::Text("Stats de Comportamiento:");
     ImGui::SliderFloat("Velocidad (Speed)", &organism_config.move_speed, 1.0f, 15.0f);
@@ -107,37 +107,56 @@ void ImPlotMenu::organism_population_plot()
     // Use vectors to store data dynamically
     static std::vector<float> time_data;
     static std::vector<float> population_data;
-    
-    // Get current time and organism count
-    float current_time = ImGui::GetTime();
-    int organism_count = 0;
-    for (const auto& entity : Scene::instance().get_entities())
+
+	// time controllator redefine to 32 bits draw in imguiconfig
+	static float time_accumulator = 0.0f;
+	time_accumulator += ImGui::GetIO().DeltaTime;
+
+    if (time_accumulator > 0.1f)
     {
-        if (std::dynamic_pointer_cast<Organism>(entity))
+
+		time_accumulator = 0.0f;
+
+        // Get current time and organism count
+        float current_time = ImGui::GetTime();
+        int organism_count = 0;
+        for (const auto& entity : Scene::instance().get_entities())
         {
-            organism_count++;
+            if (std::dynamic_pointer_cast<Organism>(entity))
+            {
+                organism_count++;
+            }
         }
+
+        // Add new data point
+        time_data.push_back(current_time);
+        population_data.push_back(static_cast<float>(organism_count));
+
+        // Remove data older than 'history'
+        float history = 60.0f;
+        auto first_to_keep = std::lower_bound(time_data.begin(), time_data.end(), current_time - history);
+        if (first_to_keep != time_data.begin()) {
+            auto num_to_erase = std::distance(time_data.begin(), first_to_keep);
+            time_data.erase(time_data.begin(), first_to_keep);
+            population_data.erase(population_data.begin(), population_data.begin() + num_to_erase);
+        }
+
+        ImPlot::SetNextAxisLimits(ImAxis_X1, current_time - history, current_time, ImGuiCond_Always);
+        ImPlot::SetNextAxisToFit(ImAxis_Y1);
+
     }
 
-    // Add new data point
-    time_data.push_back(current_time);
-    population_data.push_back(static_cast<float>(organism_count));
-
-    // Remove data older than 'history'
-    float history = 60.0f;
-    auto first_to_keep = std::lower_bound(time_data.begin(), time_data.end(), current_time - history);
-    if (first_to_keep != time_data.begin()) {
-        auto num_to_erase = std::distance(time_data.begin(), first_to_keep);
-        time_data.erase(time_data.begin(), first_to_keep);
-        population_data.erase(population_data.begin(), population_data.begin() + num_to_erase);
-    }
-
-    ImPlot::SetNextAxisLimits(ImAxis_X1, current_time - history, current_time, ImGuiCond_Always);
-    ImPlot::SetNextAxisToFit(ImAxis_Y1);
-
-    if (ImPlot::BeginPlot("Organism Population Over Time", "Time", "Population"))
+    // Si no hacia el cambio, no funcionaba en visual studio
+    if (ImPlot::BeginPlot("Organism Population Over Time"))
     {
-        // Plot the data
+        ImPlot::SetupAxes("Time", "Population");
+
+		float time = ImGui::GetTime();
+        ImPlot::SetupAxisLimits(ImAxis_X1, time - 60.0f, time, ImGuiCond_Always);
+
+		// Forzar seguimiento automatico del eje Y
+        ImPlot::SetupAxis(ImAxis_Y1, nullptr, ImPlotAxisFlags_AutoFit);
+
         if (!time_data.empty())
         {
             ImPlot::PlotLine("Population", time_data.data(), population_data.data(), time_data.size());
