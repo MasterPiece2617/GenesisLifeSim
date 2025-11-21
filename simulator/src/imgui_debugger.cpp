@@ -31,6 +31,7 @@ void Debugger::imgui_terrain(std::shared_ptr<EntityTerrain> terrain, std::shared
       ImGui::Text("Tipo de terreno: %d", cell_data.terrain_type);
       ImGui::Text("ID de textura: %d", cell_data.texture_id);
       ImGui::Text("caminable: %s", cell_data.is_walkable ? "Si" : "No");
+      ImGui::Text("Esfuerzo: %d", cell_data.effort);
     } else {
       ImGui::Separator();
       ImGui::Text("Fuera de los limites del mapa");

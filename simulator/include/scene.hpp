@@ -34,6 +34,8 @@ protected:
 
 public:
 
+	int num_organisms = 5;
+
 	Scene(); 
 	Scene(const Scene&) = delete;
 	Scene& operator=(const Scene&) = delete;

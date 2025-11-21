@@ -31,19 +31,49 @@ void Behaviour::start()
 {
 	std::function<BTStatus()> move = [&]()
 	{
-		if (moving)
-		{
-			sf::Vector2f pos = owner.lock()->get_transform().get_position();
-			sf::Vector2f direction = goal - pos;
+        if (moving)
+        {
+            sf::Vector2f pos = owner.lock()->get_transform().get_position();
 
-			float length = std::sqrt(direction.x * direction.x + direction.y * direction.y);
+            // --- ELECCIÓN DE OBJETIVO ---
+            // Si hay un camino, vamos al nodo actual. Si no, vamos al goal final.
+            sf::Vector2f current_target = goal;
+            bool using_path = !path.empty();
 
-			if (length < 0.001f)
-			{
-				owner.lock()->get_transform().set_position(goal);
-				moving = false;
-			}
+            if (using_path)
+            {
+                // Protección por si el índice se sale
+                if (path_index > path.size() - 1){
+                    moving = false;
+                    path.clear();
+                    return BTStatus::SUCCESS;
+                }
+                current_target = path[path_index];
+            }
 
+            // Usamos current_target en vez de goal para la dirección
+            sf::Vector2f direction = current_target - pos;
+
+            float length = std::sqrt(direction.x * direction.x + direction.y * direction.y);
+
+            // CASO 1: LLEGADA INMEDIATA
+            if (length < 0.1f)
+            {
+                owner.lock()->get_transform().set_position(current_target); // Snap al objetivo actual
+                
+                // --- AVANCE DE NODO ---
+                if (using_path) {
+                    ++path_index; // Siguiente nodo
+                    if (path_index < path.size()) return BTStatus::RUNNING; // Sigue caminando
+                    path.clear(); // Terminó el camino
+                }
+                // ---------------------------------
+
+                moving = false;
+                return BTStatus::SUCCESS;
+            }
+
+            // --- TU LÓGICA DE TERRENO ---
             float current_effort = 1.0f;
             auto terrain_entity = Scene::instance().get_entity("Terrain");
             std::shared_ptr<EntityTerrain> terrain = nullptr;
@@ -51,58 +81,77 @@ void Behaviour::start()
             if (terrain_entity)
             {
                 terrain = std::dynamic_pointer_cast<EntityTerrain>(terrain_entity);
-
                 if (terrain)
                 {
                     sf::Vector2f current_pos = owner.lock()->get_transform().get_position();
-
                     int pos_x = static_cast<int>(std::floor(current_pos.x));
                     int pos_y = static_cast<int>(std::floor(current_pos.y));
-
                     current_effort = terrain->get_effort(static_cast<uint16_t>(pos_x), static_cast<uint16_t>(pos_y));
                 }
             }
 
             float effective_speed = speed / current_effort;
+            sf::Vector2f dir_normalized = direction / length;
+            sf::Vector2f delta = dir_normalized * effective_speed * Time::get_delta();
 
-			sf::Vector2f dir_normalized = direction / length;
+            // CASO 2: LLEGADA EN ESTE FRAME
+            if (std::sqrt(delta.x * delta.x + delta.y * delta.y) >= length)
+            {
+                // Usamos current_target
+                sf::Vector2f final_pos = current_target; 
+                
+                // Clamp (Tu lógica original)
+                if (auto terrain = std::dynamic_pointer_cast<EntityTerrain>(terrain_entity))
+                {
+                    final_pos.x = std::max(0.f, std::min(final_pos.x, (float)terrain->get_width() - 1));
+                    final_pos.y = std::max(0.f, std::min(final_pos.y, (float)terrain->get_height() - 1));
+                }
 
-			sf::Vector2f delta = dir_normalized * effective_speed * Time::get_delta();
+                owner.lock()->get_transform().set_position(final_pos);
 
-			if (std::sqrt(delta.x * delta.x + delta.y * delta.y) >= length)
-			{
-				sf::Vector2f final_goal = goal;
-				// Clamp the final goal position to ensure it's within map boundaries
-				if (auto terrain = std::dynamic_pointer_cast<EntityTerrain>(terrain_entity))
-				{
-					final_goal.x = std::max(0.f, std::min(final_goal.x, (float)terrain->get_width() - 1));
-					final_goal.y = std::max(0.f, std::min(final_goal.y, (float)terrain->get_height() - 1));
-				}
+                // --- AVANCE DE NODO ---
+                if (using_path) {
+                    ++path_index;
+                    if (path_index <= path.size()) return BTStatus::RUNNING; // Camino terminado
+                    path.clear();
+                }
 
-				owner.lock()->get_transform().set_position(final_goal);
-				moving = false;
-			}
-			else
-			{
-				sf::Vector2f new_pos = pos + delta;
+                moving = false;
+            }
+            else // CASO 3: AVANCE NORMAL
+            {
+                sf::Vector2f new_pos = pos + delta;
 
-				// Final safety check: Clamp the new position to map boundaries before translating
-				//auto terrain_entity = Scene::instance().get_entity("Terrain");
-				if (terrain)
-				{
-					new_pos.x = std::max(0.f, std::min(new_pos.x, (float)terrain->get_width() - 1));
-					new_pos.y = std::max(0.f, std::min(new_pos.y, (float)terrain->get_height() - 1));
-				}
+                if (!using_path && terrain)
+                {
+                    int next_gx = static_cast<int>(new_pos.x);
+                    int next_gy = static_cast<int>(new_pos.y);
 
-				// We set the position directly instead of translating to ensure it's clamped.
-				// The difference is negligible for small deltas.
-				owner.lock()->get_transform().set_position(new_pos);
-			}
-			return BTStatus::RUNNING;
-		}
+                    float effort_ahead = terrain->get_effort(next_gx, next_gy);
+                    
+                    // UMBRAL DE TOLERANCIA: 
+                    if (effort_ahead > 10.0f) 
+                    {   
+                        // Opcional: Invertir rotación visualmente para efecto de "rebote"
+                        owner.lock()->get_transform().rotate(180.0f);
+                        moving = false;
+                        return BTStatus::FAILURE;// Forzamos al árbol a elegir un nuevo destino en el prox frame
+                    }
+                }
 
-		return BTStatus::SUCCESS;
-	};
+                if (terrain)
+                {
+                    new_pos.x = std::max(0.f, std::min(new_pos.x, (float)terrain->get_width() - 1));
+                    new_pos.y = std::max(0.f, std::min(new_pos.y, (float)terrain->get_height() - 1));
+                }
+
+                owner.lock()->get_transform().set_position(new_pos);
+            }
+            return BTStatus::RUNNING;
+        }
+
+        return BTStatus::SUCCESS;
+    };
 
     std::function<BTStatus()> hunger = [&]()
     {
@@ -204,8 +253,13 @@ void Behaviour::start()
             }
         }
 
+        if (fixed_entity) 
         {
-            int vision = organism->get_stats().vision;
+            return BTStatus::RUNNING; 
+        }
+
+        {
+            int vision = organism->get_stats().vision + 15;
             int x_min = std::floor(pos.x - vision);
             int x_max = std::ceil(pos.x + vision);
             int y_min = std::floor(pos.y - vision);
@@ -239,11 +293,36 @@ void Behaviour::start()
                 float angle_rad = std::atan2(dir.y, dir.x);
                 float angle_deg = angle_rad * 180.f / 3.14159265f;
                 organism->get_transform().set_rotation(angle_deg);
-                moving = true;
-                return BTStatus::RUNNING;
+
+                auto terrain_entity = Scene::instance().get_entity("Terrain");
+                if (auto terrain = std::dynamic_pointer_cast<EntityTerrain>(terrain_entity)) 
+                {
+                    // 1. Calculamos la ruta
+                    path = pathfinder.find_path(pos, goal, *terrain);
+                    
+                    // 2. Si A* encontró un camino válido
+                    if (!path.empty()) 
+                    {
+                        path_index = 0;
+
+                        // saltamos al segundo para que el movimiento arranque fluido.
+                        if (path.size() > 1) 
+                        {
+                            sf::Vector2f p0 = path[0];
+                            float d2 = (p0.x - pos.x)*(p0.x - pos.x) + (p0.y - pos.y)*(p0.y - pos.y);
+                            if (d2 < 100.0f) 
+                            {
+                                // Si está a menos de ~10 pixeles
+                                path_index = 1;
+                            }
+                        }
+
+                        moving = true;
+                        return BTStatus::RUNNING;
+                    }
+                }
             }
         }
-
         return BTStatus::RUNNING;
     };
 
@@ -292,7 +371,7 @@ void Behaviour::update()
 
 	if (auto organism = std::dynamic_pointer_cast<Organism>(owner.lock()))
 	{
-		organism->get_stats().hunger -= 5 * Time::get_delta();
+		organism->get_stats().hunger -= 3 * Time::get_delta();
 
 		if (organism->get_stats().hunger <= 0)
 		{
@@ -334,10 +413,13 @@ void FoodSpawner::update()
     		auto terrain = Scene::instance().get_entity("Terrain"); // Use get_entity for safety
     		uint16_t map_width = terrain ? std::dynamic_pointer_cast<EntityTerrain>(terrain)->get_width() : 100;
     		uint16_t map_height = terrain ? std::dynamic_pointer_cast<EntityTerrain>(terrain)->get_height() : 100;
-    		float x = static_cast<float>(std::rand() % map_width);
-    		float y = static_cast<float>(std::rand() % map_height);
-			food->get_transform().set_position(sf::Vector2f(x, y));
-			Scene::instance().add_entity(food);
+    		int x = std::rand() % map_width;
+    		int y = std::rand() % map_height;
+
+            if (terrain && std::dynamic_pointer_cast<EntityTerrain>(terrain)->get_effort(static_cast<uint16_t>(x), static_cast<uint16_t>(y)) == 1.0f) {
+                food->get_transform().set_position(sf::Vector2f(x, y));
+			    Scene::instance().add_entity(food);
+            }
     	}
     time = 0;
     }

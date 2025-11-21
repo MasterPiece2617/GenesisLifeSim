@@ -62,19 +62,42 @@ void Scene::add_entity(std::shared_ptr<Entity> entity)
 void Scene::load(const OrganismConfig& organism_config) // Provisional
 {
 	add_entity(EntityFactory<FoodGenerator>::create("food generator"));
+	auto terrain_entity = Scene::instance().get_entity("Terrain");
+    auto terrain = std::dynamic_pointer_cast<EntityTerrain>(terrain_entity);
 
-	for (int i = 0; i < 50; ++i)
+    uint16_t map_width = terrain ? terrain->get_width() : 100;
+    uint16_t map_height = terrain ? terrain->get_height() : 100;
+
+	for (int i = 0; i < num_organisms; ++i)
 	{
 		auto entity = EntityFactory<Organism>::create("Organism " + std::to_string(i), organism_config);
 
-		// Get map dimensions to spawn organisms inside
-		auto terrain = Scene::instance().get_entity("Terrain");
-		uint16_t map_width = terrain ? std::dynamic_pointer_cast<EntityTerrain>(terrain)->get_width() : 100;
-		uint16_t map_height = terrain ? std::dynamic_pointer_cast<EntityTerrain>(terrain)->get_height() : 100;
-		float x = static_cast<float>(std::rand() % map_width);
-		float y = static_cast<float>(std::rand() % map_height);
+        float final_x = 0.0f;
+        float final_y = 0.0f;
+        bool valid_spot = false;
 
-		entity->get_transform().set_position({x, y});
+        if (terrain)
+        {
+            int attempts = 0;
+            // Buscamos un punto válido
+            while (attempts < 50 && !valid_spot) 
+            {
+                int grid_x = std::rand() % map_width;
+                int grid_y = std::rand() % map_height;
+
+                // [CAMBIO] Solo preguntamos si es caminable (walkable).
+                // Ya no nos importa si es pasto (1) o arena (2), solo que no sea agua.
+                if (terrain->get_effort(static_cast<uint16_t>(grid_x), static_cast<uint16_t>(grid_y)) == 1.0f)
+                {
+                    final_x = (grid_x + 0.5f);
+                    final_y = (grid_y + 0.5f);
+                    valid_spot = true;
+                }
+                attempts++;
+            }
+        }
+
+		entity->get_transform().set_position({final_x, final_y});
 		add_entity(entity);
 	}
 }

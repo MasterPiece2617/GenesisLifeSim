@@ -239,40 +239,7 @@ void Engine::run()
           Debugger::imgui_terrain(this->terrain, this->window);
         }
         // cargador de caracteristicas
-        ImGui::Begin("Seleccione las caracteristicas:");
-        ImGui::Text("Seleccione las caracteristicas que desea cargar en la simulacion.");
-        ImGui::Separator();
-        // --- NUEVO C�DIGO PARA MODIFICAR STATS --
-        ImGui::Text("Stats del Organismo:");
-        // Conecta el SliderInt a organism_config.vision_radius
-        ImGui::SliderInt("Vision", &organism_config.vision_radius, 1, 20);
-      
-        ImGui::Separator();
-        ImGui::Text("Stats de Comportamiento:");
-        // Conecta el SliderFloat a organism_config.move_speed
-        ImGui::SliderFloat("Velocidad (Speed)", &organism_config.move_speed, 1.0f, 15.0f);
-        // Selector de color en el men� inicial (no runtime)
-        {
-            sf::Color sc = organism_config.color;
-            float ccol[4] = { sc.r / 255.0f, sc.g / 255.0f, sc.b / 255.0f, sc.a / 255.0f };
-            if (ImGui::ColorEdit4("Color del Organismo", ccol))
-            {
-                organism_config.color = sf::Color(
-                    static_cast<sf::Uint8>(ccol[0] * 255.0f),
-                    static_cast<sf::Uint8>(ccol[1] * 255.0f),
-                    static_cast<sf::Uint8>(ccol[2] * 255.0f),
-                    static_cast<sf::Uint8>(ccol[3] * 255.0f)
-                );
-            }
-        }
-        // --- FIN DEL NUEVO C�DIGO --
-        ImGui::Separator();
-        if (ImGui::Button("Cargar Caracteristicas"))
-        {
-            Scene::instance().load(organism_config);
-            this->window->setView(Scene::instance().get_main_camera()->get_view());
-        }
-        ImGui::End();
+        //ImGuiMenu::show_organism_config_window(this->organism_config, this->window.get());
 
         sf::Vector2f mouse_world_pos = window->mapPixelToCoords(sf::Mouse::getPosition());
         mouse_world_pos.x /= Constants::px_mt;
@@ -280,19 +247,7 @@ void Engine::run()
 
         Debugger::imgui_scene(fps_display, mouse_world_pos, selected_entity);
   
-        ImGui::Begin("Ejemplo implot");
-        if (ImPlot::BeginPlot("Mi primer plot")) 
-        {
-          static float x_data[1000];
-          static float y_data[1000];
-          for (int i = 0; i < 1000; i++) {
-            x_data[i] = i * 0.01f;
-            y_data[i] = std::sin(x_data[i]);
-          }
-          ImPlot::PlotLine("Seno", x_data, y_data, 1000);
-          ImPlot::EndPlot();
-        }
-        ImGui::End();
+        ImPlotMenu::show_menu(this->organism_config, this->window.get());
 
       }
       
