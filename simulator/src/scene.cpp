@@ -111,7 +111,7 @@ std::vector<std::shared_ptr<Entity>> Scene::get_entities() const
 {
 	return entities;
 }
-// To manage terrain perfectly, we need to be able to get entities by name
+
 std::shared_ptr<Entity> Scene::get_entity(const std::string& name) const
 {
 	for (const auto& entity : entities)

@@ -24,7 +24,7 @@
 struct Stats
 {
 	float hunger = 100;
-	int vision = 5;
+	float vision = 5;
 	sf::Color color = sf::Color::Red;
 };
 
@@ -35,6 +35,7 @@ protected:
 	bool is_alive = true;
 	OrganismConfig organism_config;
 public:
+	Organism(std::string _name, const Stats _stats);
 	Organism(std::string _name, const OrganismConfig& _organism_config);
 	void init() override;
 	Stats& get_stats();
