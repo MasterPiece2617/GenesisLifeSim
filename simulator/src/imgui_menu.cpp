@@ -164,6 +164,8 @@ void ImPlotMenu::organism_population_plot()
     static bool last_minute_static = false;
     static bool last_5_minutes = false;
 
+    static bool reset_view = false;
+
     // raw data, better name
     static std::vector<float> raw_time_data;
     static std::vector<float> raw_pop_data;
@@ -205,6 +207,7 @@ void ImPlotMenu::organism_population_plot()
             show_all_history = false; 
             last_minute_static = false; 
             last_5_minutes = false; 
+            reset_view = true;
         }
     }
     if (ImGui::Checkbox("View: All History", &show_all_history)) {
@@ -213,6 +216,7 @@ void ImPlotMenu::organism_population_plot()
             real_time_view = false; 
             last_minute_static = false; 
             last_5_minutes = false; 
+            reset_view = true;
         }
     }
     if (ImGui::Checkbox("View: Last Minute", &last_minute_static)) {
@@ -221,6 +225,7 @@ void ImPlotMenu::organism_population_plot()
             real_time_view = false; 
             show_all_history = false; 
             last_5_minutes = false; 
+            reset_view = true;
         }
     }
     if (ImGui::Checkbox("View: Last 5 Minutes", &last_5_minutes)) {
@@ -229,7 +234,13 @@ void ImPlotMenu::organism_population_plot()
             real_time_view = false; 
             show_all_history = false; 
             last_minute_static = false; 
+            reset_view = true;
         }
+    }
+
+    ImGui::SameLine();
+    if (ImGui::Button("Fit Zoom")) {
+        reset_view = true;
     }
 
     ImGui::Separator();
@@ -277,9 +288,18 @@ void ImPlotMenu::organism_population_plot()
         {
             ImPlot::SetupAxisLimits(ImAxis_X1, current_t - 60.0f, current_t, ImGuiCond_Always);
         }
-        else if (show_all_history && !raw_time_data.empty())
-        {
-            ImPlot::SetupAxisLimits(ImAxis_X1, raw_time_data.front(), current_t, ImGuiCond_Always);
+        else if (reset_view)
+        { 
+            if (show_all_history && !raw_time_data.empty())
+            {
+                ImPlot::SetupAxisLimits(ImAxis_X1, raw_time_data.front(), current_t, ImGuiCond_Always);
+            }
+            else if (last_minute_static || last_5_minutes)
+            {
+                float window = last_minute_static ? 60.0f : 300.0f;
+                ImPlot::SetupAxisLimits(ImAxis_X1, current_t - window, current_t, ImGuiCond_Always);
+            }
+            reset_view = false;
         }
         else if (last_minute_static || last_5_minutes)
         {
@@ -306,6 +326,8 @@ void ImPlotMenu::carnivore_herbivore_plot()
     static bool show_all_history = false;
     static bool last_minute_static = false;
     static bool last_5_minutes = false;
+    
+    static bool reset_view = false;
 
     static std::vector<float> raw_time_data;
     static std::vector<float> raw_carn_data;
@@ -355,6 +377,7 @@ void ImPlotMenu::carnivore_herbivore_plot()
             show_all_history = false; 
             last_minute_static = false; 
             last_5_minutes = false; 
+            reset_view = true;
         }
     }
     if (ImGui::Checkbox("View: All History", &show_all_history)) {
@@ -363,6 +386,7 @@ void ImPlotMenu::carnivore_herbivore_plot()
             real_time_view = false; 
             last_minute_static = false; 
             last_5_minutes = false; 
+            reset_view = true;
         }
     }
     if (ImGui::Checkbox("View: Last Minute", &last_minute_static)) {
@@ -371,6 +395,7 @@ void ImPlotMenu::carnivore_herbivore_plot()
             real_time_view = false; 
             show_all_history = false; 
             last_5_minutes = false; 
+            reset_view = true;
         }
     }
     if (ImGui::Checkbox("View: Last 5 Minutes", &last_5_minutes)) {
@@ -379,7 +404,13 @@ void ImPlotMenu::carnivore_herbivore_plot()
             real_time_view = false; 
             show_all_history = false; 
             last_minute_static = false; 
+            reset_view = true;
         }
+    }
+
+    ImGui::SameLine();
+    if (ImGui::Button("Fit Zoom")) {
+        reset_view = true;
     }
 
     ImGui::Separator();
@@ -442,9 +473,18 @@ void ImPlotMenu::carnivore_herbivore_plot()
         {
             ImPlot::SetupAxisLimits(ImAxis_X1, current_t - 60.0f, current_t, ImGuiCond_Always);
         }
-        else if (show_all_history && !raw_time_data.empty())
+        else if (reset_view)
         {
-            ImPlot::SetupAxisLimits(ImAxis_X1, raw_time_data.front(), current_t, ImGuiCond_Always);
+            if (show_all_history && !raw_time_data.empty())
+            {
+                ImPlot::SetupAxisLimits(ImAxis_X1, raw_time_data.front(), current_t, ImGuiCond_Always);
+            }
+            else if (last_minute_static || last_5_minutes)
+            {
+                float window = last_minute_static ? 60.0f : 300.0f;
+                ImPlot::SetupAxisLimits(ImAxis_X1, current_t - window, current_t, ImGuiCond_Always);
+            }
+            reset_view = false;
         }
         else if (last_minute_static || last_5_minutes)
         {
