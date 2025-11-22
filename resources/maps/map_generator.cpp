@@ -18,7 +18,7 @@ int main()
 {
     const uint16_t width = 200; 
     const uint16_t height = 200;
-    const int seed = 12345; // Puedes cambiar la seed
+    const int seed = 33; // Puedes cambiar la seed
 
     std::vector<CellData> cells(static_cast<size_t>(width) * height);
 
@@ -57,11 +57,11 @@ int main()
                 // Opcional: Si el agua es MUY profunda (ej. < -0.7), 
                 // también podrías poner Rough Sea (7) aquí para que se vea natural
                 // mezclado con el borde. Por ahora lo dejo en agua normal (2).
-                cell = {2, 2, 255, false}; 
+                cell = {2, 2, 7, false}; 
             }
             // 2. ARENA (-0.2 a -0.05)
             else if (heightValue < -0.05f) {
-                cell = {3, 3, 2, true}; // Sand
+                cell = {3, 3, 3, true}; // Sand
             }
             // 3. LLANURAS (0.0 a 0.5)
             else if (heightValue < 0.5f) {
@@ -73,18 +73,18 @@ int main()
             }
             // 4. PANTANO (0.5 a 0.7)
             else if (heightValue < 0.7f) {
-                cell = {5, 5, 4, true}; // Swamp (Lento)
+                cell = {5, 5, 10, true}; // Swamp (Lento)
             }
             // 5. MONTAÑA (> 0.7)
             else {
-                cell = {4, 4, 3, true}; // Stone
+                cell = {4, 4, 9, true}; // Stone
             }
 
             cells[y * width + x] = cell;
         }
     }
 
-    std::ofstream file("map_noise_1_v2.zadat", std::ios::binary);
+    std::ofstream file("map_noise_1_v3.zadat", std::ios::binary);
     if (!file) {
         std::cerr << "Error opening file for writing." << std::endl;
         return -1;

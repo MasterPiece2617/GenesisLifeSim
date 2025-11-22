@@ -19,11 +19,14 @@
 #include <utils.hpp>
 #include <organism_config.hpp>
 #include <entity_terrain.hpp>
+#include <pathfinder.hpp>
 
 struct Stats
 {
 	float hunger = 100;
 	float vision = 5;
+	float nu = 100;
+	OrganismCategory category = OrganismCategory::HERBIVORE;
 	sf::Color color = sf::Color::Red;
 };
 
@@ -49,6 +52,10 @@ protected:
 	float time = 0;
 	bool moving = false;
 	float speed = 5;
+	// Para el pathfinder
+	PathFinder pathfinder;
+	std::vector<sf::Vector2f> path;
+    int path_index = path.size();
 public:
 	Behaviour(std::weak_ptr<Entity> _owner, const OrganismConfig& _organism_config);
 	void start() override;
