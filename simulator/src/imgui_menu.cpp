@@ -276,7 +276,6 @@ void ImPlotMenu::organism_population_plot()
         if (real_time_view)
         {
             ImPlot::SetupAxisLimits(ImAxis_X1, current_t - 60.0f, current_t, ImGuiCond_Always);
-            ImPlot::SetupAxis(ImAxis_Y1, nullptr, ImPlotAxisFlags_AutoFit);
         }
         else if (show_all_history && !raw_time_data.empty())
         {
@@ -288,6 +287,7 @@ void ImPlotMenu::organism_population_plot()
             ImPlot::SetupAxisLimits(ImAxis_X1, current_t - window, current_t, ImGuiCond_Always);
         }
  
+        ImPlot::SetupAxis(ImAxis_Y1, nullptr, ImPlotAxisFlags_AutoFit);
 
         if (plot_count > 0)
         {
@@ -441,7 +441,6 @@ void ImPlotMenu::carnivore_herbivore_plot()
         if (real_time_view)
         {
             ImPlot::SetupAxisLimits(ImAxis_X1, current_t - 60.0f, current_t, ImGuiCond_Always);
-            ImPlot::SetupAxis(ImAxis_Y1, nullptr, ImPlotAxisFlags_AutoFit);
         }
         else if (show_all_history && !raw_time_data.empty())
         {
@@ -453,6 +452,8 @@ void ImPlotMenu::carnivore_herbivore_plot()
             ImPlot::SetupAxisLimits(ImAxis_X1, current_t - window, current_t, ImGuiCond_Always);
         }
   
+        ImPlot::SetupAxis(ImAxis_Y1, nullptr, ImPlotAxisFlags_AutoFit);
+
         if (plot_count_c > 0)
         {
             ImPlot::SetNextLineStyle(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), 2.0f);
