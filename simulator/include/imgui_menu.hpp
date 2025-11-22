@@ -28,4 +28,5 @@ class ImPlotMenu : public ImGuiMenu
 protected:
 public:
     static void organism_population_plot();
+    static void carnivore_herbivore_plot();
 };

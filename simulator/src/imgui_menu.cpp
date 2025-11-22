@@ -80,6 +80,8 @@ void ImGuiMenu::show_organism_config_window(OrganismConfig& organism_config, sf:
 
 static bool show_organism_population = false;
 static bool show_organism_config = false;
+static bool show_carnivore_herbivore = false;
+
 
 void ImGuiMenu::show_menu(OrganismConfig& organism_config, sf::RenderWindow* window)
 {
@@ -88,6 +90,7 @@ void ImGuiMenu::show_menu(OrganismConfig& organism_config, sf::RenderWindow* win
         if (ImGui::BeginMenu("Plots"))
         {
             ImGui::MenuItem("Organism Population", NULL, &show_organism_population);
+            ImGui::MenuItem("Carnivore vs Herbivore", NULL, &show_carnivore_herbivore);
             ImGui::EndMenu();
         }
 
@@ -108,6 +111,11 @@ void ImGuiMenu::show_menu(OrganismConfig& organism_config, sf::RenderWindow* win
     if (show_organism_config)
     {
         ImGuiMenu::show_organism_config_window(organism_config, window);
+    }
+
+    if (show_carnivore_herbivore)
+    {
+        ImPlotMenu::carnivore_herbivore_plot();
     }
 }
 
@@ -137,7 +145,7 @@ void ImPlotMenu::organism_population_plot()
         {
             if (std::dynamic_pointer_cast<Organism>(entity))
             {
-                organism_count++;
+                ++organism_count;
             }
         }
 
@@ -177,5 +185,79 @@ void ImPlotMenu::organism_population_plot()
 
         ImPlot::EndPlot();
     }
+    ImGui::End();
+}
+
+void ImPlotMenu::carnivore_herbivore_plot()
+{
+    ImGui::Begin("Carnivore vs Herbivore Plot");
+
+    static std::vector<float> time_data;
+    static std::vector<float> carnivore_data;
+    static std::vector<float> herbivore_data;
+
+    static float time_accumulator = 0.0f; 
+    time_accumulator += ImGui::GetIO().DeltaTime;
+
+    if (time_accumulator > 0.1f)
+    {
+        time_accumulator = 0.0f;
+
+        float current_time = ImGui::GetTime();
+        int carnivore_count = 0;
+        int herbivore_count = 0;
+
+        for (const auto& entity : Scene::instance().get_entities())
+        {
+            auto organism = std::dynamic_pointer_cast<Organism>(entity);
+            if (organism)
+            {
+                // Asumo: 1 = Carnivoro, 0 = Herbivoro
+                int cat = (int)organism->get_stats().category;
+                if (cat == 1) {
+                    ++carnivore_count;
+                } else if (cat == 0) {
+                    ++herbivore_count;
+                }
+            }
+        }
+
+        // Agregar datos
+        time_data.push_back(current_time);
+        carnivore_data.push_back(static_cast<float>(carnivore_count));
+        herbivore_data.push_back(static_cast<float>(herbivore_count));
+
+        // Limpiar datos viejos (> 60 segundos)
+        float history = 60.0f;
+        if (!time_data.empty() && time_data[0] < current_time - history) 
+        {
+            time_data.erase(time_data.begin());
+            carnivore_data.erase(carnivore_data.begin());
+            herbivore_data.erase(herbivore_data.begin());
+        }
+    }
+
+    if (ImPlot::BeginPlot("Carnivore vs Herbivore Over Time"))
+    {
+        ImPlot::SetupAxes("Time", "Population");
+        
+        float current_time = ImGui::GetTime();
+        ImPlot::SetupAxisLimits(ImAxis_X1, current_time - 60.0f, current_time, ImGuiCond_Always);
+        ImPlot::SetupAxis(ImAxis_Y1, nullptr, ImPlotAxisFlags_AutoFit);
+
+        if (!time_data.empty())
+        {
+            // Línea Roja para Carnívoros
+            ImPlot::SetNextLineStyle(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), 2.0f);
+            ImPlot::PlotLine("Carnivores", time_data.data(), carnivore_data.data(), time_data.size());
+
+            // Línea Verde para Herbívoros
+            ImPlot::SetNextLineStyle(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), 2.0f);
+            ImPlot::PlotLine("Herbivores", time_data.data(), herbivore_data.data(), time_data.size());
+        }
+
+        ImPlot::EndPlot();
+    }
+
     ImGui::End();
 }
