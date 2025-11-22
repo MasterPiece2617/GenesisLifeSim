@@ -8,6 +8,7 @@ Organism::Organism(std::string _name, const OrganismConfig& _organism_config) : 
 	stats.color = _organism_config.color;
 	stats.hunger = 100;
 	stats.category = _organism_config.category;
+	stats.speed = _organism_config.move_speed;
 	is_alive = true;
 
 	//add_component(std::make_shared<Behaviour>(weak_from_this(), _organism_config));
@@ -16,7 +17,7 @@ Organism::Organism(std::string _name, const OrganismConfig& _organism_config) : 
 
 void Organism::init()
 {
-	add_component(std::make_shared<Behaviour>(weak_from_this(), organism_config));
+	add_component(std::make_shared<Behaviour>(weak_from_this()));
     add_component(std::make_shared<SpriteRenderer>(shared_from_this(), stats.color, "being"));
 }
 
@@ -25,10 +26,7 @@ Stats& Organism::get_stats()
     return stats;
 }
 
-Behaviour::Behaviour(std::weak_ptr<Entity> _owner, const OrganismConfig& _organism_config) : Component(_owner), bt(std::make_shared<Node>(nullptr))
-{
-	speed = _organism_config.move_speed;
-}
+Behaviour::Behaviour(std::weak_ptr<Entity> _owner) : Component(_owner), bt(std::make_shared<Node>(nullptr)) {}
 
 void Behaviour::start()
 {
@@ -36,7 +34,11 @@ void Behaviour::start()
 	{
         if (moving)
         {
-            sf::Vector2f pos = owner.lock()->get_transform().get_position();
+			auto organism = std::dynamic_pointer_cast<Organism>(owner.lock());
+
+			if (!organism) return BTStatus::FAILURE;
+
+            sf::Vector2f pos = organism->get_transform().get_position();
 
             // --- ELECCIÓN DE OBJETIVO ---
             // Si hay un camino, vamos al nodo actual. Si no, vamos al goal final.
@@ -72,7 +74,7 @@ void Behaviour::start()
             // CASO 1: LLEGADA INMEDIATA
             if (length < 0.1f)
             {
-                owner.lock()->get_transform().set_position(current_target); // Snap al objetivo actual
+                organism->get_transform().set_position(current_target); // Snap al objetivo actual
                 
                 // --- AVANCE DE NODO ---
                 if (using_path) {
@@ -103,7 +105,7 @@ void Behaviour::start()
                 }
             }
 
-            float effective_speed = speed / current_effort;
+            float effective_speed = organism->get_stats().speed / current_effort;
             sf::Vector2f dir_normalized = direction / length;
             sf::Vector2f delta = dir_normalized * effective_speed * Time::get_delta();
 
@@ -538,16 +540,30 @@ void Behaviour::start()
 
                     if (can_reproduce && enough_hunger && prob_dist(rng) <= REPRODUCE_PROB)
                     {
-						Stats child_stats;
-						child_stats.hunger = 100.0f;
-						child_stats.vision = (og->get_stats().vision + nearest->get_stats().vision) / 2;
+                        static std::mt19937 rng(std::random_device{}());
+                        std::uniform_real_distribution<float> variation(-0.1f, 0.1f);
+                        Stats child_stats;
+                        child_stats.hunger = 100.0f;
+
+                        child_stats.vision = (og->get_stats().vision + nearest->get_stats().vision) / 2.0f;
+                        child_stats.vision += child_stats.vision * variation(rng);
+
+                        child_stats.speed = (og->get_stats().speed + nearest->get_stats().speed) / 2.0f;
+                        child_stats.speed += child_stats.speed * variation(rng);
+
                         child_stats.category = og->get_stats().category;
 
-                        float t = 0.5f; // 0.0 = todo og, 1.0 = todo nearest
+                        float t = 0.5f;
+                        auto mix_channel = [&](sf::Uint8 a, sf::Uint8 b) {
+                            float base = a * (1 - t) + b * t;
+                            float mutated = base + base * variation(rng);
+                            return static_cast<sf::Uint8>(std::clamp(mutated, 0.0f, 255.0f));
+                            };
+
                         child_stats.color = sf::Color(
-                            static_cast<sf::Uint8>(og->get_stats().color.r * (1 - t) + nearest->get_stats().color.r * t),
-                            static_cast<sf::Uint8>(og->get_stats().color.g * (1 - t) + nearest->get_stats().color.g * t),
-                            static_cast<sf::Uint8>(og->get_stats().color.b * (1 - t) + nearest->get_stats().color.b * t)
+                            mix_channel(og->get_stats().color.r, nearest->get_stats().color.r),
+                            mix_channel(og->get_stats().color.g, nearest->get_stats().color.g),
+                            mix_channel(og->get_stats().color.b, nearest->get_stats().color.b)
                         );
 
 
