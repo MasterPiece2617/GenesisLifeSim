@@ -119,84 +119,215 @@ void ImGuiMenu::show_menu(OrganismConfig& organism_config, sf::RenderWindow* win
     }
 }
 
+// helper function to resample a curve to N points
+struct Point { float x, y; };
+std::vector<Point> resample_curve(const std::vector<Point>& data, size_t N) {
+    if (data.size() < 2) return data;
+
+    // Longitud acumulada
+    std::vector<float> s(data.size(), 0.0f);
+    for (size_t i = 1; i < data.size(); ++i) {
+        float dx = data[i].x - data[i-1].x;
+        float dy = data[i].y - data[i-1].y;
+        s[i] = s[i-1] + std::sqrt(dx*dx + dy*dy);
+    }
+    float total_length = s.back();
+
+    std::vector<Point> out;
+    out.reserve(N);
+
+    size_t k = 0;
+    for (size_t i = 0; i < N; ++i) {
+        float target = (total_length * i) / (N - 1);
+
+        while (k+1 < data.size() && s[k+1] < target) ++k;
+
+        if (k+1 >= data.size()) {
+            out.push_back(data.back());
+            continue;
+        }
+
+        float t = (target - s[k]) / (s[k+1] - s[k]);
+        Point p;
+        p.x = data[k].x + t * (data[k+1].x - data[k].x);
+        p.y = data[k].y + t * (data[k+1].y - data[k].y);
+        out.push_back(p);
+    }
+    return out;
+}
 
 // Graficas de Implot
 void ImPlotMenu::organism_population_plot()
 {
-    ImGui::Begin("Organism Population Over Time Plot");
+    static bool real_time_view = true;  
+    static bool show_all_history = false; 
+    static bool last_minute_static = false;
+    static bool last_5_minutes = false;
 
-    // Use vectors to store data dynamically
-    static std::vector<float> time_data;
-    static std::vector<float> population_data;
+    static bool reset_view = false;
 
-	// time controllator redefine to 32 bits draw in imguiconfig
-	static float time_accumulator = 0.0f;
-	time_accumulator += ImGui::GetIO().DeltaTime;
+    // raw data, better name
+    static std::vector<float> raw_time_data;
+    static std::vector<float> raw_pop_data;
+
+    static float time_accumulator = 0.0f;
+    time_accumulator += ImGui::GetIO().DeltaTime;
 
     if (time_accumulator > 0.1f)
     {
-
-		time_accumulator = 0.0f;
-
-        // Get current time and organism count
+        time_accumulator = 0.0f;
         float current_time = ImGui::GetTime();
         int organism_count = 0;
+
         for (const auto& entity : Scene::instance().get_entities())
         {
+            // change to events
             if (std::dynamic_pointer_cast<Organism>(entity))
             {
                 ++organism_count;
-            }
+            } 
         }
 
-        // Add new data point
-        time_data.push_back(current_time);
-        population_data.push_back(static_cast<float>(organism_count));
+        raw_time_data.push_back(current_time);
+        raw_pop_data.push_back(static_cast<float>(organism_count));
 
-        // Remove data older than 'history'
-        float history = 60.0f;
-        auto first_to_keep = std::lower_bound(time_data.begin(), time_data.end(), current_time - history);
-        if (first_to_keep != time_data.begin()) {
-            auto num_to_erase = std::distance(time_data.begin(), first_to_keep);
-            time_data.erase(time_data.begin(), first_to_keep);
-            population_data.erase(population_data.begin(), population_data.begin() + num_to_erase);
+        // 10 min = 600 seg. A 10 datos/seg = 6000 puntos.
+        if (raw_time_data.size() > 60000) // Lo aumente akasjd
+        {
+            raw_time_data.erase(raw_time_data.begin());
+            raw_pop_data.erase(raw_pop_data.begin());
         }
-
-        ImPlot::SetNextAxisLimits(ImAxis_X1, current_time - history, current_time, ImGuiCond_Always);
-        ImPlot::SetNextAxisToFit(ImAxis_Y1);
-
     }
 
-    // Si no hacia el cambio, no funcionaba en visual studio
-    if (ImPlot::BeginPlot("Organism Population Over Time"))
+    ImGui::Begin("Organism Population Over Time Plot");
+
+    if (ImGui::Checkbox("View: Real Time", &real_time_view)) {
+        if(real_time_view) 
+        { 
+            show_all_history = false; 
+            last_minute_static = false; 
+            last_5_minutes = false; 
+            reset_view = true;
+        }
+    }
+    if (ImGui::Checkbox("View: All History", &show_all_history)) {
+        if(show_all_history) 
+        { 
+            real_time_view = false; 
+            last_minute_static = false; 
+            last_5_minutes = false; 
+            reset_view = true;
+        }
+    }
+    if (ImGui::Checkbox("View: Last Minute", &last_minute_static)) {
+        if(last_minute_static) 
+        { 
+            real_time_view = false; 
+            show_all_history = false; 
+            last_5_minutes = false; 
+            reset_view = true;
+        }
+    }
+    if (ImGui::Checkbox("View: Last 5 Minutes", &last_5_minutes)) {
+        if(last_5_minutes) 
+        { 
+            real_time_view = false; 
+            show_all_history = false; 
+            last_minute_static = false; 
+            reset_view = true;
+        }
+    }
+
+    ImGui::SameLine();
+    if (ImGui::Button("Fit Zoom")) {
+        reset_view = true;
+    }
+
+    ImGui::Separator();
+
+    float* plot_x = raw_time_data.data();
+    float* plot_y = raw_pop_data.data();
+    int plot_count = raw_time_data.size();
+    
+    // Vectores temporales para resamplear
+    std::vector<Point> temp_points;
+    std::vector<float> resampled_x;
+    std::vector<float> resampled_y;
+
+    if (last_minute_static || last_5_minutes) 
     {
-        ImPlot::SetupAxes("Time", "Population");
+        float current_t = ImGui::GetTime();
+        float window_size = last_minute_static ? 60.0f : 300.0f;
 
-		float time = ImGui::GetTime();
-        ImPlot::SetupAxisLimits(ImAxis_X1, time - 60.0f, time, ImGuiCond_Always);
+        // filter data required
+        for(size_t i=0; i<raw_time_data.size(); ++i) {
+            if(raw_time_data[i] >= current_t - window_size) {
+                temp_points.push_back({raw_time_data[i], raw_pop_data[i]});
+            }
+        }
+        
+        // Resampled xd
+        if (temp_points.size() > 2) {
+            auto resampled = resample_curve(temp_points, 500); // Tu función
+            for(const auto& p : resampled) {
+                resampled_x.push_back(p.x);
+                resampled_y.push_back(p.y);
+            }
+            plot_x = resampled_x.data();
+            plot_y = resampled_y.data();
+            plot_count = resampled_x.size();
+        }
+    }
 
-		// Forzar seguimiento automatico del eje Y
-        ImPlot::SetupAxis(ImAxis_Y1, nullptr, ImPlotAxisFlags_AutoFit);
+    if (ImPlot::BeginPlot("Population Graph", ImVec2(-1, -1)))
+    {
+        ImPlot::SetupAxes("Time (s)", "Population");
+        float current_t = ImGui::GetTime();
 
-        if (!time_data.empty())
+        if (real_time_view)
         {
-            ImPlot::PlotLine("Population", time_data.data(), population_data.data(), time_data.size());
+            ImPlot::SetupAxisLimits(ImAxis_X1, current_t - 60.0f, current_t, ImGuiCond_Always);
+            ImPlot::SetupAxis(ImAxis_Y1, nullptr, ImPlotAxisFlags_AutoFit);
+        }
+        else if (reset_view)
+        { 
+            if (show_all_history && !raw_time_data.empty())
+            {
+                ImPlot::SetupAxisLimits(ImAxis_X1, raw_time_data.front(), current_t, ImGuiCond_Always);
+            }
+            else if (last_minute_static || last_5_minutes)
+            {
+                float window = last_minute_static ? 60.0f : 300.0f;
+                ImPlot::SetupAxisLimits(ImAxis_X1, current_t - window, current_t, ImGuiCond_Always);
+            }
+            reset_view = false;
+        }
+
+        if (plot_count > 0)
+        {
+            ImPlot::PlotLine("Organisms", plot_x, plot_y, plot_count);
         }
 
         ImPlot::EndPlot();
     }
+
     ImGui::End();
 }
 
 void ImPlotMenu::carnivore_herbivore_plot()
 {
-    ImGui::Begin("Carnivore vs Herbivore Plot");
+    static bool real_time_view = true;
+    static bool show_all_history = false;
+    static bool last_minute_static = false;
+    static bool last_5_minutes = false;
+    
+    static bool reset_view = false;
 
-    static std::vector<float> time_data;
-    static std::vector<float> carnivore_data;
-    static std::vector<float> herbivore_data;
+    static std::vector<float> raw_time_data;
+    static std::vector<float> raw_carn_data;
+    static std::vector<float> raw_herb_data;
 
-    static float time_accumulator = 0.0f; 
+    static float time_accumulator = 0.0f;
     time_accumulator += ImGui::GetIO().DeltaTime;
 
     if (time_accumulator > 0.1f)
@@ -212,7 +343,6 @@ void ImPlotMenu::carnivore_herbivore_plot()
             auto organism = std::dynamic_pointer_cast<Organism>(entity);
             if (organism)
             {
-                // Asumo: 1 = Carnivoro, 0 = Herbivoro
                 int cat = (int)organism->get_stats().category;
                 if (cat == 1) {
                     ++carnivore_count;
@@ -222,38 +352,146 @@ void ImPlotMenu::carnivore_herbivore_plot()
             }
         }
 
-        // Agregar datos
-        time_data.push_back(current_time);
-        carnivore_data.push_back(static_cast<float>(carnivore_count));
-        herbivore_data.push_back(static_cast<float>(herbivore_count));
+        raw_time_data.push_back(current_time);
+        raw_carn_data.push_back(static_cast<float>(carnivore_count));
+        raw_herb_data.push_back(static_cast<float>(herbivore_count));
 
-        // Limpiar datos viejos (> 60 segundos)
-        float history = 60.0f;
-        if (!time_data.empty() && time_data[0] < current_time - history) 
-        {
-            time_data.erase(time_data.begin());
-            carnivore_data.erase(carnivore_data.begin());
-            herbivore_data.erase(herbivore_data.begin());
+        if (raw_time_data.size() > 60000) {
+             raw_time_data.erase(raw_time_data.begin());
+             raw_carn_data.erase(raw_carn_data.begin());
+             raw_herb_data.erase(raw_herb_data.begin());
         }
     }
 
-    if (ImPlot::BeginPlot("Carnivore vs Herbivore Over Time"))
+    ImGui::Begin("Carnivore vs Herbivore Plot");
+
+    if (ImGui::Checkbox("View: Real Time", &real_time_view)) {
+        if(real_time_view) 
+        { 
+            show_all_history = false; 
+            last_minute_static = false; 
+            last_5_minutes = false; 
+            reset_view = true;
+        }
+    }
+    if (ImGui::Checkbox("View: All History", &show_all_history)) {
+        if(show_all_history) 
+        { 
+            real_time_view = false; 
+            last_minute_static = false; 
+            last_5_minutes = false; 
+            reset_view = true;
+        }
+    }
+    if (ImGui::Checkbox("View: Last Minute", &last_minute_static)) {
+        if(last_minute_static) 
+        { 
+            real_time_view = false; 
+            show_all_history = false; 
+            last_5_minutes = false; 
+            reset_view = true;
+        }
+    }
+    if (ImGui::Checkbox("View: Last 5 Minutes", &last_5_minutes)) {
+        if(last_5_minutes) 
+        { 
+            real_time_view = false; 
+            show_all_history = false; 
+            last_minute_static = false; 
+            reset_view = true;
+        }
+    }
+
+    ImGui::SameLine();
+    if (ImGui::Button("Fit Zoom")) {
+        reset_view = true;
+    }
+
+    ImGui::Separator();
+
+    float* plot_x_c = raw_time_data.data();
+    float* plot_y_c = raw_carn_data.data();
+    int plot_count_c = raw_time_data.size();
+
+    float* plot_x_h = raw_time_data.data();
+    float* plot_y_h = raw_herb_data.data();
+    int plot_count_h = raw_time_data.size();
+
+    std::vector<float> res_time_c, res_val_c;
+    std::vector<float> res_time_h, res_val_h;
+
+    if ((last_minute_static || last_5_minutes) && !raw_time_data.empty()) 
     {
-        ImPlot::SetupAxes("Time", "Population");
+        float current_t = ImGui::GetTime();
+        float window_size = last_minute_static ? 60.0f : 300.0f;
         
-        float current_time = ImGui::GetTime();
-        ImPlot::SetupAxisLimits(ImAxis_X1, current_time - 60.0f, current_time, ImGuiCond_Always);
-        ImPlot::SetupAxis(ImAxis_Y1, nullptr, ImPlotAxisFlags_AutoFit);
+        std::vector<Point> temp_c;
+        std::vector<Point> temp_h;
 
-        if (!time_data.empty())
+        for(size_t i=0; i<raw_time_data.size(); ++i) {
+            if(raw_time_data[i] >= current_t - window_size) {
+                temp_c.push_back({raw_time_data[i], raw_carn_data[i]});
+                temp_h.push_back({raw_time_data[i], raw_herb_data[i]});
+            }
+        }
+        
+        if (temp_c.size() > 2) {
+            auto resampled_c = resample_curve(temp_c, 500);
+            for(const auto& p : resampled_c) {
+                res_time_c.push_back(p.x);
+                res_val_c.push_back(p.y);
+            }
+            plot_x_c = res_time_c.data();
+            plot_y_c = res_val_c.data();
+            plot_count_c = res_time_c.size();
+        }
+
+        if (temp_h.size() > 2) {
+            auto resampled_h = resample_curve(temp_h, 500);
+            for(const auto& p : resampled_h) {
+                res_time_h.push_back(p.x);
+                res_val_h.push_back(p.y);
+            }
+            plot_x_h = res_time_h.data();
+            plot_y_h = res_val_h.data();
+            plot_count_h = res_time_h.size();
+        }
+    }
+
+    if (ImPlot::BeginPlot("Carnivore vs Herbivore Over Time", ImVec2(-1, -1)))
+    {
+        ImPlot::SetupAxes("Time (s)", "Population");
+        float current_t = ImGui::GetTime();
+
+        if (real_time_view)
         {
-            // Línea Roja para Carnívoros
-            ImPlot::SetNextLineStyle(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), 2.0f);
-            ImPlot::PlotLine("Carnivores", time_data.data(), carnivore_data.data(), time_data.size());
+            ImPlot::SetupAxisLimits(ImAxis_X1, current_t - 60.0f, current_t, ImGuiCond_Always);
+            ImPlot::SetupAxis(ImAxis_Y1, nullptr, ImPlotAxisFlags_AutoFit);
+        }
+        else if (reset_view)
+        {
+            if (show_all_history && !raw_time_data.empty())
+            {
+                ImPlot::SetupAxisLimits(ImAxis_X1, raw_time_data.front(), current_t, ImGuiCond_Always);
+            }
+            else if (last_minute_static || last_5_minutes)
+            {
+                float window = last_minute_static ? 60.0f : 300.0f;
+                ImPlot::SetupAxisLimits(ImAxis_X1, current_t - window, current_t, ImGuiCond_Always);
+            }
+            reset_view = false;
+        }
 
-            // Línea Verde para Herbívoros
+        if (plot_count_c > 0)
+        {
+            ImPlot::SetNextLineStyle(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), 2.0f);
+            ImPlot::PlotLine("Carnivores", plot_x_c, plot_y_c, plot_count_c);
+        }
+
+        if (plot_count_h > 0)
+        {
             ImPlot::SetNextLineStyle(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), 2.0f);
-            ImPlot::PlotLine("Herbivores", time_data.data(), herbivore_data.data(), time_data.size());
+            ImPlot::PlotLine("Herbivores", plot_x_h, plot_y_h, plot_count_h);
         }
 
         ImPlot::EndPlot();
