@@ -26,34 +26,23 @@ Engine::Engine()
 
                 sf::Vector2f mouse_world_pos = window->mapPixelToCoords(sf::Mouse::getPosition(*window));
 
-                for (auto& entity : Scene::instance().get_chunk_entities(mouse_world_pos))
+                for (auto& entity : Scene::instance().get_chunk_entities(mouse_world_pos / (float)Constants::px_mt))
                 {
-                    std::shared_ptr<SpriteRenderer> renderer = entity->get_component<SpriteRenderer>();
-                    std::cout << entity->get_name() << std::endl;
-
-                    if (!renderer)
+                    auto organism = std::dynamic_pointer_cast<Organism>(entity);
+                    if (!organism)
                     {
                         continue;
                     }
 
-                    sf::VertexArray& arr = renderer->get_batch();
-
-                    for (std::size_t i = 0; i + 3 < arr.getVertexCount(); i += 4)
+                    sf::Vector2f org_pos = organism->get_transform().get_position();
+                    if (mouse_world_pos.x / Constants::px_mt >= org_pos.x - 0.5f && mouse_world_pos.x / Constants::px_mt <= org_pos.x + 1 &&
+                        mouse_world_pos.y / Constants::px_mt >= org_pos.y - 0.5f && mouse_world_pos.y / Constants::px_mt <= org_pos.y + 1)
                     {
-                        const sf::Vector2f& p0 = arr[i + 0].position;
-                        const sf::Vector2f& p2 = arr[i + 2].position;
-
-                        float min_x = std::min(p0.x, p2.x);
-                        float max_x = std::max(p0.x, p2.x);
-                        float min_y = std::min(p0.y, p2.y);
-                        float max_y = std::max(p0.y, p2.y);
-
-                        if (mouse_world_pos.x * Constants::px_mt >= min_x && mouse_world_pos.x * Constants::px_mt <= max_x &&
-                            mouse_world_pos.y * Constants::px_mt >= min_y && mouse_world_pos.y * Constants::px_mt <= max_y)
-                        {
-                            selected_entity = entity;
-                            break;
-                        }
+                        selected_entity = organism;
+                        break;
+                    } else
+                    {
+                        selected_entity = nullptr;
                     }
                 }
             }
@@ -122,7 +111,7 @@ void Engine::update()
 void Engine::render()
 {
   this->window->clear();
-  // Dibuja el terreno primero, si existe
+ 
   if (terrain)
   {
       terrain->draw(*window, sf::RenderStates::Default);
@@ -181,16 +170,15 @@ void Engine::render()
 
 	for (const auto& layer : render_queue)
 	{
-		sf::VertexArray final_vertices(sf::Quads); // 1. Crear un único VertexArray por capa.
+		sf::VertexArray final_vertices(sf::Quads);
 		for (const auto& renderer : layer)
 		{
 			const sf::VertexArray& batch = renderer->get_batch();
 			for (size_t i = 0; i < batch.getVertexCount(); ++i)
 			{
-				final_vertices.append(batch[i]); // 2. Acumular los vértices de todos los renderers.
+				final_vertices.append(batch[i]);
 			}
 		}
-		// 3. Dibujar todos los vértices acumulados de la capa de una sola vez.
 		this->window->draw(final_vertices, &Texture::get_atlas()); 
 	}
 
@@ -224,7 +212,6 @@ void Engine::run()
         fps_timer = 0.0f;
     }
 
-    // cargador de mapa
     if (!map_loaded)
     {
 
@@ -235,21 +222,22 @@ void Engine::run()
     else 
     {
 
-        // debug celldata with imgui
         if (this->terrain) 
         {
           Debugger::imgui_terrain(this->terrain, this->window);
         }
-        // cargador de caracteristicas
-        //ImGuiMenu::show_organism_config_window(this->organism_config, this->window.get());
 
-        sf::Vector2f mouse_world_pos = window->mapPixelToCoords(sf::Mouse::getPosition());
-        mouse_world_pos.x /= Constants::px_mt;
-        mouse_world_pos.y /= Constants::px_mt;
+        sf::Vector2f mouse_world_pos = window->mapPixelToCoords(sf::Mouse::getPosition(*window));
+        mouse_world_pos.x;
+        mouse_world_pos.y;
 
         Debugger::imgui_scene(fps_display, mouse_world_pos, selected_entity);
   
         ImPlotMenu::show_menu(this->organism_config, this->window.get());
+        
+        std::shared_ptr<Organism> selected_organism = std::dynamic_pointer_cast<Organism>(selected_entity);
+        Debugger::show_selected_entity(selected_organism);
+        
     }
       
       this->render();
