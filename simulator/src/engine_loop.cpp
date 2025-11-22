@@ -231,7 +231,9 @@ void Engine::run()
       ImGuiMenu::show_select_map_window(this->map_loaded, selected_map, 
                                         EntityTerrain::get_map_files("resources/maps", ".zadat"),
                                         this->terrain, this->texture_atlas);
-      } else {
+    } 
+    else 
+    {
 
         // debug celldata with imgui
         if (this->terrain) 
@@ -248,12 +250,11 @@ void Engine::run()
         Debugger::imgui_scene(fps_display, mouse_world_pos, selected_entity);
   
         ImPlotMenu::show_menu(this->organism_config, this->window.get());
-
-      }
+    }
       
       this->render();
       this->window->setTitle("Genesis BioSim");  
-    }
+  }
   
   ImPlot::DestroyContext();
   ImGui::DestroyContext();

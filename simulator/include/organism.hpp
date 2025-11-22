@@ -25,6 +25,8 @@ struct Stats
 {
 	float hunger = 100;
 	float vision = 5;
+	float nu = 100;
+	OrganismCategory category = OrganismCategory::HERBIVORE;
 	sf::Color color = sf::Color::Red;
 };
 

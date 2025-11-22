@@ -71,7 +71,7 @@ void Scene::load(const OrganismConfig& organism_config) // Provisional
 	for (int i = 0; i < num_organisms; ++i)
 	{
 		auto entity = EntityFactory<Organism>::create("Organism " + std::to_string(i), organism_config);
-
+		std::cout << (int)entity->get_stats().category << std::endl;
         float final_x = 0.0f;
         float final_y = 0.0f;
         bool valid_spot = false;

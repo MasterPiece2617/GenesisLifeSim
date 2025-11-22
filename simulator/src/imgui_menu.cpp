@@ -1,5 +1,7 @@
 #include <imgui_menu.hpp>
 
+bool is_carnivore = false;
+
 void ImGuiMenu::show_select_map_window(bool& map_loaded, std::string& selected_map, const std::vector<std::string>& map_files, 
                                         std::shared_ptr<EntityTerrain>& terrain, std::shared_ptr<Atlas>& texture_atlas)
 {
@@ -54,6 +56,17 @@ void ImGuiMenu::show_organism_config_window(OrganismConfig& organism_config, sf:
         }
     }
     ImGui::Separator();
+	ImGui::Text("Es carnivoro:");
+	ImGui::Checkbox("Carnivoro", &is_carnivore);
+
+    if (is_carnivore)
+    {
+        organism_config.category = OrganismCategory::CARNIVORE;
+    }
+    else
+    {
+        organism_config.category = OrganismCategory::HERBIVORE;
+	}
 
     ImGui::Text("cantidad de organismos a generar: 4 (fijo por ahora)");
     ImGui::SliderInt("Cantidad de organismos", &Scene::instance().num_organisms, 1, 100);
