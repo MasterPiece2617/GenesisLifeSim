@@ -9,7 +9,6 @@ void Debugger::imgui_terrain(std::shared_ptr<EntityTerrain> terrain, std::shared
     sf::Vector2f mouse_pos_world =
         window->mapPixelToCoords(mouse_pos_win);
 
-    // Calcula las coordenadas de la celda
     uint16_t cell_x =
         static_cast<uint16_t>(mouse_pos_world.x / Constants::px_mt);
     uint16_t cell_y =
@@ -19,13 +18,10 @@ void Debugger::imgui_terrain(std::shared_ptr<EntityTerrain> terrain, std::shared
     ImGui::Text("Posicion del mouse (mundo): (%.1f, %.1f)", mouse_pos_world.x,
                 mouse_pos_world.y);
 
-    // Verifica si la celda esta dentro de los limites del mapa
     if (cell_x < terrain->get_width() && cell_y < terrain->get_height()) 
     {
-      // Obtiene los datos de la celda
       CellData cell_data = terrain->get_cell(cell_x, cell_y);
 
-      // Muestra los datos de la celda
       ImGui::Separator();
       ImGui::Text("Coordenadas de la celda: (%d, %d)", cell_x, cell_y);
       ImGui::Text("Tipo de terreno: %d", cell_data.terrain_type);
@@ -40,16 +36,26 @@ void Debugger::imgui_terrain(std::shared_ptr<EntityTerrain> terrain, std::shared
     ImGui::End();
 }
 
-void Debugger::imgui_scene(float& fps_display, sf::Vector2f& mouse_world_pos, std::shared_ptr<Entity>& selected_entity)
+void Debugger::imgui_scene(float& fps_display, sf::Vector2f& mouse_world_pos)
 {
     ImGui::Begin("Info");
     ImGui::Text("Entities: %d", Scene::instance().get_entities().size());
     ImGui::Text("FPS: %.2f", fps_display);
     ImGui::Text("Zoom: %.2f", Scene::instance().get_main_camera()->get_zoom());
-    ImGui::Text("Mouse x: %f y: %f", mouse_world_pos.x, mouse_world_pos.y);
-    if (selected_entity)
+    ImGui::Text("Mouse x: %f y: %f", mouse_world_pos.x / Constants::px_mt, mouse_world_pos.y / Constants::px_mt);
+    ImGui::End();
+}
+
+void Debugger::show_selected_entity(std::shared_ptr<Organism>& selected_entity)
+{
+    if (!selected_entity)
     {
-        ImGui::Text("%s", selected_entity->get_name().c_str());
+        return;
     }
+    ImGui::Begin("Selected Entity");
+    ImGui::Text("Name: %s", selected_entity->get_name().c_str());
+    ImGui::Separator();
+    ImGui::Text("Position: %.2f, %.2f", selected_entity->get_transform().get_position().x, selected_entity->get_transform().get_position().y);
+    ImGui::Text("type organism: %s", selected_entity->get_stats().category == OrganismCategory::CARNIVORE ? "Carnivore" : "Herbivore");
     ImGui::End();
 }

@@ -156,7 +156,7 @@ std::vector<Point> resample_curve(const std::vector<Point>& data, size_t N) {
     return out;
 }
 
-// Graficas de Implot
+// ImPlot graphs
 void ImPlotMenu::organism_population_plot()
 {
     static bool real_time_view = true;  

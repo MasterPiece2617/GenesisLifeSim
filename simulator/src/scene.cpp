@@ -79,21 +79,18 @@ void Scene::load(const OrganismConfig& organism_config) // Provisional
         if (terrain)
         {
             int attempts = 0;
-            // Buscamos un punto válido
             while (attempts < 50 && !valid_spot) 
             {
                 int grid_x = std::rand() % map_width;
                 int grid_y = std::rand() % map_height;
 
-                // [CAMBIO] Solo preguntamos si es caminable (walkable).
-                // Ya no nos importa si es pasto (1) o arena (2), solo que no sea agua.
                 if (terrain->get_effort(static_cast<uint16_t>(grid_x), static_cast<uint16_t>(grid_y)) == 1.0f)
                 {
                     final_x = (grid_x + 0.5f);
                     final_y = (grid_y + 0.5f);
                     valid_spot = true;
                 }
-                attempts++;
+                ++attempts;
             }
         }
 
