@@ -244,7 +244,7 @@ void Behaviour::start()
             return BTStatus::RUNNING;
         }
 
-        const float eps = 0.001f;
+        const float eps = 0.005f;
         const sf::Vector2f d = goal - pos;
         const float dist2 = d.x * d.x + d.y * d.y;
 
@@ -382,7 +382,7 @@ void Behaviour::start()
 
             if (fixed_entity)
             {
-                return BTStatus::RUNNING;
+				goal = fixed_entity->get_transform().get_position();
             }
 
             // --- Búsqueda de presas ---
