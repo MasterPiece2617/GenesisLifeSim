@@ -552,6 +552,7 @@ void Behaviour::start()
 
 
                         std::shared_ptr<Organism> child = EntityFactory<Organism>::create("Organism", child_stats);
+                        EventManager::publish(Event(EventType::ORGANISM_BORN, EntityEvent(child))); // new born event
                         sf::Vector2f child_pos = pos;
                         child_pos.x += static_cast<float>((std::rand() % 3) - 1);
                         child_pos.y += static_cast<float>((std::rand() % 3) - 1);

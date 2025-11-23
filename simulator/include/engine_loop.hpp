@@ -22,6 +22,7 @@
 #include <organism_config.hpp>
 #include <imgui_debugger.hpp>
 #include <imgui_menu.hpp>
+#include <population_stats.hpp>
 
 class Engine {
 protected:
