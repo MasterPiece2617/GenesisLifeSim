@@ -26,6 +26,7 @@ struct Stats
 	float hunger = 100;
 	float vision = 5;
 	float nu = 100;
+	float speed = 5;
 	OrganismCategory category = OrganismCategory::HERBIVORE;
 	sf::Color color = sf::Color::Red;
 };
@@ -51,7 +52,6 @@ protected:
 	BehaviourTree bt;
 	float time = 0;
 	bool moving = false;
-	float speed = 5;
 	// Para el pathfinder
 	PathFinder pathfinder;
 	std::vector<sf::Vector2f> path;

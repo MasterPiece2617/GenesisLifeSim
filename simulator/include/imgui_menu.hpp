@@ -31,4 +31,5 @@ protected:
 public:
     static void organism_population_plot();
     static void carnivore_herbivore_plot();
+    static void organism_stats_plot();
 };

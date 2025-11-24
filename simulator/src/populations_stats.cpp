@@ -3,6 +3,10 @@
 int PopulationStats::num_organisms = 0;
 int PopulationStats::num_carnivores = 0;
 int PopulationStats::num_herbivores = 0;
+float PopulationStats::total_average_speed = 0.0f;
+float PopulationStats::total_average_vision = 0.0f;
+std::vector<float> PopulationStats::organisms_vision_data;
+std::vector<float> PopulationStats::organisms_speed_data;
 
 void PopulationStats::init(std::shared_ptr<sf::RenderWindow> window)
 {
@@ -13,9 +17,9 @@ void PopulationStats::init(std::shared_ptr<sf::RenderWindow> window)
 
 void PopulationStats::on_organism_born(const Event& event)
 {
-    auto curremt_organism = event.get_data<EntityEvent>().entity;
+    auto current_organism = event.get_data<EntityEvent>().entity;
 
-    if (auto organism = std::dynamic_pointer_cast<Organism>(curremt_organism))
+    if (auto organism = std::dynamic_pointer_cast<Organism>(current_organism))
     {
         ++num_organisms;
 
@@ -27,6 +31,9 @@ void PopulationStats::on_organism_born(const Event& event)
         {
             ++num_herbivores;
         }
+
+        total_average_vision += organism->get_stats().vision;
+        total_average_speed += organism->get_stats().speed;
     }
 }
 
@@ -46,6 +53,24 @@ void PopulationStats::on_organism_died(const Event& event)
         {
             --num_herbivores;
         }
+
+        total_average_vision -= organism->get_stats().vision;
+        total_average_speed -= organism->get_stats().speed;
+
+        if (num_organisms <= 0)
+        {
+            total_average_vision = 0.0f;
+            total_average_speed = 0.0f;
+        }
     }
 }
 
+std::vector<float> PopulationStats::get_organisms_vision_data()
+{
+    return organisms_vision_data;
+}
+
+std::vector<float> PopulationStats::get_organisms_speed_data()
+{
+    return organisms_speed_data;
+}

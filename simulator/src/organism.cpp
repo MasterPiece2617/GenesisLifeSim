@@ -8,6 +8,7 @@ Organism::Organism(std::string _name, const OrganismConfig& _organism_config) : 
 	stats.color = _organism_config.color;
 	stats.hunger = 100;
 	stats.category = _organism_config.category;
+    stats.speed = _organism_config.move_speed;
 	is_alive = true;
 
 	//add_component(std::make_shared<Behaviour>(weak_from_this(), _organism_config));
@@ -25,10 +26,7 @@ Stats& Organism::get_stats()
     return stats;
 }
 
-Behaviour::Behaviour(std::weak_ptr<Entity> _owner, const OrganismConfig& _organism_config) : Component(_owner), bt(std::make_shared<Node>(nullptr))
-{
-	speed = _organism_config.move_speed;
-}
+Behaviour::Behaviour(std::weak_ptr<Entity> _owner, const OrganismConfig& _organism_config) : Component(_owner), bt(std::make_shared<Node>(nullptr)) {}
 
 void Behaviour::start()
 {
@@ -103,7 +101,7 @@ void Behaviour::start()
                 }
             }
 
-            float effective_speed = speed / current_effort;
+            float effective_speed = std::dynamic_pointer_cast<Organism>(owner.lock())->get_stats().speed / current_effort;
             sf::Vector2f dir_normalized = direction / length;
             sf::Vector2f delta = dir_normalized * effective_speed * Time::get_delta();
 
