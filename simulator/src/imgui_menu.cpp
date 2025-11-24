@@ -351,24 +351,41 @@ void ImPlotMenu::organism_stats_plot()
         float current_time = ImGui::GetTime();
 
         float avg_speed = 0.0f;
-    float avg_vision = 0.0f;
+        float avg_vision = 0.0f;
+        float avg_carn_speed = 0.0f;
+        float avg_carn_vision = 0.0f;
+        float avg_herb_speed = 0.0f;
+        float avg_herb_vision = 0.0f;
 
-    if (PopulationStats::num_organisms > 0) 
-    {
-        avg_speed = PopulationStats::total_average_speed / PopulationStats::num_organisms;
-        avg_vision = PopulationStats::total_average_vision / PopulationStats::num_organisms;
-    }
 
-    time_data.push_back(current_time);
-    PopulationStats::organisms_speed_data.push_back(avg_speed);
-    PopulationStats::organisms_vision_data.push_back(avg_vision);
+        if (PopulationStats::num_organisms > 0) 
+        {
+            avg_speed = PopulationStats::total_average_speed / PopulationStats::num_organisms;
+            avg_vision = PopulationStats::total_average_vision / PopulationStats::num_organisms;
+            avg_carn_speed = PopulationStats::total_average_speed_carnivores / PopulationStats::num_carnivores;
+            avg_carn_vision = PopulationStats::total_average_vision_carnivores / PopulationStats::num_carnivores;
+            avg_herb_speed = PopulationStats::total_average_speed_herbivores / PopulationStats::num_herbivores;
+            avg_herb_vision = PopulationStats::total_average_vision_herbivores / PopulationStats::num_herbivores;
+        }
 
-    // Limpieza de memoria (ej. mantener últimos 2000 puntos)
-    if (time_data.size() > 2000) {
-        time_data.erase(time_data.begin());
-        PopulationStats::organisms_speed_data.erase(PopulationStats::organisms_speed_data.begin());
-        PopulationStats::organisms_vision_data.erase(PopulationStats::organisms_vision_data.begin());
-    }
+        time_data.push_back(current_time);
+        PopulationStats::organisms_speed_data.push_back(avg_speed);
+        PopulationStats::organisms_vision_data.push_back(avg_vision);
+        PopulationStats::carnivores_speed_data.push_back(avg_carn_speed);
+        PopulationStats::carnivores_vision_data.push_back(avg_carn_vision);
+        PopulationStats::herbivores_speed_data.push_back(avg_herb_speed);
+        PopulationStats::herbivores_vision_data.push_back(avg_herb_vision);
+
+        if (time_data.size() > 2000) 
+        {
+            time_data.erase(time_data.begin());
+            PopulationStats::organisms_speed_data.erase(PopulationStats::organisms_speed_data.begin());
+            PopulationStats::organisms_vision_data.erase(PopulationStats::organisms_vision_data.begin());
+            PopulationStats::carnivores_speed_data.erase(PopulationStats::carnivores_speed_data.begin());
+            PopulationStats::carnivores_vision_data.erase(PopulationStats::carnivores_vision_data.begin());
+            PopulationStats::herbivores_speed_data.erase(PopulationStats::herbivores_speed_data.begin());
+            PopulationStats::herbivores_vision_data.erase(PopulationStats::herbivores_vision_data.begin());
+        }
     }
 
     ImGui::Begin("Estadisticas de Organismos");
@@ -392,14 +409,30 @@ void ImPlotMenu::organism_stats_plot()
             if (selector == 0) 
             {
                 const auto& speed_data = PopulationStats::organisms_speed_data;
+                const auto& carn_speed_data = PopulationStats::carnivores_speed_data;
+                const auto& herb_speed_data = PopulationStats::herbivores_speed_data;
+
                 ImPlot::SetNextLineStyle(ImVec4(0, 1, 1, 1), 2.0f); 
                 ImPlot::PlotLine("Avg Speed", time_data.data(), speed_data.data(), time_data.size());
+
+                ImPlot::SetNextLineStyle(ImVec4(1, 0, 0, 1), 2.0f);
+                ImPlot::PlotLine("Avg Carn Speed", time_data.data(), carn_speed_data.data(), time_data.size());
+                ImPlot::SetNextLineStyle(ImVec4(0, 1, 0, 1), 2.0f);
+                ImPlot::PlotLine("Avg Herb Speed", time_data.data(), herb_speed_data.data(), time_data.size());
             }
             else if (selector == 1) 
             {
                 const auto& vision_data = PopulationStats::organisms_vision_data;
+                const auto& carn_vision_data = PopulationStats::carnivores_vision_data;
+                const auto& herb_vision_data = PopulationStats::herbivores_vision_data;
+
                 ImPlot::SetNextLineStyle(ImVec4(1, 0, 1, 1), 2.0f);
                 ImPlot::PlotLine("Avg Vision", time_data.data(), vision_data.data(), time_data.size());
+
+                ImPlot::SetNextLineStyle(ImVec4(1, 0, 0, 1), 2.0f);
+                ImPlot::PlotLine("Avg Carn Vision", time_data.data(), carn_vision_data.data(), time_data.size());
+                ImPlot::SetNextLineStyle(ImVec4(0, 1, 0, 1), 2.0f);
+                ImPlot::PlotLine("Avg Herb Vision", time_data.data(), herb_vision_data.data(), time_data.size());
             }
         }
 

@@ -3,10 +3,20 @@
 int PopulationStats::num_organisms = 0;
 int PopulationStats::num_carnivores = 0;
 int PopulationStats::num_herbivores = 0;
+
 float PopulationStats::total_average_speed = 0.0f;
 float PopulationStats::total_average_vision = 0.0f;
+float PopulationStats::total_average_speed_carnivores = 0.0f;
+float PopulationStats::total_average_vision_carnivores = 0.0f;
+float PopulationStats::total_average_speed_herbivores = 0.0f;
+float PopulationStats::total_average_vision_herbivores = 0.0f;
+
 std::vector<float> PopulationStats::organisms_vision_data;
 std::vector<float> PopulationStats::organisms_speed_data;
+std::vector<float> PopulationStats::carnivores_vision_data;
+std::vector<float> PopulationStats::carnivores_speed_data;
+std::vector<float> PopulationStats::herbivores_vision_data;
+std::vector<float> PopulationStats::herbivores_speed_data;
 
 void PopulationStats::init(std::shared_ptr<sf::RenderWindow> window)
 {
@@ -26,10 +36,14 @@ void PopulationStats::on_organism_born(const Event& event)
         if ((int)organism->get_stats().category == 1) // carnivore
         {
             ++num_carnivores;
+            total_average_speed_carnivores += organism->get_stats().speed;
+            total_average_vision_carnivores += organism->get_stats().vision;
         }
         else if ((int)organism->get_stats().category == 0) // herbivore
         {
             ++num_herbivores;
+            total_average_speed_herbivores += organism->get_stats().speed;
+            total_average_vision_herbivores += organism->get_stats().vision;
         }
 
         total_average_vision += organism->get_stats().vision;
@@ -48,10 +62,14 @@ void PopulationStats::on_organism_died(const Event& event)
         if ((int)organism->get_stats().category == 1) // carnivore
         {
             --num_carnivores;
+            total_average_vision_carnivores -= organism->get_stats().vision;
+            total_average_speed_carnivores -= organism->get_stats().speed;
         }
         else if ((int)organism->get_stats().category == 0) // herbivore
         {
             --num_herbivores;
+            total_average_vision_herbivores -= organism->get_stats().vision;
+            total_average_speed_herbivores -= organism->get_stats().speed;
         }
 
         total_average_vision -= organism->get_stats().vision;
@@ -61,6 +79,10 @@ void PopulationStats::on_organism_died(const Event& event)
         {
             total_average_vision = 0.0f;
             total_average_speed = 0.0f;
+            total_average_vision_carnivores = 0.0f;
+            total_average_speed_carnivores = 0.0f;
+            total_average_vision_herbivores = 0.0f;
+            total_average_speed_herbivores = 0.0f;
         }
     }
 }
