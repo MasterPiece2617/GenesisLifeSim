@@ -6,16 +6,7 @@
 #include <fstream>
 
 #include "texture.hpp"
-
-struct CellData
-{
-	uint8_t terrain_type;
-	uint8_t texture_id;
-	uint8_t effort;
-	bool is_walkable;
-	bool is_navigable;
-	bool is_plantable;
-};
+#include "map_generator.hpp"
 
 class Terrain 
 {

@@ -85,7 +85,7 @@ void Engine::update()
 
         ImGui::SFML::ProcessEvent(ev);
     }
-    ImGui::SFML::ProcessEvent(ev);
+    //ImGui::SFML::ProcessEvent(ev);
   
 
     // Update  

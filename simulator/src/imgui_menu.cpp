@@ -2,6 +2,9 @@
 #include <engine_loop.hpp>
 
 bool is_carnivore = false;
+bool show_map_creator_window = false;
+int width = 200;
+int height = 200;
 
 void ImGuiMenu::show_select_map_window(bool& map_loaded, std::string& selected_map, const std::vector<std::string>& map_files, 
                                         std::shared_ptr<EntityTerrain>& terrain, std::shared_ptr<Atlas>& texture_atlas)
@@ -28,8 +31,89 @@ void ImGuiMenu::show_select_map_window(bool& map_loaded, std::string& selected_m
         terrain = EntityFactory<EntityTerrain>::create(selected_map, texture_atlas);
         Scene::instance().add_entity(terrain);
         map_loaded = true; // To close the map selection window
+        show_map_creator_window = false;
         ImGui::CloseCurrentPopup();
     } 
+
+    if (ImGui::Button("Crear mapa personalizado"))
+    {
+        show_map_creator_window = true;
+    }
+
+    if (show_map_creator_window)
+    {
+        show_map_creator();
+    }
+
+    ImGui::End();
+}
+
+void ImGuiMenu::show_map_creator()
+{
+    ImGui::Begin("Creador de Mundos");
+
+    static MapGenerator::Config config;
+    static char filename_buffer[128] = "new_map.zadat";
+
+    ImGui::Text("Configuracion del Terreno");
+    ImGui::Separator();
+
+    // Inputs
+    ImGui::InputInt("Semilla (Seed)", &config.seed);
+    ImGui::SameLine();
+    if (ImGui::Button("Random")) {
+        config.seed = rand();
+    }
+
+    ImGui::SliderFloat("Frecuencia (Zoom)", &config.frequency, 0.001f, 0.1f, "%.4f");
+    ImGui::SliderFloat("Detalle (Ruido)", &config.detail_freq, 0.01f, 0.2f);
+    ImGui::SliderInt("Octavas", &config.octaves, 1, 8);
+
+    ImGui::Separator();
+    ImGui::Text("Dimensiones");
+    ImGui::InputInt("Ancho", &width, 10, 100);
+    ImGui::InputInt("Alto", &height, 10, 100);
+
+    config.width = static_cast<uint16_t>(width);
+    config.height = static_cast<uint16_t>(height);
+
+    ImGui::Separator();
+    ImGui::InputText("Nombre Archivo", filename_buffer, sizeof(filename_buffer));
+
+    if (ImGui::Button("Cerrar", ImVec2(120, 0))) 
+    { 
+        show_map_creator_window = false;
+    }
+
+    if (ImGui::Button("Generar y guardar mapa", ImVec2(-1, 25)))
+    {   
+        config.filename = std::string(filename_buffer);
+
+        // Validar extensión
+        if (config.filename.find(".zadat") == std::string::npos) {
+            config.filename += ".zadat";
+        }
+
+        // Llamar al generador
+        MapGenerator::generate_map(config);
+        
+        ImGui::OpenPopup("Mapa Guardado");
+    }
+
+    // Modal de confirmación
+    if (ImGui::BeginPopupModal("Mapa Guardado", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+    {
+        ImGui::Text("El mapa se ha guardado en resources/maps/");
+        ImGui::Text("%s", config.filename.c_str());
+        ImGui::Separator();
+
+        if (ImGui::Button("OK", ImVec2(120, 0))) { 
+            ImGui::CloseCurrentPopup(); 
+        }
+
+        ImGui::EndPopup();
+    }
+
     ImGui::End();
 }
 
