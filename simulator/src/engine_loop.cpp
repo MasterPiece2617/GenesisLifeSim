@@ -298,6 +298,8 @@ void Engine::run()
             std::cout << "Camera centered on terrain." << std::endl;
         }
 
+        Scene::instance().load(this->organism_config);
+
       }
     }
     else 

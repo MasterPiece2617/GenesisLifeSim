@@ -735,27 +735,55 @@ void FoodGenerator::init()
 	add_component(std::make_shared<FoodSpawner>(shared_from_this()));
 }
 
-FoodSpawner::FoodSpawner(std::weak_ptr<Entity> _owner) : Component(_owner) {}
+FoodSpawner::FoodSpawner(std::weak_ptr<Entity> _owner) : Component(_owner) 
+{
+	timer = static_cast<float>(std::rand() % (int)spawn_rate);
+}
+
+Tree::Tree(std::string _name) : Entity(_name) {}
+
+void Tree::init()
+{
+    add_component(std::make_shared<SpriteRenderer>(shared_from_this(), "tree"));
+
+    add_component(std::make_shared<FoodSpawner>(shared_from_this()));
+}
 
 void FoodSpawner::update()
 {
 	time += Time::get_delta();
-	if (time >= 2.0f)
-	{
-		for (int i = 0; i < 20; ++i)
-		{
-			std::shared_ptr<Food> food = EntityFactory<Food>::create("fruit");
-			auto terrain = Scene::instance().get_entity("Terrain"); // Use get_entity for safety
-			uint16_t map_width = terrain ? std::dynamic_pointer_cast<EntityTerrain>(terrain)->get_width() : 100;
-			uint16_t map_height = terrain ? std::dynamic_pointer_cast<EntityTerrain>(terrain)->get_height() : 100;
-			int x = std::rand() % map_width;
-			int y = std::rand() % map_height;
 
-			if (terrain && std::dynamic_pointer_cast<EntityTerrain>(terrain)->get_effort(static_cast<uint16_t>(x), static_cast<uint16_t>(y)) == 1.0f) {
-				food->get_transform().set_position(sf::Vector2f(x, y));
-				Scene::instance().add_entity(food);
-			}
-		}
-		time = 0;
-	}
+    if (time >= spawn_rate)
+    {
+        time = 0.0f;
+
+        auto owner_ptr = owner.lock();
+        if (!owner_ptr) return;
+
+        std::shared_ptr<Food> food = EntityFactory<Food>::create("fruit");
+        
+        sf::Vector2f tree_pos = owner_ptr->get_transform().get_position();
+ 
+        float angle = (std::rand() % 360) * Constants::pi_val / 180.0f;
+        float dist = (std::rand() % 100) / 100.0f * spawn_radius; // 0 to spawn_radius
+        
+        sf::Vector2f offset(std::cos(angle) * dist, std::sin(angle) * dist);
+        sf::Vector2f spawn_pos_meters = (tree_pos + offset);
+
+        auto terrain_entity = Scene::instance().get_entity("Terrain");
+        if (auto terrain = std::dynamic_pointer_cast<EntityTerrain>(terrain_entity))
+        {
+            sf::Vector2f offset_px = offset;
+            sf::Vector2f final_pos_px = tree_pos + offset_px;
+
+            int gx = static_cast<int>(final_pos_px.x);
+            int gy = static_cast<int>(final_pos_px.y);
+
+            if (terrain->plantable((uint16_t)gx, (uint16_t)gy))
+            {
+                food->get_transform().set_position(final_pos_px);
+                Scene::instance().add_entity(food);
+            }
+        }
+    }
 }

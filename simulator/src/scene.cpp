@@ -78,42 +78,35 @@ void Scene::spawn_organisms(sf::Vector2f position_meters, OrganismConfig& organi
 
 void Scene::load(const OrganismConfig& organism_config) // Provisional
 {
-	add_entity(EntityFactory<FoodGenerator>::create("food generator"));
-	// auto terrain_entity = Scene::instance().get_entity("Terrain");
-    // auto terrain = std::dynamic_pointer_cast<EntityTerrain>(terrain_entity);
+	auto terrain_entity = Scene::instance().get_entity("Terrain");
+    auto terrain = std::dynamic_pointer_cast<EntityTerrain>(terrain_entity);
 
-    // uint16_t map_width = terrain ? terrain->get_width() : 100;
-    // uint16_t map_height = terrain ? terrain->get_height() : 100;
+    uint16_t map_width = terrain->get_width();
+    uint16_t map_height = terrain->get_height();
 
-	// for (int i = 0; i < num_organisms; ++i)
-	// {
-	// 	auto entity = EntityFactory<Organism>::create("Organism " + std::to_string(i), organism_config);
-	// 	EventManager::publish(Event(EventType::ORGANISM_BORN, EntityEvent(entity)), entity);
-    //     float final_x = 0.0f;
-    //     float final_y = 0.0f;
-    //     bool valid_spot = false;
+    int trees_desired = 200; // Cantidad de árboles
+    int trees_placed = 0;
+    int attempts = 0;
 
-    //     if (terrain)
-    //     {
-    //         int attempts = 0;
-    //         while (attempts < 50 && !valid_spot) 
-    //         {
-    //             int grid_x = std::rand() % map_width;
-    //             int grid_y = std::rand() % map_height;
+    while (trees_placed < trees_desired && attempts < 2000)
+    {
+        ++attempts;
+        int gx = std::rand() % map_width;
+        int gy = std::rand() % map_height;
 
-    //             if (terrain->get_effort(static_cast<uint16_t>(grid_x), static_cast<uint16_t>(grid_y)) == 1.0f)
-    //             {
-    //                 final_x = (grid_x + 0.5f);
-    //                 final_y = (grid_y + 0.5f);
-    //                 valid_spot = true;
-    //             }
-    //             ++attempts;
-    //         }
-    //     }
+        if (terrain->plantable(gx, gy)) 
+        {
+            auto tree = EntityFactory<Tree>::create("Tree_" + std::to_string(trees_placed));
 
-	// 	entity->get_transform().set_position({final_x, final_y});
-	// 	add_entity(entity);
-	// }
+            float wx = (gx + 0.5f);
+            float wy = (gy + 0.5f);
+            
+            tree->get_transform().set_position({wx, wy});
+            add_entity(tree);
+            
+			++trees_placed;
+        }
+    }
 }
 
 void Scene::clear()
