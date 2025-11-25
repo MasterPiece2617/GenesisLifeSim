@@ -9,7 +9,6 @@ Organism::Organism(std::string _name, const OrganismConfig& _organism_config) : 
 	stats.hunger = _organism_config.hunger;
 	stats.category = _organism_config.category;
 	stats.speed = _organism_config.move_speed;
-	stats.swim = _organism_config.swim_speed;
 	stats.hp = _organism_config.hp;
 	stats.size = _organism_config.size;
 	stats.weight = _organism_config.weight;
@@ -120,8 +119,6 @@ void Behaviour::start()
 
 				// --- TERRENO ---
 				float current_effort = 1.0f;
-				bool walkable = true;
-				bool swimming = false;
 				auto terrain_entity = Scene::instance().get_entity("Terrain");
 				std::shared_ptr<EntityTerrain> terrain = nullptr;
 				if (terrain_entity)
@@ -133,15 +130,10 @@ void Behaviour::start()
 						int pos_x = static_cast<int>(std::floor(current_pos.x));
 						int pos_y = static_cast<int>(std::floor(current_pos.y));
 						current_effort = terrain->get_effort((uint16_t)pos_x, (uint16_t)pos_y);
-						walkable = terrain->walkable((uint16_t)pos_x, (uint16_t)pos_y);
-						swimming = terrain->navigable((uint16_t)pos_x, (uint16_t)pos_y);
 					}
 				}
 
-				float effective_speed = walkable && !swimming ? s.speed / current_effort : 
-										!walkable && swimming ? s.swim / (current_effort - 3) : // simulate better swim
-										s.speed / current_effort;
-
+				float effective_speed = s.speed / current_effort;
 				sf::Vector2f dir_normalized = direction / length;
 				sf::Vector2f delta = dir_normalized * effective_speed * Time::get_delta();
 
@@ -584,98 +576,133 @@ void Behaviour::start()
 						static std::mt19937 rng(std::random_device{}());
 						std::uniform_real_distribution<float> variation(-0.1f, 0.1f);
 						Stats child_stats;
-						child_stats.hunger = 100.0f;
-						child_stats.vision = (og->get_stats().vision + nearest->get_stats().vision) / 2;
-                        child_stats.category = og->get_stats().category;
 
-                        float t = 0.5f; // 0.0 = todo og, 1.0 = todo nearest
-                        child_stats.color = sf::Color(
-                            static_cast<sf::Uint8>(og->get_stats().color.r * (1 - t) + nearest->get_stats().color.r * t),
-                            static_cast<sf::Uint8>(og->get_stats().color.g * (1 - t) + nearest->get_stats().color.g * t),
-                            static_cast<sf::Uint8>(og->get_stats().color.b * (1 - t) + nearest->get_stats().color.b * t)
-                        );
+						// --- Size con mutación ---
+						child_stats.size = (og->get_stats().size + nearest->get_stats().size) / 2.0f;
+						child_stats.size += child_stats.size * variation(rng);
+						child_stats.size = std::clamp(child_stats.size, 0.5f, 5.0f);
+
+						// --- Derivados de size ---
+						child_stats.weight = std::pow(child_stats.size, 3.0f);
+						child_stats.hp = 100.0f * child_stats.size;
+						child_stats.max_hunger = 200.0f * child_stats.size;
+						child_stats.hunger = child_stats.max_hunger * 0.5f;
+						child_stats.nu = child_stats.weight * 50;
+						child_stats.stamina = 100.0f * child_stats.size;
+
+						// --- Speed con rango dependiente de size ---
+						float speed_min = 3.0f + 2.0f * child_stats.size;
+						float speed_max = 8.0f + 4.0f * child_stats.size;
+						child_stats.speed = (og->get_stats().speed + nearest->get_stats().speed) / 2.0f;
+						child_stats.speed += child_stats.speed * variation(rng);
+						child_stats.speed = std::clamp(child_stats.speed, speed_min, speed_max);
+
+						// --- Vision con rango dependiente de size ---
+						float vision_base = 5.0f + 2.0f * child_stats.size;
+						float vision_min = vision_base * 0.8f;
+						float vision_max = vision_base * 1.2f;
+						child_stats.vision = (og->get_stats().vision + nearest->get_stats().vision) / 2.0f;
+						child_stats.vision += child_stats.vision * variation(rng);
+						child_stats.vision = std::clamp(child_stats.vision, vision_min, vision_max);
+
+						// --- Categoría heredada ---
+						child_stats.category = og->get_stats().category;
+
+						// --- Color con mezcla y mutación ---
+						float t = 0.5f;
+						auto mix_channel = [&](sf::Uint8 a, sf::Uint8 b)
+							{
+								float base = a * (1 - t) + b * t;
+								float mutated = base + base * variation(rng);
+								return static_cast<sf::Uint8>(std::clamp(mutated, 0.0f, 255.0f));
+							};
+						child_stats.color = sf::Color(
+							mix_channel(og->get_stats().color.r, nearest->get_stats().color.r),
+							mix_channel(og->get_stats().color.g, nearest->get_stats().color.g),
+							mix_channel(og->get_stats().color.b, nearest->get_stats().color.b)
+						);
+
+						// --- Crear hijo ---
+						std::shared_ptr<Organism> child = EntityFactory<Organism>::create("Organism", child_stats);
+						sf::Vector2f child_pos = pos;
+						child_pos.x += static_cast<float>((std::rand() % 3) - 1);
+						child_pos.y += static_cast<float>((std::rand() % 3) - 1);
+						child->get_transform().set_position(child_pos);
+						Scene::instance().add_entity(child);
+
+						// --- Coste energético de reproducción ---
+						og->get_stats().hunger = std::max(0.0f, (og->get_stats().hunger - (og->get_stats().max_hunger * 0.3f)));
+						nearest->get_stats().hunger = std::max(0.0f, (nearest->get_stats().hunger - (nearest->get_stats().max_hunger * 0.3f)));
+
+						cooldown_ticks[og.get()] = COOLDOWN_TICKS;
+						cooldown_ticks[nearest.get()] = COOLDOWN_TICKS;
+
+						moving = false;
+						fixed_entity.reset();
+
+						return BTStatus::SUCCESS;
+					}
+					else
+					{
+						return BTStatus::RUNNING;
+					}
+				}
+				else
+				{
+					fixed_entity = nearest;
+					goal = fixed_entity->get_transform().get_position();
+					sf::Vector2f dir = goal - pos;
+					float angle_rad = std::atan2(dir.y, dir.x);
+					float angle_deg = angle_rad * 180.0f / Constants::pi_val;
+					og->get_transform().set_rotation(angle_deg);
+					moving = true;
+					return BTStatus::RUNNING;
+				}
+			}
+
+			if (!moving && !fixed_entity)
+			{
+				static std::mt19937 rng_walk(std::random_device{}());
+				std::uniform_real_distribution<float> angle_deg_dist(0.0f, 360.0f);
+				std::uniform_real_distribution<float> radius_dist(0.0f, 10.0f);
+
+				float angle_deg = angle_deg_dist(rng_walk);
+				const float angle_rad = angle_deg * Constants::pi_val / 180.0f;
+				const float radius = radius_dist(rng_walk);
+
+				sf::Vector2f offset(std::cos(angle_rad) * radius, std::sin(angle_rad) * radius);
+				goal = pos + offset;
+
+				auto terrain_entity = Scene::instance().get_entity("Terrain");
+				if (auto terrain = std::dynamic_pointer_cast<EntityTerrain>(terrain_entity))
+				{
+					float map_w = static_cast<float>(terrain->get_width());
+					float map_h = static_cast<float>(terrain->get_height());
+
+					if (goal.x < 0.f || goal.x > map_w - 1.0f ||
+						goal.y < 0.f || goal.y > map_h - 1.0f)
+					{
+						offset = -offset;
+						goal = pos + offset;
+						angle_deg = std::atan2(offset.y, offset.x * 180.0f / Constants::pi_val);
+					}
+
+					goal.x = std::max(0.f, std::min(goal.x, map_w - 1.0f));
+					goal.y = std::max(0.f, std::min(goal.y, map_h - 1.0f));
+				}
+
+				og->get_transform().set_rotation(angle_deg);
+				moving = true;
+				return BTStatus::RUNNING;
+			}
+
+			return BTStatus::RUNNING;
+		};
 
 
-                        std::shared_ptr<Organism> child = EntityFactory<Organism>::create("Organism", child_stats);
-                        EventManager::publish(Event(EventType::ORGANISM_BORN, EntityEvent(child))); // new born event
-                        sf::Vector2f child_pos = pos;
-                        child_pos.x += static_cast<float>((std::rand() % 3) - 1);
-                        child_pos.y += static_cast<float>((std::rand() % 3) - 1);
-                        child->get_transform().set_position(child_pos);
-                        Scene::instance().add_entity(child);
 
-                        og->get_stats().hunger = std::max(0.0f, og->get_stats().hunger - 30.0f);
-                        nearest->get_stats().hunger = std::max(0.0f, nearest->get_stats().hunger - 30.0f);
-
-                        cooldown_ticks[og.get()] = COOLDOWN_TICKS;
-                        cooldown_ticks[nearest.get()] = COOLDOWN_TICKS;
-
-                        moving = false;
-                        fixed_entity.reset();
-
-                        return BTStatus::SUCCESS;
-                    }
-                    else
-                    {
-                        return BTStatus::RUNNING;
-                    }
-                }
-                else
-                {
-                    fixed_entity = nearest;
-                    goal = fixed_entity->get_transform().get_position();
-                    sf::Vector2f dir = goal - pos;
-                    float angle_rad = std::atan2(dir.y, dir.x);
-                    float angle_deg = angle_rad * 180.0f / 3.14159265f;
-                    og->get_transform().set_rotation(angle_deg);
-                    moving = true;
-                    return BTStatus::RUNNING;
-                }
-            }
-
-            if (!moving && !fixed_entity)
-            {
-                static std::mt19937 rng_walk(std::random_device{}());
-                std::uniform_real_distribution<float> angle_deg_dist(0.0f, 360.0f);
-                std::uniform_real_distribution<float> radius_dist(0.0f, 10.0f);
-
-                float angle_deg = angle_deg_dist(rng_walk);
-                const float angle_rad = angle_deg * 3.14159265f / 180.0f;
-                const float radius = radius_dist(rng_walk);
-
-                sf::Vector2f offset(std::cos(angle_rad) * radius, std::sin(angle_rad) * radius);
-                goal = pos + offset;
-
-                auto terrain_entity = Scene::instance().get_entity("Terrain");
-                if (auto terrain = std::dynamic_pointer_cast<EntityTerrain>(terrain_entity))
-                {
-                    float map_w = static_cast<float>(terrain->get_width());
-                    float map_h = static_cast<float>(terrain->get_height());
-
-                    if (goal.x < 0.f || goal.x > map_w - 1.0f ||
-                        goal.y < 0.f || goal.y > map_h - 1.0f)
-                    {
-                        offset = -offset;
-                        goal = pos + offset;
-                        angle_deg = std::atan2(offset.y, offset.x) * 180.0f / 3.14159265f;
-                    }
-
-                    goal.x = std::max(0.f, std::min(goal.x, map_w - 1.0f));
-                    goal.y = std::max(0.f, std::min(goal.y, map_h - 1.0f));
-                }
-
-                og->get_transform().set_rotation(angle_deg);
-                moving = true;
-                return BTStatus::RUNNING;
-            }
-
-            return BTStatus::RUNNING;
-        };
-
-
-
-    std::shared_ptr<Node> root = bt.get_root();
-    std::shared_ptr<SequenceNode> selector = std::make_shared<SequenceNode>(root);
+	std::shared_ptr<Node> root = bt.get_root();
+	std::shared_ptr<SequenceNode> selector = std::make_shared<SequenceNode>(root);
 
 	root->add_child(selector);
 

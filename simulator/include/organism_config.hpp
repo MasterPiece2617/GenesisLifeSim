@@ -19,7 +19,7 @@ struct OrganismConfig
 	float size = 1;
 	float weight = 1;
 	float vision_radius = 5;
-	float nu = 1;
+	float nu = 50;
 	float move_speed = 5.0f;
 	float swim_speed = 5.0f;
 	OrganismCategory category = OrganismCategory::HERBIVORE;

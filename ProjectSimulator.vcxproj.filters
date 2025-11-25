@@ -1,183 +1,88 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Archivos de origen">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
-    </Filter>
-    <Filter Include="Archivos de encabezado">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
-    </Filter>
-    <Filter Include="Archivos de recursos">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
-    </Filter>
+    <ClCompile Include="libs\imgui\imgui-SFML.cpp" />
+    <ClCompile Include="libs\imgui\imgui.cpp" />
+    <ClCompile Include="libs\imgui\imgui_draw.cpp" />
+    <ClCompile Include="libs\imgui\imgui_tables.cpp" />
+    <ClCompile Include="libs\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="libs\implot\implot.cpp" />
+    <ClCompile Include="libs\implot\implot_items.cpp" />
+    <ClCompile Include="simulator\src\behaviour_tree.cpp" />
+    <ClCompile Include="simulator\src\camera.cpp" />
+    <ClCompile Include="simulator\src\entity_terrain.cpp" />
+    <ClCompile Include="simulator\src\event_manager.cpp" />
+    <ClCompile Include="simulator\src\imgui_debugger.cpp" />
+    <ClCompile Include="simulator\src\imgui_menu.cpp" />
+    <ClCompile Include="simulator\src\organism.cpp" />
+    <ClCompile Include="simulator\src\pathfinder.cpp" />
+    <ClCompile Include="simulator\src\renderer.cpp" />
+    <ClCompile Include="simulator\src\terrain.cpp" />
+    <ClCompile Include="simulator\src\texture.cpp" />
+    <ClCompile Include="simulator\src\utils.cpp" />
+    <ClCompile Include="simulator\src\transform.cpp" />
+    <ClCompile Include="simulator\main.cpp" />
+    <ClCompile Include="simulator\src\component.cpp" />
+    <ClCompile Include="simulator\src\engine_loop.cpp" />
+    <ClCompile Include="simulator\src\entity.cpp" />
+    <ClCompile Include="simulator\src\graph.cpp" />
+    <ClCompile Include="simulator\src\scene.cpp" />
+    <ClCompile Include="simulator\src\population_stats.cpp" />
+    <ClCompile Include="simulator\src\populations_stats.cpp" />
+    <ClCompile Include="simulator\src\map_generator.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="simulator\main.cpp">
-      <Filter>Archivos de origen</Filter>
-    </ClCompile>
-    <ClCompile Include="simulator\src\engine_loop.cpp">
-      <Filter>Archivos de origen</Filter>
-    </ClCompile>
-    <ClCompile Include="simulator\src\component.cpp">
-      <Filter>Archivos de origen</Filter>
-    </ClCompile>
-    <ClCompile Include="simulator\src\entity.cpp">
-      <Filter>Archivos de origen</Filter>
-    </ClCompile>
-    <ClCompile Include="simulator\src\graph.cpp">
-      <Filter>Archivos de origen</Filter>
-    </ClCompile>
-    <ClCompile Include="simulator\src\scene.cpp">
-      <Filter>Archivos de origen</Filter>
-    </ClCompile>
-    <ClCompile Include="simulator\src\transform.cpp">
-      <Filter>Archivos de origen</Filter>
-    </ClCompile>
-    <ClCompile Include="simulator\src\event_manager.cpp">
-      <Filter>Archivos de origen</Filter>
-    </ClCompile>
-    <ClCompile Include="simulator\src\renderer.cpp">
-      <Filter>Archivos de origen</Filter>
-    </ClCompile>
-    <ClCompile Include="simulator\src\camera.cpp">
-      <Filter>Archivos de origen</Filter>
-    </ClCompile>
-    <ClCompile Include="simulator\src\utils.cpp">
-      <Filter>Archivos de origen</Filter>
-    </ClCompile>
-    <ClCompile Include="simulator\src\texture.cpp">
-      <Filter>Archivos de origen</Filter>
-    </ClCompile>
-    <ClCompile Include="libs\imgui\imgui.cpp">
-      <Filter>Archivos de origen</Filter>
-    </ClCompile>
-    <ClCompile Include="libs\imgui\imgui_draw.cpp">
-      <Filter>Archivos de origen</Filter>
-    </ClCompile>
-    <ClCompile Include="libs\imgui\imgui_tables.cpp">
-      <Filter>Archivos de origen</Filter>
-    </ClCompile>
-    <ClCompile Include="libs\imgui\imgui_widgets.cpp">
-      <Filter>Archivos de origen</Filter>
-    </ClCompile>
-    <ClCompile Include="libs\imgui\imgui-SFML.cpp">
-      <Filter>Archivos de origen</Filter>
-    </ClCompile>
-    <ClCompile Include="simulator\src\organism.cpp">
-      <Filter>Archivos de origen</Filter>
-    </ClCompile>
-    <ClCompile Include="simulator\src\behaviour_tree.cpp">
-    <ClCompile Include="simulator\src\terrain.cpp">
-      <Filter>Archivos de origen</Filter>
-    </ClCompile>
-    <ClCompile Include="simulator\src\entity_terrain.cpp">
-      <Filter>Archivos de origen</Filter>
-    </ClCompile>
+    <ClInclude Include="libs\imgui\imconfig-SFML.h" />
+    <ClInclude Include="libs\imgui\imconfig.h" />
+    <ClInclude Include="libs\imgui\imgui-SFML.h" />
+    <ClInclude Include="libs\imgui\imgui-SFML_export.h" />
+    <ClInclude Include="libs\imgui\imgui.h" />
+    <ClInclude Include="libs\imgui\imgui_internal.h" />
+    <ClInclude Include="libs\imgui\imstb_rectpack.h" />
+    <ClInclude Include="libs\imgui\imstb_textedit.h" />
+    <ClInclude Include="libs\imgui\imstb_truetype.h" />
+    <ClInclude Include="libs\implot\implot.h" />
+    <ClInclude Include="libs\implot\implot_internal.h" />
+    <ClInclude Include="simulator\include\behaviour_tree.hpp" />
+    <ClInclude Include="simulator\include\imgui_debugger.hpp" />
+    <ClInclude Include="simulator\include\imgui_menu.hpp" />
+    <ClInclude Include="simulator\include\organism.hpp" />
+    <ClInclude Include="simulator\include\camera.hpp" />
+    <ClInclude Include="simulator\include\component.hpp" />
+    <ClInclude Include="simulator\include\component_test.hpp" />
+    <ClInclude Include="simulator\include\config.hpp" />
+    <ClInclude Include="simulator\include\engine_loop.hpp" />
+    <ClInclude Include="simulator\include\entity_terrain.hpp" />
+    <ClInclude Include="simulator\include\entity_test.hpp" />
+    <ClInclude Include="simulator\include\event_manager.hpp" />
+    <ClInclude Include="simulator\include\graph.hpp" />
+    <ClInclude Include="simulator\include\organism_config.hpp" />
+    <ClInclude Include="simulator\include\pathfinder.hpp" />
+    <ClInclude Include="simulator\include\renderer.hpp" />
+    <ClInclude Include="simulator\include\scene.hpp" />
+    <ClInclude Include="simulator\include\terrain.hpp" />
+    <ClInclude Include="simulator\include\texture.hpp" />
+    <ClInclude Include="simulator\include\utils.hpp" />
+    <ClInclude Include="simulator\include\transform.hpp" />
+    <ClInclude Include="src\map\map.hpp" />
+    <ClInclude Include="simulator\include\entity.hpp" />
+    <ClInclude Include="libs\FastNoiseLite\FastNoiseLite.h" />
+    <ClInclude Include="simulator\include\map_generator.hpp" />
+    <ClInclude Include="simulator\include\population_stats.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="README.md" />
-    <None Include="docs\intro_estructura.md" />
-    <None Include="docs\engine_loop.md" />
-    <None Include="docs\scene.md" />
-    <None Include="docs\main.md" />
-    <None Include="docs\entity.md" />
+    <Image Include="..\..\EDA.png" />
+  </ItemGroup>
+  <ItemGroup>
     <None Include="docs\component.md" />
-    <None Include="docs\transform.md" />
+    <None Include="docs\engine_loop.md" />
+    <None Include="docs\entity.md" />
     <None Include="docs\event_manager.md" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="simulator\include\engine_loop.hpp">
-      <Filter>Archivos de encabezado</Filter>
-    </ClInclude>
-    <ClInclude Include="src\map\map.hpp">
-      <Filter>Archivos de encabezado</Filter>
-    </ClInclude>
-    <ClInclude Include="simulator\include\entity.hpp">
-      <Filter>Archivos de encabezado</Filter>
-    </ClInclude>
-    <ClInclude Include="simulator\include\component.hpp">
-      <Filter>Archivos de encabezado</Filter>
-    </ClInclude>
-    <ClInclude Include="simulator\include\component_test.hpp">
-      <Filter>Archivos de encabezado</Filter>
-    </ClInclude>
-    <ClInclude Include="simulator\include\entity_test.hpp">
-      <Filter>Archivos de encabezado</Filter>
-    </ClInclude>
-    <ClInclude Include="simulator\include\graph.hpp">
-      <Filter>Archivos de encabezado</Filter>
-    </ClInclude>
-    <ClInclude Include="simulator\include\scene.hpp">
-      <Filter>Archivos de encabezado</Filter>
-    </ClInclude>
-    <ClInclude Include="simulator\include\transform.hpp">
-      <Filter>Archivos de encabezado</Filter>
-    </ClInclude>
-    <ClInclude Include="simulator\include\event_manager.hpp">
-      <Filter>Archivos de encabezado</Filter>
-    </ClInclude>
-    <ClInclude Include="simulator\include\renderer.hpp">
-      <Filter>Archivos de encabezado</Filter>
-    </ClInclude>
-    <ClInclude Include="simulator\include\camera.hpp">
-      <Filter>Archivos de encabezado</Filter>
-    </ClInclude>
-    <ClInclude Include="simulator\include\config.hpp">
-      <Filter>Archivos de encabezado</Filter>
-    </ClInclude>
-    <ClInclude Include="simulator\include\utils.hpp">
-      <Filter>Archivos de encabezado</Filter>
-    </ClInclude>
-    <ClInclude Include="simulator\include\texture.hpp">
-      <Filter>Archivos de encabezado</Filter>
-    </ClInclude>
-    <ClInclude Include="libs\imgui\imconfig.h">
-      <Filter>Archivos de encabezado</Filter>
-    </ClInclude>
-    <ClInclude Include="libs\imgui\imconfig-SFML.h">
-      <Filter>Archivos de encabezado</Filter>
-    </ClInclude>
-    <ClInclude Include="libs\imgui\imgui.h">
-      <Filter>Archivos de encabezado</Filter>
-    </ClInclude>
-    <ClInclude Include="libs\imgui\imgui_internal.h">
-      <Filter>Archivos de encabezado</Filter>
-    </ClInclude>
-    <ClInclude Include="libs\imgui\imgui-SFML.h">
-      <Filter>Archivos de encabezado</Filter>
-    </ClInclude>
-    <ClInclude Include="libs\imgui\imgui-SFML_export.h">
-      <Filter>Archivos de encabezado</Filter>
-    </ClInclude>
-    <ClInclude Include="libs\imgui\imstb_rectpack.h">
-      <Filter>Archivos de encabezado</Filter>
-    </ClInclude>
-    <ClInclude Include="libs\imgui\imstb_textedit.h">
-      <Filter>Archivos de encabezado</Filter>
-    </ClInclude>
-    <ClInclude Include="libs\imgui\imstb_truetype.h">
-      <Filter>Archivos de encabezado</Filter>
-    </ClInclude>
-    <ClInclude Include="simulator\include\organism.hpp">
-      <Filter>Archivos de encabezado</Filter>
-    </ClInclude>
-    <ClInclude Include="simulator\include\behaviour_tree.hpp">
-      <Filter>Archivos de encabezado</Filter>
-    </ClInclude>
-    <ClInclude Include="simulator\include\organism_config.hpp">
-    <ClInclude Include="simulator\include\terrain.hpp">
-      <Filter>Archivos de encabezado</Filter>
-    </ClInclude>
-    <ClInclude Include="simulator\include\entity_terrain.hpp">
-      <Filter>Archivos de encabezado</Filter>
-    </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <Image Include="..\..\EDA.png">
-      <Filter>Archivos de recursos</Filter>
-    </Image>
+    <None Include="docs\intro_estructura.md" />
+    <None Include="docs\main.md" />
+    <None Include="docs\scene.md" />
+    <None Include="docs\transform.md" />
+    <None Include="README.md" />
+    <None Include="\\wsl.localhost\Debian\home\darxj\Workbench\Proyecto_AYDA\proyecto_ayda\resources\maps\map_noise_1_v2.zadat" />
   </ItemGroup>
 </Project>
