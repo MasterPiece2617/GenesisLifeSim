@@ -35,41 +35,68 @@ void ImGuiMenu::show_select_map_window(bool& map_loaded, std::string& selected_m
 void ImGuiMenu::show_organism_config_window(OrganismConfig& organism_config, sf::RenderWindow* window)
 {
     ImGui::Begin("Seleccione las caracteristicas:");
-    ImGui::Text("Seleccione las caracteristicas que desea cargar en la simulacion.");
-    ImGui::Separator();
     ImGui::Text("Stats del Organismo:");
-    ImGui::SliderFloat("Vision", &organism_config.vision_radius, 1, 20);
     ImGui::Separator();
-    ImGui::Text("Stats de Comportamiento:");
-    ImGui::SliderFloat("Velocidad (Speed)", &organism_config.move_speed, 1.0f, 15.0f);
-    {
-        sf::Color sc = organism_config.color;
-        float ccol[4] = { sc.r / 255.0f, sc.g / 255.0f, sc.b / 255.0f, sc.a / 255.0f };
-        if (ImGui::ColorEdit4("Color del Organismo", ccol))
-        {
-            organism_config.color = sf::Color(
-                static_cast<sf::Uint8>(ccol[0] * 255.0f),
-                static_cast<sf::Uint8>(ccol[1] * 255.0f),
-                static_cast<sf::Uint8>(ccol[2] * 255.0f),
-                static_cast<sf::Uint8>(ccol[3] * 255.0f)
-            );
-        }
-    }
-    ImGui::Separator();
-	ImGui::Text("Es carnivoro:");
-	ImGui::Checkbox("Carnivoro", &is_carnivore);
 
-    if (is_carnivore)
+    // --- Tamaño ---
+    if (ImGui::SliderFloat("Tamaño (Size)", &organism_config.size, 0.5f, 5.0f))
     {
-        organism_config.category = OrganismCategory::CARNIVORE;
+        // Derivados
+        organism_config.weight = std::pow(organism_config.size, 3.0f);
+        organism_config.hp = 100.0f * organism_config.size;
+        organism_config.max_hunger = 200.0f * organism_config.size;
+        organism_config.nu = organism_config.weight;
+        organism_config.stamina = 100.0f * organism_config.size;
+		organism_config.max_hp = organism_config.hp;
+		organism_config.hunger = organism_config.max_hunger * 0.7f;
+		organism_config.max_stamina = organism_config.stamina;
+        // Clamp de velocidad actual al nuevo rango
+        float speed_min = 3.0f + 2.0f * organism_config.size;
+        float speed_max = 8.0f + 4.0f * organism_config.size;
+        organism_config.move_speed = std::clamp(organism_config.move_speed, speed_min, speed_max);
+
+        // Recalcular rango de visión y clamp
+        float vision_base = 5.0f + 2.0f * organism_config.size;
+        float vision_min = vision_base * 0.8f;
+        float vision_max = vision_base * 1.2f;
+        organism_config.vision_radius = std::clamp(organism_config.vision_radius, vision_min, vision_max);
     }
-    else
+
+    // --- Velocidad dependiente del tamaño (rango creciente con size) ---
+    float speed_min = 3.0f + 2.0f * organism_config.size;
+    float speed_max = 8.0f + 4.0f * organism_config.size;
+    ImGui::SliderFloat("Velocidad (Speed)", &organism_config.move_speed, speed_min, speed_max);
+
+    // --- Visión dependiente del tamaño con margen ---
+    float vision_base = 5.0f + 2.0f * organism_config.size;
+    float vision_min = vision_base * 0.8f;
+    float vision_max = vision_base * 1.2f;
+    ImGui::SliderFloat("Vision", &organism_config.vision_radius, vision_min, vision_max);
+
+    // --- Mostrar valores derivados ---
+    ImGui::Separator();
+    ImGui::Text("HP: %.1f", organism_config.hp);
+    ImGui::Text("Hunger: %.1f", organism_config.hunger);
+    ImGui::Text("Stamina: %.1f", organism_config.stamina);
+    ImGui::Text("Peso (Weight): %.1f", organism_config.weight);
+    ImGui::Text("Nutrición (nu): %.1f", organism_config.nu);
+
+    // Color
+    sf::Color sc = organism_config.color;
+    float ccol[4] = { sc.r / 255.0f, sc.g / 255.0f, sc.b / 255.0f, sc.a / 255.0f };
+    if (ImGui::ColorEdit4("Color del Organismo", ccol))
     {
-        organism_config.category = OrganismCategory::HERBIVORE;
-	}
+        organism_config.color = sf::Color(
+            static_cast<sf::Uint8>(ccol[0] * 255.0f),
+            static_cast<sf::Uint8>(ccol[1] * 255.0f),
+            static_cast<sf::Uint8>(ccol[2] * 255.0f),
+            static_cast<sf::Uint8>(ccol[3] * 255.0f)
+        );
+    }
 
     ImGui::Text("cantidad de organismos a generar");
     ImGui::SliderInt("Cantidad de organismos", &Scene::instance().num_organisms, 1, 100);
+
     if (ImGui::Button("Cargar Caracteristicas"))
     {
         Scene::instance().load(organism_config);
