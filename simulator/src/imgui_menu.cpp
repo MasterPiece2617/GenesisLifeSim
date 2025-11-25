@@ -117,7 +117,7 @@ void ImGuiMenu::show_map_creator()
     ImGui::End();
 }
 
-void ImGuiMenu::show_organism_config_window(OrganismConfig& organism_config, sf::RenderWindow* window)
+void ImGuiMenu::show_organism_config_window(OrganismConfig& organism_config, sf::RenderWindow* window, bool& placement_mode)
 {
     ImGui::Begin("Seleccione las caracteristicas:");
     ImGui::Text("Seleccione las caracteristicas que desea cargar en la simulacion.");
@@ -154,12 +154,38 @@ void ImGuiMenu::show_organism_config_window(OrganismConfig& organism_config, sf:
 	}
 
     ImGui::Text("cantidad de organismos a generar");
-    ImGui::SliderInt("Cantidad de organismos", &Scene::instance().num_organisms, 1, 100);
-    if (ImGui::Button("Cargar Caracteristicas"))
+    ImGui::SliderInt("Cantidad de organismos", &Scene::instance().num_organisms, 1, 20);
+
+    int styles_pushed = 0;
+
+    if (placement_mode)
     {
-        Scene::instance().load(organism_config);
-        window->setView(Scene::instance().get_main_camera()->get_view());
+        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2f, 0.8f, 0.2f, 1.0f));        
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.3f, 0.9f, 0.3f, 1.0f)); 
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.1f, 0.6f, 0.1f, 1.0f));  
+        styles_pushed = 3;
     }
+
+    const char* label = placement_mode ? "Modo Colocacion: ACTIVO [Click para Apagar]###ToggleSpawn" 
+                                       : "Modo Colocacion: INACTIVO [Click para Encender]###ToggleSpawn";
+
+    if (ImGui::Button(label, ImVec2(-1, 40)))
+    {
+        placement_mode = !placement_mode;
+    }
+
+    if (styles_pushed > 0) 
+    {
+        ImGui::PopStyleColor(styles_pushed);
+    }
+
+    if (placement_mode) 
+    {
+        ImGui::TextColored(ImVec4(0, 1, 0, 1), ">> MODO ACTIVO <<");
+        ImGui::TextWrapped("- Click Izquierdo en el mapa: Crear Organismo");
+        ImGui::TextWrapped("- Click Derecho: Cancelar / Salir");
+    }
+
     ImGui::End();
 }
 
@@ -176,7 +202,7 @@ static bool reset_simulation_requested = false;
 
 
 void ImGuiMenu::show_menu(OrganismConfig& organism_config, sf::RenderWindow* window, 
-                          std::shared_ptr<EntityTerrain>& terrain, bool& map_loaded, std::string& selected_map, bool& centered)
+                          std::shared_ptr<EntityTerrain>& terrain, bool& map_loaded, std::string& selected_map, bool& centered, bool& placement_mode)
 {
     if (ImGui::BeginMainMenuBar())
     {
@@ -213,7 +239,7 @@ void ImGuiMenu::show_menu(OrganismConfig& organism_config, sf::RenderWindow* win
 
     if (show_organism_config)
     {
-        ImGuiMenu::show_organism_config_window(organism_config, window);
+        ImGuiMenu::show_organism_config_window(organism_config, window, placement_mode);
     }
 
     if (show_organism_stats)
