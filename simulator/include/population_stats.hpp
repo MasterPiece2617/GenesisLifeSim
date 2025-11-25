@@ -23,6 +23,9 @@ public:
     static float total_average_speed_carnivores;
     static float total_average_vision_herbivores;
     static float total_average_speed_herbivores;
+    static float total_average_size;
+    static float total_average_size_carnivores;
+    static float total_average_size_herbivores;
 
     static std::vector<float> time_history;
     static std::vector<float> total_organisms_history;
@@ -34,6 +37,9 @@ public:
     static std::vector<float> carnivores_speed_data;
     static std::vector<float> herbivores_vision_data;
     static std::vector<float> herbivores_speed_data;
+    static std::vector<float> organisms_size_data;
+    static std::vector<float> carnivores_size_data;
+    static std::vector<float> herbivores_size_data;
 
 	static void init(std::shared_ptr<sf::RenderWindow> window);
     static void reset();

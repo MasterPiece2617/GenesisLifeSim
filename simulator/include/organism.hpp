@@ -34,6 +34,7 @@ struct Stats
 	float vision = 5;
 	float nu = 100;
 	float speed = 5.0f;
+	float swim = 5.0f;
 	OrganismCategory category = OrganismCategory::HERBIVORE;
 	sf::Color color = sf::Color::Red;
 };

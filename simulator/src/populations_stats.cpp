@@ -11,6 +11,9 @@ float PopulationStats::total_average_speed_carnivores = 0.0f;
 float PopulationStats::total_average_vision_carnivores = 0.0f;
 float PopulationStats::total_average_speed_herbivores = 0.0f;
 float PopulationStats::total_average_vision_herbivores = 0.0f;
+float PopulationStats::total_average_size = 0.0f;
+float PopulationStats::total_average_size_carnivores = 0.0f;
+float PopulationStats::total_average_size_herbivores = 0.0f;
 
 std::vector<float> PopulationStats::time_history;
 std::vector<float> PopulationStats::total_organisms_history;
@@ -22,6 +25,9 @@ std::vector<float> PopulationStats::carnivores_vision_data;
 std::vector<float> PopulationStats::carnivores_speed_data;
 std::vector<float> PopulationStats::herbivores_vision_data;
 std::vector<float> PopulationStats::herbivores_speed_data;
+std::vector<float> PopulationStats::organisms_size_data;
+std::vector<float> PopulationStats::carnivores_size_data;
+std::vector<float> PopulationStats::herbivores_size_data;
 
 void PopulationStats::init(std::shared_ptr<sf::RenderWindow> window)
 {
@@ -42,6 +48,9 @@ void PopulationStats::reset()
     total_average_vision_carnivores = 0.0f;
     total_average_speed_herbivores = 0.0f;
     total_average_vision_herbivores = 0.0f;
+    total_average_size = 0.0f;
+    total_average_size_carnivores = 0.0f;
+    total_average_size_herbivores = 0.0f;
 
     time = 0.0f;
     time_history.clear();
@@ -54,6 +63,9 @@ void PopulationStats::reset()
     carnivores_speed_data.clear();
     herbivores_vision_data.clear();
     herbivores_speed_data.clear();
+    organisms_size_data.clear();
+    carnivores_size_data.clear();
+    herbivores_size_data.clear();
 }
 
 void PopulationStats::update_history(float delta)
@@ -62,12 +74,15 @@ void PopulationStats::update_history(float delta)
 
     float avg_spd = (num_organisms > 0) ? (total_average_speed  / num_organisms) : 0.0f; // Avoid division by zero better form to write it
     float avg_vis = (num_organisms > 0) ? (total_average_vision / num_organisms) : 0.0f;
+    float avg_sz  = (num_organisms > 0) ? (total_average_size  / num_organisms) : 0.0f;
 
     float avg_spd_c = (num_carnivores > 0) ? (total_average_speed_carnivores / num_carnivores) : 0.0f;
     float avg_vis_c = (num_carnivores > 0) ? (total_average_vision_carnivores / num_carnivores) : 0.0f;
+    float avg_sz_c  = (num_carnivores > 0) ? (total_average_size_carnivores / num_carnivores) : 0.0f;
 
     float avg_spd_h = (num_herbivores > 0) ? (total_average_speed_herbivores / num_herbivores) : 0.0f;
     float avg_vis_h = (num_herbivores > 0) ? (total_average_vision_herbivores / num_herbivores) : 0.0f;
+    float avg_sz_h  = (num_herbivores > 0) ? (total_average_size_herbivores / num_herbivores) : 0.0f;
 
     time_history.push_back(time); // Same time to all plots
 
@@ -82,6 +97,10 @@ void PopulationStats::update_history(float delta)
     organisms_vision_data.push_back(avg_vis);
     carnivores_vision_data.push_back(avg_vis_c);
     herbivores_vision_data.push_back(avg_vis_h);
+
+    organisms_size_data.push_back(avg_sz);
+    carnivores_size_data.push_back(avg_sz_c);
+    herbivores_size_data.push_back(avg_sz_h);
 
     if (time_history.size() > 50000) 
     {
@@ -98,6 +117,10 @@ void PopulationStats::update_history(float delta)
         organisms_vision_data.erase(organisms_vision_data.begin());
         carnivores_vision_data.erase(carnivores_vision_data.begin());
         herbivores_vision_data.erase(herbivores_vision_data.begin());
+
+        organisms_size_data.erase(organisms_size_data.begin());
+        carnivores_size_data.erase(carnivores_size_data.begin());
+        herbivores_size_data.erase(herbivores_size_data.begin());
     }
 }
 
@@ -114,16 +137,19 @@ void PopulationStats::on_organism_born(const Event& event)
             ++num_carnivores;
             total_average_speed_carnivores += organism->get_stats().speed;
             total_average_vision_carnivores += organism->get_stats().vision;
+            total_average_size_carnivores += organism->get_stats().size;
         }
         else if ((int)organism->get_stats().category == 0) // herbivore
         {
             ++num_herbivores;
             total_average_speed_herbivores += organism->get_stats().speed;
             total_average_vision_herbivores += organism->get_stats().vision;
+            total_average_size_herbivores += organism->get_stats().size;
         }
 
         total_average_vision += organism->get_stats().vision;
         total_average_speed += organism->get_stats().speed;
+        total_average_size += organism->get_stats().size;
     }
 }
 
@@ -140,33 +166,39 @@ void PopulationStats::on_organism_died(const Event& event)
             --num_carnivores;
             total_average_vision_carnivores -= organism->get_stats().vision;
             total_average_speed_carnivores -= organism->get_stats().speed;
+            total_average_size_carnivores -= organism->get_stats().size;
         }
         else if ((int)organism->get_stats().category == 0) // herbivore
         {
             --num_herbivores;
             total_average_vision_herbivores -= organism->get_stats().vision;
             total_average_speed_herbivores -= organism->get_stats().speed;
+            total_average_size_herbivores -= organism->get_stats().size;
         }
 
         total_average_vision -= organism->get_stats().vision;
         total_average_speed -= organism->get_stats().speed;
+        total_average_size -= organism->get_stats().size;
 
         if (num_organisms <= 0)
         {
             total_average_vision = 0.0f;
             total_average_speed = 0.0f;
+            total_average_size = 0.0f;
         }
 
         if (num_carnivores <= 0)
         {
             total_average_vision_carnivores = 0.0f;
             total_average_speed_carnivores = 0.0f;
+            total_average_size_carnivores = 0.0f;
         }
 
         if (num_herbivores <= 0)
         {
             total_average_vision_herbivores = 0.0f;
             total_average_speed_herbivores = 0.0f;
+            total_average_size_herbivores = 0.0f;
         }
     }
 }

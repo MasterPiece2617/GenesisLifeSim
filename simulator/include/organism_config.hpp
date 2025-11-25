@@ -21,6 +21,7 @@ struct OrganismConfig
 	float vision_radius = 5;
 	float nu = 1;
 	float move_speed = 5.0f;
+	float swim_speed = 5.0f;
 	OrganismCategory category = OrganismCategory::HERBIVORE;
 	sf::Color color = sf::Color::White;
 };

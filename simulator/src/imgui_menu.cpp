@@ -123,10 +123,9 @@ void ImGuiMenu::show_organism_config_window(OrganismConfig& organism_config, sf:
     ImGui::Text("Stats del Organismo:");
     ImGui::Separator();
 
-    // --- Tamaño ---
     if (ImGui::SliderFloat("Tamaño (Size)", &organism_config.size, 0.5f, 5.0f))
     {
-        // Derivados
+        // show stats and recalculus
         organism_config.weight = std::pow(organism_config.size, 3.0f);
         organism_config.hp = 100.0f * organism_config.size;
         organism_config.max_hunger = 200.0f * organism_config.size;
@@ -135,30 +134,30 @@ void ImGuiMenu::show_organism_config_window(OrganismConfig& organism_config, sf:
 		organism_config.max_hp = organism_config.hp;
 		organism_config.hunger = organism_config.max_hunger * 0.7f;
 		organism_config.max_stamina = organism_config.stamina;
-        // Clamp de velocidad actual al nuevo rango
+
         float speed_min = 3.0f + 2.0f * organism_config.size;
         float speed_max = 8.0f + 4.0f * organism_config.size;
         organism_config.move_speed = std::clamp(organism_config.move_speed, speed_min, speed_max);
 
-        // Recalcular rango de visión y clamp
         float vision_base = 5.0f + 2.0f * organism_config.size;
         float vision_min = vision_base * 0.8f;
         float vision_max = vision_base * 1.2f;
         organism_config.vision_radius = std::clamp(organism_config.vision_radius, vision_min, vision_max);
     }
 
-    // --- Velocidad dependiente del tamaño (rango creciente con size) ---
     float speed_min = 3.0f + 2.0f * organism_config.size;
     float speed_max = 8.0f + 4.0f * organism_config.size;
     ImGui::SliderFloat("Velocidad (Speed)", &organism_config.move_speed, speed_min, speed_max);
 
-    // --- Visión dependiente del tamaño con margen ---
     float vision_base = 5.0f + 2.0f * organism_config.size;
     float vision_min = vision_base * 0.8f;
     float vision_max = vision_base * 1.2f;
     ImGui::SliderFloat("Vision", &organism_config.vision_radius, vision_min, vision_max);
 
-    // --- Mostrar valores derivados ---
+    speed_min = 4.0f - 1.0f * organism_config.size;
+    speed_max = 25.0f - 2.0f * organism_config.size;
+    ImGui::SliderFloat("Velocidad de Nado", &organism_config.swim_speed, speed_min, speed_max);
+
     ImGui::Separator();
     ImGui::Text("HP: %.1f", organism_config.hp);
     ImGui::Text("Hunger: %.1f", organism_config.hunger);
@@ -178,6 +177,10 @@ void ImGuiMenu::show_organism_config_window(OrganismConfig& organism_config, sf:
             static_cast<sf::Uint8>(ccol[3] * 255.0f)
         );
     }
+
+    ImGui::Separator();
+    ImGui::Checkbox("Es Carnivoro", (bool*)&is_carnivore);
+    organism_config.category = is_carnivore ? OrganismCategory::CARNIVORE : OrganismCategory::HERBIVORE;
 
     ImGui::Text("cantidad de organismos a generar");
     ImGui::SliderInt("Cantidad de organismos", &Scene::instance().num_organisms, 1, 20);
@@ -221,7 +224,7 @@ void ImGuiMenu::call_reset_simulation(std::shared_ptr<EntityTerrain>& terrain, b
 }
 
 static bool show_organism_population = false;
-static bool show_organism_config = false;
+static bool show_organism_config = true; // Provisional for tests, then we decided what will do with this
 static bool show_carnivore_herbivore = false;
 static bool show_organism_stats = false;
 static bool reset_simulation_requested = false;
@@ -497,7 +500,7 @@ void ImPlotMenu::organism_stats_plot()
     ImGui::Begin("Estadisticas de Organismos");
 
     static int selector = 0;
-    const char* items[] = {"Velocidad promedio", "Vision promedio"};
+    const char* items[] = {"Velocidad promedio", "Vision promedio", "Tamaño promedio"};
     ImGui::Combo("Seleccione estadistica", &selector, items, IM_ARRAYSIZE(items));
 
     ImGui::Separator();
@@ -550,6 +553,18 @@ void ImPlotMenu::organism_stats_plot()
                 ImPlot::PlotLine("Avg Carn Vision", time_data.data(), carn_vision_data.data(), time_data.size());
                 ImPlot::SetNextLineStyle(ImVec4(0, 1, 0, 1), 2.0f);
                 ImPlot::PlotLine("Avg Herb Vision", time_data.data(), herb_vision_data.data(), time_data.size());
+            }
+            else if (selector == 2)
+            {
+                const auto& size_data = PopulationStats::organisms_size_data;
+                const auto& carn_size_data = PopulationStats::carnivores_size_data;
+                const auto& herb_size_data = PopulationStats::herbivores_size_data;
+                ImPlot::SetNextLineStyle(ImVec4(0, 1, 1, 1), 2.0f);
+                ImPlot::PlotLine("Avg Size", time_data.data(), size_data.data(), time_data.size());
+                ImPlot::SetNextLineStyle(ImVec4(1, 0, 0, 1), 2.0f);
+                ImPlot::PlotLine("Avg Carn Size", time_data.data(), carn_size_data.data(), time_data.size());
+                ImPlot::SetNextLineStyle(ImVec4(0, 1, 0, 1), 2.0f);
+                ImPlot::PlotLine("Avg Herb Size", time_data.data(), herb_size_data.data(), time_data.size());
             }
 
         }
