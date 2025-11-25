@@ -46,6 +46,10 @@ enum class EventType
 
 	// Custom global events
 	GLOBAL_MESSAGE,
+
+	//Organism events
+	ORGANISM_BORN,
+	ORGANISM_DIED,
 };
 
 struct EventTypeInfo
@@ -56,7 +60,8 @@ struct EventTypeInfo
 	static const EventType entity_end = EventType::ENTITY_DESTROYED;
 	static const EventType custom_end = EventType::MESSAGE;
 	static const EventType custom_global_end = EventType::GLOBAL_MESSAGE;
-	static const size_t size = static_cast<size_t>(custom_global_end) + 1;
+	static const EventType organism_end = EventType::ORGANISM_DIED;
+	static const size_t size = static_cast<size_t>(organism_end) + 1;
 };
 
 enum class EventCategory
@@ -66,7 +71,8 @@ enum class EventCategory
 	PHYSICS_EVENT,
 	ENTITY_EVENT,
 	CUSTOM_DIRECT_EVENT,
-	CUSTOM_GLOBAL_EVENT
+	CUSTOM_GLOBAL_EVENT,
+	ORGANISM_EVENT,
 };
 
 struct EmptyEvent {};

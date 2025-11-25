@@ -49,6 +49,8 @@ Engine::Engine()
         });
 
     InputManager::init();
+
+    PopulationStats::init(this->window);
 }
 
 // Destructor

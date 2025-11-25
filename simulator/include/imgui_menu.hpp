@@ -10,6 +10,8 @@
 #include <entity_terrain.hpp>
 #include <scene.hpp>
 #include <texture.hpp>
+#include <organism_config.hpp>
+#include <population_stats.hpp>
 
 class ImGuiMenu 
 {
