@@ -15,8 +15,6 @@ void Debugger::imgui_terrain(std::shared_ptr<EntityTerrain> terrain, std::shared
         static_cast<uint16_t>(mouse_pos_world.y / Constants::px_mt);
 
     ImGui::Begin("Info de Celda");
-    ImGui::Text("Posicion del mouse (mundo): (%.1f, %.1f)", mouse_pos_world.x,
-                mouse_pos_world.y);
 
     if (cell_x < terrain->get_width() && cell_y < terrain->get_height()) 
     {
@@ -43,6 +41,51 @@ void Debugger::imgui_scene(float& fps_display, sf::Vector2f& mouse_world_pos)
     ImGui::Text("FPS: %.2f", fps_display);
     ImGui::Text("Zoom: %.2f", Scene::instance().get_main_camera()->get_zoom());
     ImGui::Text("Mouse x: %f y: %f", mouse_world_pos.x / Constants::px_mt, mouse_world_pos.y / Constants::px_mt);
+	ImGui::Separator();
+	ImGui::SameLine();
+
+	ImGui::Text("Simulation Speed: %f", Time::get_simulation_speed());
+
+    if (ImGui::Button("Pause"))
+    {
+        Time::set_simulation_speed(0);
+    }
+
+    if (ImGui::Button("X1"))
+    {
+        Time::set_simulation_speed(1);
+	}
+
+    if (ImGui::Button("X2"))
+    {
+		Time::set_simulation_speed(2);
+	}
+
+    if (ImGui::Button("X5"))
+	{
+		Time::set_simulation_speed(5);
+	}
+
+	if (ImGui::Button("X10"))
+	{
+		Time::set_simulation_speed(10);
+	}
+
+    if (ImGui::Button("X20"))
+    {
+        Time::set_simulation_speed(20);
+	}
+
+    if (ImGui::Button("X50"))
+    {
+		Time::set_simulation_speed(50);
+	}
+
+    if (ImGui::Button("X100"))
+	{
+		Time::set_simulation_speed(100);
+	}
+
     ImGui::End();
 }
 

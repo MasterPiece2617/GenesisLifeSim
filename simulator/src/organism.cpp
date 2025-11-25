@@ -63,7 +63,7 @@ void Behaviour::start()
 				if (s.stamina <= 0.0f || organism->get_is_resting())
 				{
 					// Recuperación: 100 stamina/s drenando hunger
-					float recover = 100.0f * Time::get_delta();
+					float recover = 100.0f * Time::get_delta() * Time::get_simulation_speed();
 					float hunger_cost = recover / 10.0f; // 1 hunger -> 10 stamina
 					organism->set_is_resting(true);
 
@@ -135,7 +135,7 @@ void Behaviour::start()
 
 				float effective_speed = s.speed / current_effort;
 				sf::Vector2f dir_normalized = direction / length;
-				sf::Vector2f delta = dir_normalized * effective_speed * Time::get_delta();
+				sf::Vector2f delta = dir_normalized * effective_speed * Time::get_delta() * Time::get_simulation_speed();
 
 				// --- GASTO DE STAMINA ---
 				float distance = std::sqrt(delta.x * delta.x + delta.y * delta.y);
@@ -587,7 +587,8 @@ void Behaviour::start()
 						child_stats.hp = 100.0f * child_stats.size;
 						child_stats.max_hunger = 200.0f * child_stats.size;
 						child_stats.hunger = child_stats.max_hunger * 0.5f;
-						child_stats.nu = child_stats.weight * 50;
+						child_stats.nu = child_stats.weight * 50
+							;
 						child_stats.stamina = 100.0f * child_stats.size;
 
 						// --- Speed con rango dependiente de size ---
@@ -726,13 +727,13 @@ void Behaviour::start()
 void Behaviour::update()
 {
 	bt.tick();
-	time += Time::get_delta();
+	time += Time::get_delta() * Time::get_simulation_speed();
 
 	if (auto organism = std::dynamic_pointer_cast<Organism>(owner.lock()))
 	{
 		Stats& s = organism->get_stats();
 		const float k_basal = 1.5f;
-		float drain = (k_basal * s.size) * Time::get_delta();
+		float drain = (k_basal * s.size) * Time::get_delta() * Time::get_simulation_speed();
 
 		s.hunger -= drain;
 
@@ -766,7 +767,7 @@ FoodSpawner::FoodSpawner(std::weak_ptr<Entity> _owner) : Component(_owner) {}
 
 void FoodSpawner::update()
 {
-	time += Time::get_delta();
+	time += Time::get_delta() * Time::get_simulation_speed();
 	if (time >= 2.0f)
 	{
 		for (int i = 0; i < 20; ++i)

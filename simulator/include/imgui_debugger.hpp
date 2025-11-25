@@ -6,6 +6,7 @@
 
 #include <entity_terrain.hpp>
 #include <scene.hpp>
+#include <utils.hpp>
 
 class Debugger 
 {
