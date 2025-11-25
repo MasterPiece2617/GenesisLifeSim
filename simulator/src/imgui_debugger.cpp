@@ -57,5 +57,14 @@ void Debugger::show_selected_entity(std::shared_ptr<Organism>& selected_entity)
     ImGui::Separator();
     ImGui::Text("Position: %.2f, %.2f", selected_entity->get_transform().get_position().x, selected_entity->get_transform().get_position().y);
     ImGui::Text("type organism: %s", selected_entity->get_stats().category == OrganismCategory::CARNIVORE ? "Carnivore" : "Herbivore");
+	ImGui::Text("HP: %.2f/%.2f", selected_entity->get_stats().hp, selected_entity->get_stats().max_hp);
+	ImGui::Text("Hunger: %.2f/%.2f", selected_entity->get_stats().hunger, selected_entity->get_stats().max_hunger);
+	ImGui::Text("Stamina: %.2f/%.2f", selected_entity->get_stats().stamina, selected_entity->get_stats().max_stamina);
+	ImGui::Text("Speed: %.2f", selected_entity->get_stats().speed);
+	ImGui::Text("Size: %.2f", selected_entity->get_stats().size);
+	ImGui::Text("Vision: %.2f", selected_entity->get_stats().vision);
+	ImGui::Text("Weight: %.2f", selected_entity->get_stats().weight);
+	ImGui::Text("Nu: %.2f", selected_entity->get_stats().nu);
+
     ImGui::End();
 }
