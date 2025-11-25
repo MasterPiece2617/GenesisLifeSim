@@ -231,7 +231,7 @@ void Engine::run()
         mouse_world_pos.x;
         mouse_world_pos.y;
 
-        Debugger::imgui_scene(fps_display, mouse_world_pos, selected_entity);
+        Debugger::imgui_scene(fps_display, mouse_world_pos);
   
         ImPlotMenu::show_menu(this->organism_config, this->window.get());
         

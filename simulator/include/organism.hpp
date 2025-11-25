@@ -23,7 +23,14 @@
 
 struct Stats
 {
+	float hp = 100;
+	float max_hp = 100;
 	float hunger = 100;
+	float max_hunger = 100;
+	float stamina = 100;
+	float max_stamina = 100;
+	float size = 1;
+	float weight = 1;
 	float vision = 5;
 	float nu = 100;
 	float speed = 5.0f;
@@ -36,10 +43,13 @@ class Organism : public Entity
 protected:
 	Stats stats;
 	bool is_alive = true;
+	bool is_resting = false;
 	OrganismConfig organism_config;
 public:
 	Organism(std::string _name, const Stats _stats);
 	Organism(std::string _name, const OrganismConfig& _organism_config);
+	bool get_is_resting();
+	void set_is_resting(bool rest);
 	void init() override;
 	Stats& get_stats();
 };
@@ -66,7 +76,7 @@ public:
 class Food : public Entity
 {
 protected:
-	int nu = 25;
+	int nu = 50;
 
 public:
 	Food(std::string _name);
