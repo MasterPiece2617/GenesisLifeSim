@@ -35,6 +35,7 @@ protected:
 public:
 
 	int num_organisms = 5;
+	static int organism_id;
 
 	Scene(); 
 	Scene(const Scene&) = delete;
@@ -48,7 +49,9 @@ public:
 	}
 
 	void add_entity(std::shared_ptr<Entity> entity);
+	void spawn_organisms(sf::Vector2f position_meters, OrganismConfig& organism_config);
 	void load(const OrganismConfig& organism_config);
+	void clear();
 	std::shared_ptr<Camera> get_main_camera() const;
 	std::vector<std::shared_ptr<Entity>> get_entities() const;
 	std::shared_ptr<Entity> get_entity(const std::string& name) const;

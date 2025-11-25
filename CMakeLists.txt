@@ -22,7 +22,10 @@ set(IMPLOT_SRCS
     libs/implot/implot_items.cpp
 )
 
-file (GLOB SIM_SRC simulator/src/*.cpp)
+file (GLOB SIM_SRC 
+    simulator/src/*.cpp
+)
+
 add_executable(my_app
     simulator/main.cpp
     ${SIM_SRC}
@@ -30,14 +33,8 @@ add_executable(my_app
     ${IMPLOT_SRCS}
 )
 
-# Exclude helper/tools that contain their own `main()` from the main executable.
-# For example, `map_generator.cpp` is a standalone program used during development
-# and must not be compiled into `my_app` (it defines `main`). Remove it from the
-# globbed list if present.
-list(REMOVE_ITEM SIM_SRC "${CMAKE_CURRENT_SOURCE_DIR}/simulator/src/map_generator.cpp")
-
-
 target_include_directories(my_app PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/libs/FastNoiseLite
     ${CMAKE_CURRENT_SOURCE_DIR}/libs/imgui
     ${CMAKE_CURRENT_SOURCE_DIR}/libs/implot
     ${CMAKE_CURRENT_SOURCE_DIR}/simulator/include
@@ -58,6 +55,10 @@ target_link_libraries(my_app PUBLIC
 add_custom_command(TARGET my_app POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
         ${CMAKE_SOURCE_DIR}/resources $<TARGET_FILE_DIR:my_app>/resources
+)
+
+target_compile_definitions(my_app
+    PRIVATE PROJECT_SOURCE_DIR="${CMAKE_SOURCE_DIR}"
 )
 
 ## Also copy top-level textures folder if present.

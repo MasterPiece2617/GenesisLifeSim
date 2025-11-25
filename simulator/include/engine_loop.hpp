@@ -30,7 +30,9 @@ protected:
   // To load terrain
   std::shared_ptr<Atlas> texture_atlas;
   std::shared_ptr<EntityTerrain> terrain;
+  static std::string selected_map;
   bool map_loaded = false;
+  bool centered = false;
   // Main scene
   Scene scene;
   // std::vector<std::vector<std::shared_ptr<SpriteRenderer>>> render_queue =
@@ -39,7 +41,7 @@ protected:
 
 	std::shared_ptr<Entity> selected_entity;
 	OrganismConfig organism_config;
-	bool caract_load = false;
+	bool placement_mode = false;
 
 	//std::vector<std::vector<std::shared_ptr<SpriteRenderer>>> render_queue = std::vector<std::vector<std::shared_ptr<SpriteRenderer>>>(256, std::vector<std::shared_ptr<SpriteRenderer>>());
 	int frame_count = 0;
@@ -55,4 +57,5 @@ public:
 
   // Public methods
   void run();
+  static void reset_simulation(std::shared_ptr<EntityTerrain>& terrain, bool& map_loaded, std::string& selected_map, bool& centered);
 };

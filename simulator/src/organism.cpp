@@ -9,6 +9,7 @@ Organism::Organism(std::string _name, const OrganismConfig& _organism_config) : 
 	stats.hunger = _organism_config.hunger;
 	stats.category = _organism_config.category;
 	stats.speed = _organism_config.move_speed;
+	stats.swim = _organism_config.swim_speed;
 	stats.hp = _organism_config.hp;
 	stats.size = _organism_config.size;
 	stats.weight = _organism_config.weight;
@@ -119,6 +120,8 @@ void Behaviour::start()
 
 				// --- TERRENO ---
 				float current_effort = 1.0f;
+				bool walkable = true;
+				bool swimming = false;
 				auto terrain_entity = Scene::instance().get_entity("Terrain");
 				std::shared_ptr<EntityTerrain> terrain = nullptr;
 				if (terrain_entity)
@@ -130,10 +133,15 @@ void Behaviour::start()
 						int pos_x = static_cast<int>(std::floor(current_pos.x));
 						int pos_y = static_cast<int>(std::floor(current_pos.y));
 						current_effort = terrain->get_effort((uint16_t)pos_x, (uint16_t)pos_y);
+						walkable = terrain->walkable((uint16_t)pos_x, (uint16_t)pos_y);
+						swimming = terrain->navigable((uint16_t)pos_x, (uint16_t)pos_y);
 					}
 				}
 
-				float effective_speed = s.speed / current_effort;
+				float effective_speed = walkable && !swimming ? s.speed / current_effort : 
+										!walkable && swimming ? s.swim / (current_effort - 3) : // simulate better swim
+										s.speed / current_effort;
+
 				sf::Vector2f dir_normalized = direction / length;
 				sf::Vector2f delta = dir_normalized * effective_speed * Time::get_delta();
 

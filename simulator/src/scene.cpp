@@ -1,5 +1,7 @@
 #include <scene.hpp>
 
+int Scene::organism_id = 0;
+
 sf::Vector2i Scene::quantize(sf::Vector2f pos)
 {
 	return sf::Vector2i(
@@ -59,44 +61,76 @@ void Scene::add_entity(std::shared_ptr<Entity> entity)
 	entity->start();
 }
 
+void Scene::spawn_organisms(sf::Vector2f position_meters, OrganismConfig& organism_config)
+{
+	for (int i = 0; i < num_organisms; ++i)
+	{
+		auto entity = EntityFactory<Organism>::create("Organism " + std::to_string(++organism_id), organism_config);
+		EventManager::publish(Event(EventType::ORGANISM_BORN, EntityEvent(entity)), entity);
+
+		float offset_x = static_cast<float>(std::rand() % 100 - 50) / 100.0f;
+		float offset_y = static_cast<float>(std::rand() % 100 - 50) / 100.0f;
+
+		entity->get_transform().set_position({position_meters.x + offset_x, position_meters.y + offset_y});
+		add_entity(entity);
+	}
+}
+
 void Scene::load(const OrganismConfig& organism_config) // Provisional
 {
 	add_entity(EntityFactory<FoodGenerator>::create("food generator"));
-	auto terrain_entity = Scene::instance().get_entity("Terrain");
-    auto terrain = std::dynamic_pointer_cast<EntityTerrain>(terrain_entity);
+	// auto terrain_entity = Scene::instance().get_entity("Terrain");
+    // auto terrain = std::dynamic_pointer_cast<EntityTerrain>(terrain_entity);
 
-    uint16_t map_width = terrain ? terrain->get_width() : 100;
-    uint16_t map_height = terrain ? terrain->get_height() : 100;
+    // uint16_t map_width = terrain ? terrain->get_width() : 100;
+    // uint16_t map_height = terrain ? terrain->get_height() : 100;
 
-	for (int i = 0; i < num_organisms; ++i)
+	// for (int i = 0; i < num_organisms; ++i)
+	// {
+	// 	auto entity = EntityFactory<Organism>::create("Organism " + std::to_string(i), organism_config);
+	// 	EventManager::publish(Event(EventType::ORGANISM_BORN, EntityEvent(entity)), entity);
+    //     float final_x = 0.0f;
+    //     float final_y = 0.0f;
+    //     bool valid_spot = false;
+
+    //     if (terrain)
+    //     {
+    //         int attempts = 0;
+    //         while (attempts < 50 && !valid_spot) 
+    //         {
+    //             int grid_x = std::rand() % map_width;
+    //             int grid_y = std::rand() % map_height;
+
+    //             if (terrain->get_effort(static_cast<uint16_t>(grid_x), static_cast<uint16_t>(grid_y)) == 1.0f)
+    //             {
+    //                 final_x = (grid_x + 0.5f);
+    //                 final_y = (grid_y + 0.5f);
+    //                 valid_spot = true;
+    //             }
+    //             ++attempts;
+    //         }
+    //     }
+
+	// 	entity->get_transform().set_position({final_x, final_y});
+	// 	add_entity(entity);
+	// }
+}
+
+void Scene::clear()
+{
+	entities.clear();
+	
+	for (auto& chunk : chunks)
 	{
-		auto entity = EntityFactory<Organism>::create("Organism " + std::to_string(i), organism_config);
-		EventManager::publish(Event(EventType::ORGANISM_BORN, EntityEvent(entity)), entity);
-        float final_x = 0.0f;
-        float final_y = 0.0f;
-        bool valid_spot = false;
-
-        if (terrain)
-        {
-            int attempts = 0;
-            while (attempts < 50 && !valid_spot) 
-            {
-                int grid_x = std::rand() % map_width;
-                int grid_y = std::rand() % map_height;
-
-                if (terrain->get_effort(static_cast<uint16_t>(grid_x), static_cast<uint16_t>(grid_y)) == 1.0f)
-                {
-                    final_x = (grid_x + 0.5f);
-                    final_y = (grid_y + 0.5f);
-                    valid_spot = true;
-                }
-                ++attempts;
-            }
-        }
-
-		entity->get_transform().set_position({final_x, final_y});
-		add_entity(entity);
+		chunk.second.clear();
 	}
+
+	chunks.clear();
+
+	organism_id = 0;
+
+	main_camera = EntityFactory<Camera>::create("Main Camera");
+	add_entity(main_camera);
 }
 
 std::shared_ptr<Camera> Scene::get_main_camera() const

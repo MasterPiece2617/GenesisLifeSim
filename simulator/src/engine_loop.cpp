@@ -18,33 +18,79 @@ Engine::Engine()
 
     EventManager::suscribe(this->window, EventType::MOUSE_BUTTON_PRESSED, [&](const Event& event)
         {
+            if (ImGui::GetIO().WantCaptureMouse) return;
+
             sf::Mouse::Button button = event.get_data<MouseButtonEvent>().button;
 
             switch (button)
             {
             case sf::Mouse::Button::Left:
-
+            {
                 sf::Vector2f mouse_world_pos = window->mapPixelToCoords(sf::Mouse::getPosition(*window));
 
-                for (auto& entity : Scene::instance().get_chunk_entities(mouse_world_pos / (float)Constants::px_mt))
+                if (this->placement_mode)
                 {
-                    auto organism = std::dynamic_pointer_cast<Organism>(entity);
-                    if (!organism)
+                    if (this->terrain)
                     {
-                        continue;
+                        sf::Vector2f mouse_meters = mouse_world_pos / (float)Constants::px_mt;
+
+                        if (mouse_meters.x >= 0 && mouse_meters.x < this->terrain->get_width() &&
+                            mouse_meters.y >= 0 && mouse_meters.y < this->terrain->get_height())
+                        {
+                            if (this->terrain->walkable((uint16_t)mouse_meters.x, (uint16_t)mouse_meters.y))
+                            {
+                                // spawn!!!!!!!!!
+                                Scene::instance().spawn_organisms(mouse_meters, this->organism_config);
+                            }
+                            else
+                            {
+                                std::cout << "No se puede colocar aqui (Terreno no caminable)" << std::endl;
+                            }
+                        }
                     }
 
-                    sf::Vector2f org_pos = organism->get_transform().get_position();
-                    if (mouse_world_pos.x / Constants::px_mt >= org_pos.x - 0.5f && mouse_world_pos.x / Constants::px_mt <= org_pos.x + 1 &&
-                        mouse_world_pos.y / Constants::px_mt >= org_pos.y - 0.5f && mouse_world_pos.y / Constants::px_mt <= org_pos.y + 1)
+                    //this->placement_mode = true;
+                }
+                else
+                {
+                    // Selection mode
+                    for (auto& entity : Scene::instance().get_chunk_entities(mouse_world_pos / (float)Constants::px_mt))
                     {
-                        selected_entity = organism;
-                        break;
-                    } else
-                    {
-                        selected_entity = nullptr;
+                        auto organism = std::dynamic_pointer_cast<Organism>(entity);
+                        if (!organism)
+                        {
+                            continue;
+                        }
+
+                        sf::Vector2f org_pos = organism->get_transform().get_position();
+                        if (mouse_world_pos.x / Constants::px_mt >= org_pos.x - 0.5f && mouse_world_pos.x / Constants::px_mt <= org_pos.x + 1 &&
+                            mouse_world_pos.y / Constants::px_mt >= org_pos.y - 0.5f && mouse_world_pos.y / Constants::px_mt <= org_pos.y + 1)
+                        {
+                            selected_entity = organism;
+                            break;
+                        } 
+                        else
+                        {
+                            selected_entity = nullptr;
+                        }
                     }
                 }
+            }
+            break;
+
+            case sf::Mouse::Button::Right:
+            {
+                if (this->placement_mode)
+                {
+                    this->placement_mode = false;
+                } 
+                else
+                {
+                    selected_entity = nullptr;
+                }  
+
+            }
+            break;
             }
         });
 
@@ -80,12 +126,18 @@ void Engine::update()
                 Event ev(EventType::MOUSE_BUTTON_PRESSED, data);
                 EventManager::publish(ev);
             }
+            else if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Right))
+            {
+                MouseButtonEvent data(sf::Mouse::Button::Right);
+                Event ev(EventType::MOUSE_BUTTON_PRESSED, data);
+                EventManager::publish(ev);
+            }
             break;
         }
 
         ImGui::SFML::ProcessEvent(ev);
     }
-    ImGui::SFML::ProcessEvent(ev);
+    //ImGui::SFML::ProcessEvent(ev);
   
 
     // Update  
@@ -184,6 +236,16 @@ void Engine::render()
 		this->window->draw(final_vertices, &Texture::get_atlas()); 
 	}
 
+
+    static float time_accumulator = 0.0f;
+
+    time_accumulator += Time::get_delta();
+    if (time_accumulator >= 0.2f)
+    {
+        PopulationStats::update_history(time_accumulator);
+        time_accumulator = 0.0f;
+    }
+
   ImGui::SFML::Render(*this->window);
   this->window->display();
 }
@@ -194,7 +256,7 @@ void Engine::run()
   float fps_accumulator = 0.0f;
   float fps_display = 0.0f;
   float fps_timer = 0.0f;
-  static std::string selected_map = "";
+  std::string selected_map = "";
 
   ImGui::CreateContext();
   ImPlot::CreateContext();
@@ -220,10 +282,26 @@ void Engine::run()
       ImGuiMenu::show_select_map_window(this->map_loaded, selected_map, 
                                         EntityTerrain::get_map_files("resources/maps", ".zadat"),
                                         this->terrain, this->texture_atlas);
-    } 
+
+      if (this->terrain)
+      {
+        auto main_camera = Scene::instance().get_main_camera();
+
+        if (main_camera && !centered)
+        {
+            
+            main_camera->get_transform().set_position({ (this->terrain->get_width() * Constants::px_mt) / 2.0f, (this->terrain->get_height() * Constants::px_mt) / 2.0f });
+            main_camera->get_view().setCenter(main_camera->get_transform().get_position().x, main_camera->get_transform().get_position().y);
+            this->window->setView(main_camera->get_view());
+            main_camera->set_zoom(1.0f);
+            centered = true;
+            std::cout << "Camera centered on terrain." << std::endl;
+        }
+
+      }
+    }
     else 
     {
-
         if (this->terrain) 
         {
           Debugger::imgui_terrain(this->terrain, this->window);
@@ -235,7 +313,7 @@ void Engine::run()
 
         Debugger::imgui_scene(fps_display, mouse_world_pos);
   
-        ImPlotMenu::show_menu(this->organism_config, this->window.get());
+        ImPlotMenu::show_menu(this->organism_config, this->window.get(), terrain, this->map_loaded, selected_map, this->centered, this->placement_mode);
         
         std::shared_ptr<Organism> selected_organism = std::dynamic_pointer_cast<Organism>(selected_entity);
         Debugger::show_selected_entity(selected_organism);
@@ -243,13 +321,32 @@ void Engine::run()
     }
       
       this->render();
-      this->window->setTitle("Genesis BioSim");  
+      //this->window->setTitle("Genesis BioSim");  
   }
   
   ImPlot::DestroyContext();
   ImGui::DestroyContext();
 
   ImGui::SFML::Shutdown();
-  }
+}
 
-    
+void Engine::reset_simulation(std::shared_ptr<EntityTerrain>& terrain, bool& map_loaded, std::string& selected_map, bool& centered)
+{
+    Scene::instance().clear();
+
+    PopulationStats::reset();
+
+    terrain.reset();
+    map_loaded = false;
+    centered = false;
+    selected_map = "";
+ 
+    auto main_camera = Scene::instance().get_main_camera();
+    if (main_camera)
+    {
+        main_camera->get_transform().set_position({ Config::WINDOW_WIDTH / (2.0f * Constants::px_mt), Config::WINDOW_HEIGHT / (2.0f * Constants::px_mt) });
+        main_camera->set_zoom(1.0f);
+    }
+
+    std::cout << "Simulation reset completed." << std::endl;
+}

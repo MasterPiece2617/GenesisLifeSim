@@ -114,3 +114,13 @@ float EntityTerrain::get_effort(uint16_t x, uint16_t y) const
 {
 	return terrain.get_effort(x, y);
 }
+
+bool EntityTerrain::navigable(uint16_t x, uint16_t y) const
+{
+	return terrain.navigable(x, y);
+}
+
+bool EntityTerrain::plantable(uint16_t x, uint16_t y) const
+{
+	return terrain.plantable(x, y);
+}
