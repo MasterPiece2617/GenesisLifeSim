@@ -2,7 +2,7 @@
 
 Organism::Organism(std::string _name, const Stats _stats) : Entity(_name), stats(_stats) {}
 
-Organism::Organism(std::string _name, const OrganismConfig& _organism_config) : Entity(_name), organism_config(_organism_config)
+Organism::Organism(std::string _name, const OrganismConfig& _organism_config) : Entity(_name)
 {
 	stats.vision = _organism_config.vision_radius;
 	stats.color = _organism_config.color;
@@ -39,6 +39,16 @@ void Organism::init()
 	add_component(std::make_shared<SpriteRenderer>(shared_from_this(), stats.color, "being"));
 
 	transform->set_scale({ stats.size, stats.size });
+}
+
+std::string Organism::get_state()
+{
+	return state;
+}
+
+void Organism::set_state(std::string new_state)
+{
+	state = new_state;
 }
 
 Stats& Organism::get_stats()
@@ -187,11 +197,11 @@ void Behaviour::start()
 		{
 			if (auto organism = std::dynamic_pointer_cast<Organism>(owner.lock()))
 			{
-				if (organism->get_stats().hunger > (organism->get_stats().max_hunger * 0.7f))
+				if (organism->get_stats().hunger > (organism->get_stats().max_hunger * 0.9f))
 				{
 					return BTStatus::SUCCESS;
 				}
-
+				organism->set_state("Hungry");
 				return BTStatus::FAILURE;
 			}
 
@@ -219,7 +229,8 @@ void Behaviour::start()
 
 		const sf::Vector2f pos = organism->get_transform().get_position();
 
-		if (!moving && !fixed_entity) {
+		if (!moving && !fixed_entity)
+		{
 			static std::mt19937 rng(std::random_device{}());
 			std::uniform_real_distribution<float> angle_deg_dist(0.0f, 360.0f);
 			std::uniform_real_distribution<float> radius_dist(0.0f, 10.0f);
@@ -265,7 +276,8 @@ void Behaviour::start()
 
 		if (organism->get_stats().category == OrganismCategory::HERBIVORE)
 		{
-			if (dist2 <= eps * eps) {
+			if (dist2 <= eps * eps)
+			{
 				if (auto food = std::dynamic_pointer_cast<Food>(fixed_entity))
 				{
 
@@ -292,6 +304,8 @@ void Behaviour::start()
 			{
 				return BTStatus::RUNNING;
 			}
+
+			organism->set_state("Searching Food");
 
 			int vision = organism->get_stats().vision;
 			int x_min = std::floor(pos.x - vision);
@@ -320,6 +334,7 @@ void Behaviour::start()
 
 								if (abs <= vision && abs < min_distance.second)
 								{
+									organism->set_state("Going to Food");
 									min_distance = { food, abs };
 								}
 							}

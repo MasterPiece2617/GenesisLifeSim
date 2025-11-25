@@ -97,6 +97,7 @@ void Debugger::show_selected_entity(std::shared_ptr<Organism>& selected_entity)
     }
     ImGui::Begin("Selected Entity");
     ImGui::Text("Name: %s", selected_entity->get_name().c_str());
+	ImGui::Text("State: %s", selected_entity->get_state().c_str());
     ImGui::Separator();
     ImGui::Text("Position: %.2f, %.2f", selected_entity->get_transform().get_position().x, selected_entity->get_transform().get_position().y);
     ImGui::Text("type organism: %s", selected_entity->get_stats().category == OrganismCategory::CARNIVORE ? "Carnivore" : "Herbivore");
