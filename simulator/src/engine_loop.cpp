@@ -184,6 +184,15 @@ void Engine::render()
 		this->window->draw(final_vertices, &Texture::get_atlas()); 
 	}
 
+
+    static float time_accumulator = 0.0f;
+    time_accumulator += Time::get_delta();
+    if (time_accumulator >= 0.2f)
+    {
+        PopulationStats::update_history(time_accumulator);
+        time_accumulator = 0.0f;
+    }
+
   ImGui::SFML::Render(*this->window);
   this->window->display();
 }
@@ -194,7 +203,7 @@ void Engine::run()
   float fps_accumulator = 0.0f;
   float fps_display = 0.0f;
   float fps_timer = 0.0f;
-  static std::string selected_map = "";
+  std::string selected_map = "";
 
   ImGui::CreateContext();
   ImPlot::CreateContext();
@@ -235,7 +244,7 @@ void Engine::run()
 
         Debugger::imgui_scene(fps_display, mouse_world_pos);
   
-        ImPlotMenu::show_menu(this->organism_config, this->window.get());
+        ImPlotMenu::show_menu(this->organism_config, this->window.get(), terrain, this->map_loaded, selected_map);
         
         std::shared_ptr<Organism> selected_organism = std::dynamic_pointer_cast<Organism>(selected_entity);
         Debugger::show_selected_entity(selected_organism);
@@ -243,7 +252,7 @@ void Engine::run()
     }
       
       this->render();
-      this->window->setTitle("Genesis BioSim");  
+      //this->window->setTitle("Genesis BioSim");  
   }
   
   ImPlot::DestroyContext();
@@ -252,4 +261,22 @@ void Engine::run()
   ImGui::SFML::Shutdown();
   }
 
-    
+void Engine::reset_simulation(std::shared_ptr<EntityTerrain>& terrain, bool& map_loaded, std::string& selected_map)
+{
+    Scene::instance().clear();
+
+    PopulationStats::reset();
+
+    terrain.reset();
+    map_loaded = false;
+    selected_map = "";
+ 
+    auto main_camera = Scene::instance().get_main_camera();
+    if (main_camera)
+    {
+        main_camera->get_transform().set_position({ Config::WINDOW_WIDTH / (2.0f * Constants::px_mt), Config::WINDOW_HEIGHT / (2.0f * Constants::px_mt) });
+        main_camera->set_zoom(1.0f);
+    }
+
+    std::cout << "Simulation reset completed." << std::endl;
+}

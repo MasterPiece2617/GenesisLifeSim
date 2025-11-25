@@ -99,6 +99,21 @@ void Scene::load(const OrganismConfig& organism_config) // Provisional
 	}
 }
 
+void Scene::clear()
+{
+	entities.clear();
+	
+	for (auto& chunk : chunks)
+	{
+		chunk.second.clear();
+	}
+
+	chunks.clear();
+
+	main_camera = EntityFactory<Camera>::create("Main Camera");
+	add_entity(main_camera);
+}
+
 std::shared_ptr<Camera> Scene::get_main_camera() const
 {
 	return main_camera;
