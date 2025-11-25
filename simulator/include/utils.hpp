@@ -9,6 +9,7 @@ class Time
 {  
 protected:  
 
+	static float simulation_speed;
 	static sf::Time delta_time;  
 	static sf::Clock clock;  
 
@@ -16,6 +17,8 @@ public:
 
 	static void update();  
 
+	static void set_simulation_speed(float speed);
+	static float get_simulation_speed();
 	static float get_delta();  
 };  
 

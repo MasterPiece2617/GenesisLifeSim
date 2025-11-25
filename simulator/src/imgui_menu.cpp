@@ -129,10 +129,10 @@ void ImGuiMenu::show_organism_config_window(OrganismConfig& organism_config, sf:
         organism_config.weight = std::pow(organism_config.size, 3.0f);
         organism_config.hp = 100.0f * organism_config.size;
         organism_config.max_hunger = 200.0f * organism_config.size;
-        organism_config.nu = organism_config.weight;
+        organism_config.nu = organism_config.weight * 50;
         organism_config.stamina = 100.0f * organism_config.size;
 		organism_config.max_hp = organism_config.hp;
-		organism_config.hunger = organism_config.max_hunger * 0.7f;
+		organism_config.hunger = organism_config.max_hunger * 0.69f;
 		organism_config.max_stamina = organism_config.stamina;
 
         float speed_min = 3.0f + 2.0f * organism_config.size;

@@ -45,13 +45,16 @@ protected:
 	Stats stats;
 	bool is_alive = true;
 	bool is_resting = false;
-	OrganismConfig organism_config;
+	std::string state = "Idle";
+
 public:
 	Organism(std::string _name, const Stats _stats);
 	Organism(std::string _name, const OrganismConfig& _organism_config);
 	bool get_is_resting();
 	void set_is_resting(bool rest);
 	void init() override;
+	std::string get_state();
+	void set_state(std::string new_state);
 	Stats& get_stats();
 };
 
