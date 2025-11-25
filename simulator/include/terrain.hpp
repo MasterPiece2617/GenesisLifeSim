@@ -13,6 +13,8 @@ struct CellData
 	uint8_t texture_id;
 	uint8_t effort;
 	bool is_walkable;
+	bool is_navigable;
+	bool is_plantable;
 };
 
 class Terrain 
@@ -38,6 +40,8 @@ public:
 	uint16_t get_height() const;
 	bool walkable(uint16_t x, uint16_t y) const;
 	float get_effort(uint16_t x, uint16_t y) const;
+	bool navigable(uint16_t x, uint16_t y) const;
+	bool plantable(uint16_t x, uint16_t y) const;
 	
 	~Terrain() = default;
 };

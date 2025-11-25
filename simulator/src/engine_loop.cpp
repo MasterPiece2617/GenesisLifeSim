@@ -186,6 +186,7 @@ void Engine::render()
 
 
     static float time_accumulator = 0.0f;
+
     time_accumulator += Time::get_delta();
     if (time_accumulator >= 0.2f)
     {
@@ -229,10 +230,26 @@ void Engine::run()
       ImGuiMenu::show_select_map_window(this->map_loaded, selected_map, 
                                         EntityTerrain::get_map_files("resources/maps", ".zadat"),
                                         this->terrain, this->texture_atlas);
-    } 
+
+      if (this->terrain)
+      {
+        auto main_camera = Scene::instance().get_main_camera();
+
+        if (main_camera && !centered)
+        {
+            
+            main_camera->get_transform().set_position({ (this->terrain->get_width() * Constants::px_mt) / 2.0f, (this->terrain->get_height() * Constants::px_mt) / 2.0f });
+            main_camera->get_view().setCenter(main_camera->get_transform().get_position().x, main_camera->get_transform().get_position().y);
+            this->window->setView(main_camera->get_view());
+            main_camera->set_zoom(1.0f);
+            centered = true;
+            std::cout << "Camera centered on terrain." << std::endl;
+        }
+
+      }
+    }
     else 
     {
-
         if (this->terrain) 
         {
           Debugger::imgui_terrain(this->terrain, this->window);
@@ -244,7 +261,7 @@ void Engine::run()
 
         Debugger::imgui_scene(fps_display, mouse_world_pos);
   
-        ImPlotMenu::show_menu(this->organism_config, this->window.get(), terrain, this->map_loaded, selected_map);
+        ImPlotMenu::show_menu(this->organism_config, this->window.get(), terrain, this->map_loaded, selected_map, this->centered);
         
         std::shared_ptr<Organism> selected_organism = std::dynamic_pointer_cast<Organism>(selected_entity);
         Debugger::show_selected_entity(selected_organism);
@@ -259,9 +276,9 @@ void Engine::run()
   ImGui::DestroyContext();
 
   ImGui::SFML::Shutdown();
-  }
+}
 
-void Engine::reset_simulation(std::shared_ptr<EntityTerrain>& terrain, bool& map_loaded, std::string& selected_map)
+void Engine::reset_simulation(std::shared_ptr<EntityTerrain>& terrain, bool& map_loaded, std::string& selected_map, bool& centered)
 {
     Scene::instance().clear();
 
@@ -269,6 +286,7 @@ void Engine::reset_simulation(std::shared_ptr<EntityTerrain>& terrain, bool& map
 
     terrain.reset();
     map_loaded = false;
+    centered = false;
     selected_map = "";
  
     auto main_camera = Scene::instance().get_main_camera();

@@ -12,6 +12,8 @@ struct CellData
 	uint8_t textureCell;
 	uint8_t effort;
 	bool is_walkable;
+    bool is_navigable;
+    bool is_plantable;
 };
 
 int main()
@@ -43,7 +45,7 @@ int main()
             // --- CAMBIO AQUÍ: BORDES CON 'ROUGH SEA' (ID 7) ---
             // Aumenté el borde a 8 celdas para que se note bien la "zona prohibida"
             if (y < 8 || y >= height - 8 || x < 8 || x >= width - 8) {
-                cells[y * width + x] = {7, 7, 255, false}; // ID 7: Rough Sea
+                cells[y * width + x] = {7, 7, 255, false, false, false}; // ID 7: Rough Sea
                 continue;
             }
 
@@ -57,34 +59,34 @@ int main()
                 // Opcional: Si el agua es MUY profunda (ej. < -0.7), 
                 // también podrías poner Rough Sea (7) aquí para que se vea natural
                 // mezclado con el borde. Por ahora lo dejo en agua normal (2).
-                cell = {2, 2, 7, false}; 
+                cell = {2, 2, 7, false, true, false}; // Water
             }
             // 2. ARENA (-0.2 a -0.05)
             else if (heightValue < -0.05f) {
-                cell = {3, 3, 3, true}; // Sand
+                cell = {3, 3, 3, true, false, false}; // Sand
             }
             // 3. LLANURAS (0.0 a 0.5)
             else if (heightValue < 0.5f) {
                 if (detailValue > 0.2f) {
-                    cell = {6, 6, 1, true}; // Dark Grass
+                    cell = {6, 6, 1, true, false, true}; // Dark Grass
                 } else {
-                    cell = {1, 1, 1, true}; // Grass
+                    cell = {1, 1, 1, true, false, true}; // Grass
                 }
             }
             // 4. PANTANO (0.5 a 0.7)
             else if (heightValue < 0.7f) {
-                cell = {5, 5, 10, true}; // Swamp (Lento)
+                cell = {5, 5, 10, false, true, false}; // Swamp (Lento)
             }
             // 5. MONTAÑA (> 0.7)
             else {
-                cell = {4, 4, 9, true}; // Stone
+                cell = {4, 4, 9, true, false, false}; // Stone
             }
 
             cells[y * width + x] = cell;
         }
     }
 
-    std::ofstream file("map_noise_1_v3.zadat", std::ios::binary);
+    std::ofstream file("map_noise_1_v4.zadat", std::ios::binary);
     if (!file) {
         std::cerr << "Error opening file for writing." << std::endl;
         return -1;

@@ -79,9 +79,9 @@ void ImGuiMenu::show_organism_config_window(OrganismConfig& organism_config, sf:
     ImGui::End();
 }
 
-void ImGuiMenu::call_reset_simulation(std::shared_ptr<EntityTerrain>& terrain, bool& map_loaded, std::string& selected_map)
+void ImGuiMenu::call_reset_simulation(std::shared_ptr<EntityTerrain>& terrain, bool& map_loaded, std::string& selected_map, bool& centered)
 {
-    Engine::reset_simulation(terrain, map_loaded, selected_map);
+    Engine::reset_simulation(terrain, map_loaded, selected_map, centered);
 }
 
 static bool show_organism_population = false;
@@ -92,7 +92,7 @@ static bool reset_simulation_requested = false;
 
 
 void ImGuiMenu::show_menu(OrganismConfig& organism_config, sf::RenderWindow* window, 
-                          std::shared_ptr<EntityTerrain>& terrain, bool& map_loaded, std::string& selected_map)
+                          std::shared_ptr<EntityTerrain>& terrain, bool& map_loaded, std::string& selected_map, bool& centered)
 {
     if (ImGui::BeginMainMenuBar())
     {
@@ -113,7 +113,7 @@ void ImGuiMenu::show_menu(OrganismConfig& organism_config, sf::RenderWindow* win
         {
             if (ImGui::MenuItem("Reiniciar Simulacion"))
             {
-                ImGuiMenu::call_reset_simulation(terrain, map_loaded, selected_map);
+                ImGuiMenu::call_reset_simulation(terrain, map_loaded, selected_map, centered);
                 reset_simulation_requested = true;
             }
             ImGui::EndMenu();

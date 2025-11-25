@@ -95,3 +95,21 @@ bool Terrain::walkable(uint16_t x, uint16_t y) const
 	}
 	return get_cell(x, y).is_walkable;
 }
+
+bool Terrain::navigable(uint16_t x, uint16_t y) const
+{
+	if (x >= width || y >= height)
+	{
+		return false;
+	}
+	return get_cell(x, y).is_navigable;
+}
+
+bool Terrain::plantable(uint16_t x, uint16_t y) const
+{
+	if (x >= width || y >= height)
+	{
+		return false;
+	}
+	return get_cell(x, y).is_plantable;
+}

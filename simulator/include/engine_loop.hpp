@@ -32,6 +32,7 @@ protected:
   std::shared_ptr<EntityTerrain> terrain;
   static std::string selected_map;
   bool map_loaded = false;
+  bool centered = false;
   // Main scene
   Scene scene;
   // std::vector<std::vector<std::shared_ptr<SpriteRenderer>>> render_queue =
@@ -56,5 +57,5 @@ public:
 
   // Public methods
   void run();
-  static void reset_simulation(std::shared_ptr<EntityTerrain>& terrain, bool& map_loaded, std::string& selected_map);
+  static void reset_simulation(std::shared_ptr<EntityTerrain>& terrain, bool& map_loaded, std::string& selected_map, bool& centered);
 };
