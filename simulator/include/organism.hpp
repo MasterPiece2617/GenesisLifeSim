@@ -86,7 +86,7 @@ public:
     Food(std::string _name);  
     void init() override;  
     int get_nu();  
-    ~Food() override = default; // Especificación explícita de destructor compatible con Entity  
+    ~Food() override = default;
 };
 
 class FoodGenerator : public Entity
@@ -101,8 +101,8 @@ class FoodSpawner : public Component
 protected:
 	float timer = 0.0f;
 	float time = 0.0f;
-    float spawn_rate = 20.0f; // Segundos para generar una fruta
-    float spawn_radius = 2.0f; // Radio en metros donde cae la fruta
+    float spawn_rate = 20.0f; // seconds
+    float spawn_radius = 2.0f; // meters
 public:
 	FoodSpawner(std::weak_ptr<Entity> _owner);
 	void update() override;
