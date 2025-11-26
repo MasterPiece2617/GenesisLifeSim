@@ -94,6 +94,7 @@ bool Entity::add_component(std::shared_ptr<Component> component)
 
 	component->set_owner(shared_from_this());
 	components.push_back(component);
+
 	return true;
 }
 
@@ -167,6 +168,17 @@ bool Entity::remove_child(std::shared_ptr<Entity> child)
 	}
 
 	return false;
+}
+
+bool Entity::get_delete()
+{
+	return del;
+}
+
+void Entity::set_delete()
+{
+	del = true;
+	transform->set_dirty();
 }
 
 void Entity::start()

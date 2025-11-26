@@ -24,6 +24,11 @@ bool Component::get_is_active() const
 	return is_active;
 }
 
+void Component::deactivate()
+{
+	is_active = false;
+}
+
 void Component::start() {}
 
 void Component::update() {}
