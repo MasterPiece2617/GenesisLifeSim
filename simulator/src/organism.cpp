@@ -72,9 +72,9 @@ void Behaviour::start()
 				// --- DESCANSO SI NO TIENE STAMINA ---
 				if (s.stamina <= 0.0f || organism->get_is_resting())
 				{
-					// Recuperación: 100 stamina/s drenando hunger
+					organism->set_state("Resting (Recovering Stamina)");
 					float recover = 100.0f * Time::get_delta() * Time::get_simulation_speed();
-					float hunger_cost = recover / 10.0f; // 1 hunger -> 10 stamina
+					float hunger_cost = recover / 10.0f;
 					organism->set_is_resting(true);
 
 					if (s.hunger > hunger_cost)
@@ -82,17 +82,16 @@ void Behaviour::start()
 						s.hunger -= hunger_cost;
 						s.stamina = std::min(s.stamina + recover, s.max_stamina);
 					}
-
 					if (s.stamina >= s.max_stamina)
 					{
 						organism->set_is_resting(false);
+						organism->set_state("Recovered");
 					}
-
-					// No se mueve mientras descansa
 					return BTStatus::RUNNING;
 				}
 
-				// --- MOVIMIENTO NORMAL ---
+				organism->set_state("Moving to Target");
+
 				sf::Vector2f pos = organism->get_transform().get_position();
 				sf::Vector2f current_target = goal;
 				bool using_path = !path.empty();
@@ -107,6 +106,7 @@ void Behaviour::start()
 					if (path_index > path.size() - 1) {
 						moving = false;
 						path.clear();
+						organism->set_state("Arrived at Target");
 						return BTStatus::SUCCESS;
 					}
 					current_target = path[path_index];
@@ -115,15 +115,18 @@ void Behaviour::start()
 				sf::Vector2f direction = current_target - pos;
 				float length = std::sqrt(direction.x * direction.x + direction.y * direction.y);
 
-				if (length < 0.1f)
+				// --- Nuevo umbral de llegada ---
+				const float eps = 0.5f; // más grande para evitar vibración
+				if (length < eps)
 				{
 					organism->get_transform().set_position(current_target);
+					moving = false;
+					organism->set_state("Arrived at Target");
 					if (using_path) {
 						++path_index;
 						if (path_index < path.size()) return BTStatus::RUNNING;
 						path.clear();
 					}
-					moving = false;
 					return BTStatus::SUCCESS;
 				}
 
@@ -152,30 +155,24 @@ void Behaviour::start()
 				float stamina_cost = distance * (0.5f * s.speed + 0.3f * s.size);
 				s.stamina = std::max(0.0f, s.stamina - stamina_cost);
 
-				// Si se quedó sin stamina, se detiene
 				if (s.stamina <= 0.0f)
 				{
 					moving = false;
+					organism->set_state("Stopped (No Stamina)");
 					return BTStatus::RUNNING;
 				}
 
 				// --- AVANCE ---
 				if (distance >= length)
 				{
-					sf::Vector2f final_pos = current_target;
-					if (terrain)
-					{
-						final_pos.x = std::max(0.f, std::min(final_pos.x, (float)terrain->get_width() - 1));
-						final_pos.y = std::max(0.f, std::min(final_pos.y, (float)terrain->get_height() - 1));
-					}
-					owner.lock()->get_transform().set_position(final_pos);
-
+					organism->get_transform().set_position(current_target);
+					moving = false;
+					organism->set_state("Arrived at Target");
 					if (using_path) {
 						++path_index;
 						if (path_index < path.size()) return BTStatus::RUNNING;
 						path.clear();
 					}
-					moving = false;
 				}
 				else
 				{
@@ -185,13 +182,12 @@ void Behaviour::start()
 						new_pos.x = std::max(0.f, std::min(new_pos.x, (float)terrain->get_width() - 1));
 						new_pos.y = std::max(0.f, std::min(new_pos.y, (float)terrain->get_height() - 1));
 					}
-					owner.lock()->get_transform().set_position(new_pos);
+					organism->get_transform().set_position(new_pos);
 				}
 				return BTStatus::RUNNING;
 			}
 			return BTStatus::SUCCESS;
 		};
-
 
 	std::function<BTStatus()> hunger = [&]()
 		{
@@ -199,12 +195,12 @@ void Behaviour::start()
 			{
 				if (organism->get_stats().hunger > (organism->get_stats().max_hunger * 0.9f))
 				{
+					organism->set_state("Satisfied");
 					return BTStatus::SUCCESS;
 				}
-				organism->set_state("Hungry");
+				organism->set_state("Hungry (Needs Food)");
 				return BTStatus::FAILURE;
 			}
-
 			return BTStatus::SUCCESS;
 		};
 
@@ -213,24 +209,21 @@ void Behaviour::start()
 		auto organism = std::dynamic_pointer_cast<Organism>(owner.lock());
 		if (!organism) return BTStatus::FAILURE;
 
-		if (organism->get_stats().hunger >= (organism->get_stats().max_hunger * 0.9f))
-		{
-			fixed_entity.reset();
-			moving = false;
-			return BTStatus::SUCCESS;
-		}
-
+		// Si la comida desapareció
 		if (fixed_entity && !Scene::instance().has_entity(fixed_entity))
 		{
+			organism->set_state("Food Lost");
 			fixed_entity.reset();
 			moving = false;
-			return BTStatus::RUNNING;
+			return BTStatus::FAILURE;
 		}
 
 		const sf::Vector2f pos = organism->get_transform().get_position();
 
+		// Movimiento aleatorio si no hay objetivo
 		if (!moving && !fixed_entity)
 		{
+			organism->set_state("Wandering (Searching Food)");
 			static std::mt19937 rng(std::random_device{}());
 			std::uniform_real_distribution<float> angle_deg_dist(0.0f, 360.0f);
 			std::uniform_real_distribution<float> radius_dist(0.0f, 10.0f);
@@ -256,7 +249,6 @@ void Behaviour::start()
 					return BTStatus::FAILURE;
 				}
 
-				// Clamp final de seguridad (por si acaso)
 				goal.x = std::max(0.f, std::min(goal.x, map_w - 1.0f));
 				goal.y = std::max(0.f, std::min(goal.y, map_h - 1.0f));
 			}
@@ -270,39 +262,41 @@ void Behaviour::start()
 		const sf::Vector2f d = goal - pos;
 		const float dist2 = d.x * d.x + d.y * d.y;
 
+		// --- Herbívoros ---
 		if (organism->get_stats().category == OrganismCategory::HERBIVORE)
 		{
 			if (dist2 <= eps * eps)
 			{
 				if (auto food = std::dynamic_pointer_cast<Food>(fixed_entity))
 				{
-
-					const sf::Vector2f fpos = food->get_transform().get_position();
-					const sf::Vector2f df = fpos - organism->get_transform().get_position();
-					if (df.x * df.x + df.y * df.y <= eps * eps) {
-
-						organism->get_stats().hunger = std::min(organism->get_stats().hunger + food->get_nu(), organism->get_stats().max_hunger);
-						Scene::instance().remove_entity(food);
-						fixed_entity.reset();
-
-						if (organism->get_stats().hunger < (organism->get_stats().max_hunger * 0.9f)) {
-							moving = false;
-							return BTStatus::RUNNING;
-						}
-
-						moving = false;
-						return BTStatus::SUCCESS;
-					}
+					organism->set_state("Eating");
+					organism->get_stats().hunger = std::min(
+						organism->get_stats().hunger + food->get_nu(),
+						organism->get_stats().max_hunger
+					);
+					Scene::instance().remove_entity(food);
+					fixed_entity.reset();
+					moving = false;
+					return BTStatus::SUCCESS;
+				}
+				else
+				{
+					organism->set_state("Food Lost");
+					fixed_entity.reset();
+					moving = false;
+					return BTStatus::FAILURE;
 				}
 			}
 
-			if (fixed_entity)
+			if (fixed_entity && std::dynamic_pointer_cast<Food>(fixed_entity))
 			{
+				organism->set_state("Going to Food");
 				return BTStatus::RUNNING;
 			}
 
 			organism->set_state("Searching Food");
 
+			// --- búsqueda en chunks ---
 			int vision = organism->get_stats().vision;
 			int x_min = std::floor(pos.x - vision);
 			int x_max = std::ceil(pos.x + vision);
@@ -317,7 +311,6 @@ void Behaviour::start()
 				for (int j = x_min; j < x_max; j += Constants::chunk_size)
 				{
 					auto chunk_entities = Scene::instance().get_chunk_entities(sf::Vector2f(j, i));
-
 					for (auto& e : chunk_entities)
 					{
 						if (auto food = std::dynamic_pointer_cast<Food>(e))
@@ -330,7 +323,6 @@ void Behaviour::start()
 
 								if (abs <= vision && abs < min_distance.second)
 								{
-									organism->set_state("Going to Food");
 									min_distance = { food, abs };
 								}
 							}
@@ -343,166 +335,30 @@ void Behaviour::start()
 			{
 				fixed_entity = min_distance.first;
 				goal = fixed_entity->get_transform().get_position();
-				sf::Vector2f dir = goal - pos;
-				float angle_rad = std::atan2(dir.y, dir.x);
-				float angle_deg = angle_rad * 180.f / Constants::pi_val;
-				organism->get_transform().set_rotation(angle_deg);
+				organism->set_state("Going to Food");
+				moving = true;
 
 				auto terrain_entity = Scene::instance().get_entity("Terrain");
 				if (auto terrain = std::dynamic_pointer_cast<EntityTerrain>(terrain_entity))
 				{
-					// 1. Calculamos la ruta
 					path = pathfinder.find_path(pos, goal, *terrain);
-
-					// 2. Si A* encontró un camino válido
-					if (!path.empty())
+					if (path.empty())
 					{
-						path_index = 0;
-
-						// saltamos al segundo para que el movimiento arranque fluido.
-						if (path.size() > 1)
-						{
-							sf::Vector2f p0 = path[0];
-							float d2 = (p0.x - pos.x) * (p0.x - pos.x) + (p0.y - pos.y) * (p0.y - pos.y);
-							if (d2 < 100.0f)
-							{
-								// Si está a menos de ~10 pixeles
-								path_index = 1;
-							}
-						}
-
-						moving = true;
-						return BTStatus::RUNNING;
-					}
-				}
-			}
-
-			return BTStatus::RUNNING;
-		}
-		else if (organism->get_stats().category == OrganismCategory::CARNIVORE)
-		{
-			// --- Caso: ya alcanzó la meta ---
-			if (dist2 <= eps * eps)
-			{
-				if (auto prey = std::dynamic_pointer_cast<Organism>(fixed_entity))
-				{
-					const sf::Vector2f ppos = prey->get_transform().get_position();
-					const sf::Vector2f dp = ppos - organism->get_transform().get_position();
-					if (dp.x * dp.x + dp.y * dp.y <= eps * eps)
-					{
-						// "Comer" al herbívoro
-						organism->get_stats().hunger = std::min(organism->get_stats().hunger + prey->get_stats().nu, organism->get_stats().max_hunger);
-						Scene::instance().remove_entity(prey);
+						organism->set_state("Food Unreachable");
 						fixed_entity.reset();
-
-						if (organism->get_stats().hunger < (organism->get_stats().max_hunger * 0.9f)) {
-							moving = false;
-							return BTStatus::RUNNING;
-						}
-
 						moving = false;
-						return BTStatus::SUCCESS;
+						return BTStatus::FAILURE;
 					}
 				}
-			}
-			if (fixed_entity) {
-				if (Scene::instance().has_entity(fixed_entity)) {
-					// Actualizar meta
-					goal = fixed_entity->get_transform().get_position();
-
-					// Recalcular dirección y rotación visual
-					auto organism = std::dynamic_pointer_cast<Organism>(owner.lock());
-					if (organism) {
-						sf::Vector2f pos = organism->get_transform().get_position();
-						sf::Vector2f dir = goal - pos;
-						float angle_rad = std::atan2(dir.y, dir.x);
-						float angle_deg = angle_rad * 180.f / Constants::pi_val;
-						organism->get_transform().set_rotation(angle_deg);
-					}
-
-					// Asegurar que siga en modo persecución
-					moving = true;
-
-					return BTStatus::RUNNING;
-				}
-				else {
-					fixed_entity.reset();
-					moving = false;
-				}
+				return BTStatus::RUNNING;
 			}
 
-			int vision = organism->get_stats().vision;
-			int x_min = std::floor(pos.x - vision);
-			int x_max = std::ceil(pos.x + vision);
-			int y_min = std::floor(pos.y - vision);
-			int y_max = std::ceil(pos.y + vision);
-
-			std::unordered_set<std::shared_ptr<Entity>> visited;
-			std::pair<std::shared_ptr<Entity>, float> min_distance = { nullptr, std::numeric_limits<float>::max() };
-
-			for (int i = y_min; i < y_max; i += Constants::chunk_size)
-			{
-				for (int j = x_min; j < x_max; j += Constants::chunk_size)
-				{
-					auto chunk_entities = Scene::instance().get_chunk_entities(sf::Vector2f(j, i));
-
-					for (auto& e : chunk_entities)
-					{
-						if (auto prey = std::dynamic_pointer_cast<Organism>(e))
-						{
-							if (prey->get_stats().category == OrganismCategory::HERBIVORE)
-							{
-								if (visited.insert(prey).second)
-								{
-									float dx = prey->get_transform().get_position().x - pos.x;
-									float dy = prey->get_transform().get_position().y - pos.y;
-									float abs = std::sqrt(dx * dx + dy * dy);
-
-									if (abs <= vision && abs < min_distance.second)
-									{
-										min_distance = { prey, abs };
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-
-			if (min_distance.first) {
-				fixed_entity = min_distance.first;
-				goal = fixed_entity->get_transform().get_position();
-				sf::Vector2f dir = goal - pos;
-				float angle_rad = std::atan2(dir.y, dir.x);
-				float angle_deg = angle_rad * 180.f / Constants::pi_val;
-				organism->get_transform().set_rotation(angle_deg);
-
-				auto terrain_entity = Scene::instance().get_entity("Terrain");
-				if (auto terrain = std::dynamic_pointer_cast<EntityTerrain>(terrain_entity))
-				{
-					path = pathfinder.find_path(pos, goal, *terrain);
-					if (!path.empty())
-					{
-						path_index = 0;
-						if (path.size() > 1)
-						{
-							sf::Vector2f p0 = path[0];
-							float d2 = (p0.x - pos.x) * (p0.x - pos.x) + (p0.y - pos.y) * (p0.y - pos.y);
-							if (d2 < 100.0f)
-							{
-								path_index = 1;
-							}
-						}
-						moving = true;
-						return BTStatus::RUNNING;
-					}
-				}
-			}
-
+			organism->set_state("No Food Found");
 			return BTStatus::RUNNING;
 		}
-		};
 
+		return BTStatus::RUNNING;
+		};
 
 	std::function<BTStatus()> reproduction = [&]()
 		{
@@ -569,10 +425,8 @@ void Behaviour::start()
 
 			if (nearest)
 			{
-				{
-					auto it = cooldown_ticks.find(nearest.get());
-					if (it != cooldown_ticks.end() && it->second > 0) it->second--;
-				}
+				auto it = cooldown_ticks.find(nearest.get());
+				if (it != cooldown_ticks.end() && it->second > 0) it->second--;
 
 				if (min_dist <= reproduce_range)
 				{
@@ -775,7 +629,7 @@ void FoodGenerator::init()
 	add_component(std::make_shared<FoodSpawner>(shared_from_this()));
 }
 
-FoodSpawner::FoodSpawner(std::weak_ptr<Entity> _owner) : Component(_owner) 
+FoodSpawner::FoodSpawner(std::weak_ptr<Entity> _owner) : Component(_owner)
 {
 	timer = static_cast<float>(std::rand() % (int)spawn_rate);
 }
@@ -784,46 +638,46 @@ Tree::Tree(std::string _name) : Entity(_name) {}
 
 void Tree::init()
 {
-    add_component(std::make_shared<SpriteRenderer>(shared_from_this(), "tree"));
+	add_component(std::make_shared<SpriteRenderer>(shared_from_this(), "tree"));
 
-    add_component(std::make_shared<FoodSpawner>(shared_from_this()));
+	add_component(std::make_shared<FoodSpawner>(shared_from_this()));
 }
 
 void FoodSpawner::update()
 {
 	time += Time::get_delta() * Time::get_simulation_speed();
 
-    if (time >= spawn_rate)
-    {
-        time = 0.0f;
+	if (time >= spawn_rate)
+	{
+		time = 0.0f;
 
-        auto owner_ptr = owner.lock();
-        if (!owner_ptr) return;
+		auto owner_ptr = owner.lock();
+		if (!owner_ptr) return;
 
-        std::shared_ptr<Food> food = EntityFactory<Food>::create("fruit");
-        
-        sf::Vector2f tree_pos = owner_ptr->get_transform().get_position();
- 
-        float angle = (std::rand() % 360) * Constants::pi_val / 180.0f;
-        float dist = (std::rand() % 100) / 100.0f * spawn_radius; // 0 to spawn_radius
-        
-        sf::Vector2f offset(std::cos(angle) * dist, std::sin(angle) * dist);
-        sf::Vector2f spawn_pos_meters = (tree_pos + offset);
+		std::shared_ptr<Food> food = EntityFactory<Food>::create("fruit");
 
-        auto terrain_entity = Scene::instance().get_entity("Terrain");
-        if (auto terrain = std::dynamic_pointer_cast<EntityTerrain>(terrain_entity))
-        {
-            sf::Vector2f offset_px = offset;
-            sf::Vector2f final_pos_px = tree_pos + offset_px;
+		sf::Vector2f tree_pos = owner_ptr->get_transform().get_position();
 
-            int gx = static_cast<int>(final_pos_px.x);
-            int gy = static_cast<int>(final_pos_px.y);
+		float angle = (std::rand() % 360) * Constants::pi_val / 180.0f;
+		float dist = (std::rand() % 100) / 100.0f * spawn_radius; // 0 to spawn_radius
 
-            if (terrain->plantable((uint16_t)gx, (uint16_t)gy))
-            {
-                food->get_transform().set_position(final_pos_px);
-                Scene::instance().add_entity(food);
-            }
-        }
-    }
+		sf::Vector2f offset(std::cos(angle) * dist, std::sin(angle) * dist);
+		sf::Vector2f spawn_pos_meters = (tree_pos + offset);
+
+		auto terrain_entity = Scene::instance().get_entity("Terrain");
+		if (auto terrain = std::dynamic_pointer_cast<EntityTerrain>(terrain_entity))
+		{
+			sf::Vector2f offset_px = offset;
+			sf::Vector2f final_pos_px = tree_pos + offset_px;
+
+			int gx = static_cast<int>(final_pos_px.x);
+			int gy = static_cast<int>(final_pos_px.y);
+
+			if (terrain->plantable((uint16_t)gx, (uint16_t)gy))
+			{
+				food->get_transform().set_position(final_pos_px);
+				Scene::instance().add_entity(food);
+			}
+		}
+	}
 }
