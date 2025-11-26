@@ -100,7 +100,7 @@ class FoodSpawner : public Component
 protected:
 	float timer = 0.0f;
 	float time = 0.0f;
-    float spawn_rate = 15.0f; // Segundos para generar una fruta
+    float spawn_rate = 20.0f; // Segundos para generar una fruta
     float spawn_radius = 2.0f; // Radio en metros donde cae la fruta
 public:
 	FoodSpawner(std::weak_ptr<Entity> _owner);

@@ -1,6 +1,6 @@
-# Estructura básica del programa
+# Estructura bÃ¡sica del programa
 
-Este progma está diseñado para simular un entorno 2D utillizando la biblioteca SFML. Usa una arquitectura ECS (Entity-Component Sistem) para organizar el código, facilitar la extensión y mantenimiento del mismo.
+Este progma estÃ¡ diseÃ±ado para simular un entorno 2D utillizando la biblioteca SFML. Usa una arquitectura ECS (Entity-Component Sistem) para organizar el cÃ³digo, facilitar la extensiÃ³n y mantenimiento del mismo.
 
 ## loop
 
@@ -8,20 +8,20 @@ El programa se estrucutura en un loop principal que se ejecuta continuamente has
 
 ## Componentes y entidades
 
-El programa utiliza un sistema de componentes y entidades para definir el comportamiento de los objetos en la simulación. Cada entidad puede tener múltiples componentes que definen su apariencia, comportamiento y estado.
+El programa utiliza un sistema de componentes y entidades para definir el comportamiento de los objetos en la simulaciÃ³n. Cada entidad puede tener mÃºltiples componentes que definen su apariencia, comportamiento y estado.
 Las entidades son representadas por la clase [`Entity`](entity.md) y los componentes por la clase [`Component`](component.md).
-Ambas clases están diseñadas para ser heredadas, lo que permite crear entidades y componentes personalizados según las necesidades la simulación.
+Ambas clases estÃ¡n diseÃ±adas para ser heredadas, lo que permite crear entidades y componentes personalizados segÃºn las necesidades la simulaciï¿½n.
 
-## Componentes básicos
+## Componentes bÃ¡sicos
 
 ### Transform
 
-[`Transform`](transform.md) es un componente que define la posición, rotación y escala de una entidad en el espacio 2D. Este componente está presente en todas las entidades, ya que es escencial para representar la jerarquía de objetos, incluso si no se renderiza en pantalla.
+[`Transform`](transform.md) es un componente que define la posiciÃ³n, rotaciÃ³n y escala de una entidad en el espacio 2D. Este componente estÃ¡ presente en todas las entidades, ya que es escencial para representar la jerarquÃ­a de objetos, incluso si no se renderiza en pantalla.
 
-### Render (no ha sido creado)
-[`Render`](render.md) es un componente que define cómo se renderiza una entidad en la pantalla. Este componente puede contener información sobre la textura, el color y otros aspectos visuales de la entidad. Es opcional, ya que algunas entidades pueden no necesitar ser renderizadas.
+### Render
+[`Render`](render.md) es un componente que define cÃ³mo se renderiza una entidad en la pantalla. Este componente puede contener informaciÃ³n sobre la textura, el color y otros aspectos visuales de la entidad. Es opcional, ya que algunas entidades pueden no necesitar ser renderizadas.
 
 ## Manejo de eventos
 
-El motor utiliza un sistema EDA (Event-Driven Architecture). El manejo de eventos se realiza a través de la clase [`EventManager`](event_manager.md), que captura y procesa los eventos generados por la ventana SFML y por las entidades. Los eventos pueden incluir entradas del teclado, 
-movimientos del ratón y otros eventos del sistema cómo interacciones entre entidades de la simulación. El [`EventManager`](event_manager.md) distribuye estos eventos a las entidades y componentes que los necesitan para actualizar su estado.
+El motor utiliza un sistema EDA (Event-Driven Architecture). El manejo de eventos se realiza a travÃ©s de la clase [`EventManager`](event_manager.md), que captura y procesa los eventos generados por la ventana SFML y por las entidades. Los eventos pueden incluir entradas del teclado, 
+movimientos del ratÃ³n y otros eventos del sistema cÃ³mo interacciones entre entidades de la simulaciÃ³n. El [`EventManager`](event_manager.md) distribuye estos eventos a las entidades y componentes que los necesitan para actualizar su estado.
