@@ -77,15 +77,16 @@ public:
 	~Behaviour() = default;
 };
 
-class Food : public Entity
-{
-protected:
-	int nu = 50;
+class Food : public Entity  
+{  
+protected:  
+    int nu = 50;  
 
-public:
-	Food(std::string _name);
-	void init() override;
-	int get_nu();
+public:  
+    Food(std::string _name);  
+    void init() override;  
+    int get_nu();  
+    ~Food() override = default; // Especificación explícita de destructor compatible con Entity  
 };
 
 class FoodGenerator : public Entity
