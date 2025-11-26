@@ -239,7 +239,7 @@ void Engine::render()
 
     static float time_accumulator = 0.0f;
 
-    time_accumulator += Time::get_delta();
+    time_accumulator += Time::get_delta() * Time::get_simulation_speed();
     if (time_accumulator >= 0.2f)
     {
         PopulationStats::update_history(time_accumulator);

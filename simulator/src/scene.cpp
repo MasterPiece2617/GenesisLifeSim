@@ -84,11 +84,10 @@ void Scene::load(const OrganismConfig& organism_config) // Provisional
     uint16_t map_width = terrain->get_width();
     uint16_t map_height = terrain->get_height();
 
-    int trees_desired = 200; // Cantidad de árboles
     int trees_placed = 0;
     int attempts = 0;
 
-    while (trees_placed < trees_desired && attempts < 2000)
+    while (trees_placed < tree_spawn != 0 ? tree_spawn : 400 && attempts < 2000)
     {
         ++attempts;
         int gx = std::rand() % map_width;
@@ -121,6 +120,8 @@ void Scene::clear()
 	chunks.clear();
 
 	organism_id = 0;
+
+	Time::set_simulation_speed(1.0f);
 
 	main_camera = EntityFactory<Camera>::create("Main Camera");
 	add_entity(main_camera);

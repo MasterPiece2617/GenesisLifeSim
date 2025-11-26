@@ -248,16 +248,12 @@ void Behaviour::start()
 				float map_w = (float)terrain->get_width();
 				float map_h = (float)terrain->get_height();
 
-				// --- LÓGICA DE REBOTE (BOUNCE) ---
-				// Si el punto cae fuera, invertimos el offset para que vaya hacia adentro.
 				if (goal.x < 0.f || goal.x > map_w - 1.0f ||
-					goal.y < 0.f || goal.y > map_h - 1.0f)
+					goal.y < 0.f || goal.y > map_h - 1.0f ||
+					(!terrain->navigable(static_cast<uint16_t>(goal.x), static_cast<uint16_t>(goal.y)) &&
+					 !terrain->walkable(static_cast<uint16_t>(goal.x), static_cast<uint16_t>(goal.y))))
 				{
-					offset = -offset; // Invertir dirección
-					goal = pos + offset;
-
-					// Recalculamos el ángulo para la rotación visual
-					angle_deg = std::atan2(offset.y, offset.x) * 180.0f / Constants::pi_val;
+					return BTStatus::FAILURE;
 				}
 
 				// Clamp final de seguridad (por si acaso)
@@ -645,6 +641,7 @@ void Behaviour::start()
 						child_pos.y += static_cast<float>((std::rand() % 3) - 1);
 						child->get_transform().set_position(child_pos);
 						Scene::instance().add_entity(child);
+						EventManager::publish(Event(EventType::ORGANISM_BORN, EntityEvent(child)), child);
 
 						// --- Coste energético de reproducción ---
 						og->get_stats().hunger = std::max(0.0f, (og->get_stats().hunger - (og->get_stats().max_hunger * 0.3f)));
@@ -794,7 +791,7 @@ void Tree::init()
 
 void FoodSpawner::update()
 {
-	time += Time::get_delta();
+	time += Time::get_delta() * Time::get_simulation_speed();
 
     if (time >= spawn_rate)
     {

@@ -74,6 +74,10 @@ void ImGuiMenu::show_map_creator()
     ImGui::InputInt("Ancho", &width, 10, 100);
     ImGui::InputInt("Alto", &height, 10, 100);
 
+    ImGui::Separator();
+    ImGui::Text("Arboles a producir");
+    ImGui::InputInt("Cantidad", &Scene::instance().tree_spawn, 200, 1000);
+
     config.width = static_cast<uint16_t>(width);
     config.height = static_cast<uint16_t>(height);
 

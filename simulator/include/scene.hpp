@@ -35,6 +35,7 @@ protected:
 public:
 
 	int num_organisms = 5;
+	int tree_spawn = 0;
 	static int organism_id;
 
 	Scene(); 
