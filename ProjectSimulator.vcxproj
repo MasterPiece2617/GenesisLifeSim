@@ -148,7 +148,6 @@
     <ClCompile Include="simulator\src\organism.cpp" />
     <ClCompile Include="simulator\src\pathfinder.cpp" />
     <ClCompile Include="simulator\src\populations_stats.cpp" />
-    <ClCompile Include="simulator\src\population_stats.cpp" />
     <ClCompile Include="simulator\src\renderer.cpp" />
     <ClCompile Include="simulator\src\terrain.cpp" />
     <ClCompile Include="simulator\src\texture.cpp" />

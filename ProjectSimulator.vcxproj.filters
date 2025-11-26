@@ -27,7 +27,6 @@
     <ClCompile Include="simulator\src\entity.cpp" />
     <ClCompile Include="simulator\src\graph.cpp" />
     <ClCompile Include="simulator\src\scene.cpp" />
-    <ClCompile Include="simulator\src\population_stats.cpp" />
     <ClCompile Include="simulator\src\populations_stats.cpp" />
     <ClCompile Include="simulator\src\map_generator.cpp" />
   </ItemGroup>

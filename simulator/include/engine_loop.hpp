@@ -59,3 +59,4 @@ public:
   void run();
   static void reset_simulation(std::shared_ptr<EntityTerrain>& terrain, bool& map_loaded, std::string& selected_map, bool& centered);
 };
+
